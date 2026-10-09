@@ -1,45 +1,47 @@
-# iBrowse for Windows (planned)
+# iBrowse for Windows
 
-> **Status: design only. Not built.** This machine has the .NET runtimes but no .NET SDK, so nothing here has been compiled or run. See [ADR-0015](../../docs/adr/0015-windows-and-ios-as-separate-products.md).
+> **Status: early preview.** The core library is built and tested (38 unit tests). The Windows app builds, starts and registers its hotkey, but has **not been tested with a real screen reader, a real blind user, or across many applications**. See [ADR-0015](../../docs/adr/0015-windows-and-ios-as-separate-products.md).
 
-A native desktop explorer that brings iBrowse's hover, wheel and touch exploration to **every Windows application**, not only websites. A blind person moves the mouse or a finger across any window and hears what is under it.
+A native desktop explorer that brings iBrowse's hover exploration to **every Windows application**, not only websites. Move the mouse over any window and hear what is under it.
 
-## What it will do
+## What works today
 
-| Capability | How |
+| Capability | State |
 |---|---|
-| Describe the element under the pointer | Microsoft UI Automation (`ElementFromPoint`), in the same grammar as the extension: `Save, button, Clickable` / `Text only` |
-| Stereo placement | Earcons panned by the pointer's position on screen |
-| Read and scrub text | UIA Text pattern: word, line and paragraph ranges, stepped with the wheel |
-| Turn on and off | A global hotkey (proposed Win+Alt+E), inert when off |
-| Haptics | The same eight events and device profiles as the extension |
-| Coexist with a screen reader | Companion mode: detect NVDA, JAWS or Narrator and defer speech |
+| Describe the element under the pointer through Microsoft UI Automation | Built. Same grammar as the extension: `Save — Button, Clickable`, `Text only`, `Paragraph: first five words. Click to read.` |
+| Rest-then-speak (150 ms dwell, 5 px jitter tolerance) | Built, unit-tested |
+| Checkbox, edit-field and password states (passwords never spoken) | Built, unit-tested |
+| Speak with the voices installed in Windows | Built |
+| Global hotkey **Win+Alt+E**, tray icon with a menu | Built |
+| Stay quiet when NVDA, JAWS, Narrator, ZoomText or Supernova is running (Companion) | Built, not tested against them |
 
-## Planned structure
+## Not built yet
+
+Stereo earcons, word scrubbing with the wheel through the UIA Text pattern, touch, "May be clickable" guesses, haptic drivers, a settings window, and an installer. These follow the extension's behaviour and are listed in the roadmap.
+
+## Structure
 
 ```
 apps/windows/
-  IBrowse.Core/        grammar, placement, dwell, hysteresis, event routing (no Windows APIs; unit-tested)
-  IBrowse.Windows/     UI Automation adapter, global hooks, speech, tray icon
-  IBrowse.Tests/       core unit tests, adapter integration tests against a fixture app
+  IBrowse.Core/      grammar, placement, dwell and hysteresis. No Windows APIs. Unit-tested.
+  IBrowse.Windows/   UI Automation adapter, global hotkey, tray icon, speech
+  IBrowse.Tests/     xUnit tests for the core
 ```
 
-## Build order
+## Build and run
 
-1. `IBrowse.Core`: port the speech grammar and dwell/hysteresis rules, driven by shared conformance vectors.
-2. UI Automation adapter: describe the element under a point; log what would be spoken.
-3. Speech and earcons, with panning.
-4. Global hotkey, tray icon, settings.
-5. Text scrubbing through the Text pattern.
-6. Haptic drivers (HID).
-7. Real testing with NVDA, JAWS and Narrator. **This step decides whether it ships.**
+Requires the .NET 10 SDK and Windows 10 or later.
 
-## To start building
+```
+cd apps/windows
+dotnet test IBrowse.sln
+dotnet run --project IBrowse.Windows
+```
 
-Install a .NET SDK (for example `winget install Microsoft.DotNet.SDK.10`), then `dotnet new sln` in this folder. Nothing is installed on your behalf.
+Press **Win+Alt+E** to turn Explore Mode on or off, then move the mouse. Quit from the tray icon.
 
 ## Risks
 
-- Hooking the mouse globally can conflict with screen readers' own mouse tracking.
-- Many apps expose poor UI Automation trees (games, custom-drawn UIs). The app must say "unknown element" honestly, never guess.
+- Hooking the pointer can conflict with a screen reader's own mouse tracking.
+- Many apps expose poor UI Automation trees (games, custom-drawn UIs). iBrowse says "Text only" or "Unlabeled" rather than guessing.
 - Code signing and SmartScreen reputation affect distribution.

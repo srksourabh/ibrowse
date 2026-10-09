@@ -107,7 +107,7 @@ Everything runs on your device. Nothing is sent anywhere unless you turn on a Go
 | `sdk/` | Haptics SDK: JSON schema, examples |
 | `docs/adr/` | Architecture decisions and their reasons |
 | `docs/phases/` | Plan and exit checklist for each phase |
-| `apps/windows/` | iBrowse for Windows: **design only**, not built |
+| `apps/windows/` | iBrowse for Windows (.NET): **early preview**, core tested, not yet used with a screen reader |
 | `apps/ios/` | iBrowse for iOS: **plan only**, not built |
 | `.claude/skills/ibrowse-contributor/` | A skill that teaches an AI agent to work on this repo |
 | `demo/` | The original browser simulator (not the product) |
@@ -159,7 +159,7 @@ Still to verify by hand: real haptic devices, a real Gemini key, NVDA and VoiceO
 
 ## Roadmap
 
-Closed beta with blind testers, then a Chrome Web Store release and a published SDK. A Windows desktop explorer ([design](apps/windows/README.md)) and an iOS browser ([plan](apps/ios/README.md)) follow the extension.
+Closed beta with blind testers, then a Chrome Web Store release and a published SDK. The Windows desktop explorer ([early preview](apps/windows/README.md)) grows toward parity with the extension. An iOS browser ([plan only](apps/ios/README.md)) needs a Mac to build.
 
 ## License
 

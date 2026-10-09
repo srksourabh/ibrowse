@@ -1,6 +1,6 @@
 # ADR-0015: A Windows desktop explorer and an iOS app, as separate products
 
-Status: accepted (design only; neither is built)
+Status: accepted. Windows: early preview built. iOS: plan only.
 
 ## Context
 [ADR-0001](0001-chrome-extension-not-native.md) chose a Chrome extension over a native app, because the extension reaches the web with the least friction. The user has now asked for a Windows app and an iOS app as well. The original product idea (PRD v1) was a native explorer: the same hover, wheel and touch exploration across **every** Windows application, not only websites.
@@ -27,5 +27,6 @@ The grammar and the eight haptic events are the contract. Each product re-implem
 ## Consequences
 - The repo becomes a small monorepo: extension at the root, `apps/windows`, `apps/ios`.
 - The PRD gains a "Platforms" section. Privacy rules (opt-in cloud, no key in logs) apply to every product.
-- Building the Windows app needs a .NET SDK. At the time of writing this machine has only the .NET runtimes (8 and 10), so the app cannot be compiled until an SDK is installed.
-- Neither product is released or tested with real users. Both are marked **planned** in the README.
+- The Windows core and adapter now exist (.NET 10) and the core is unit-tested. The adapter has only been smoke-run, not tested with screen readers or real users.
+- The iOS app is a plan: this project has no Mac or Xcode.
+- Neither product is released.
