@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "example-haptic-mouse",
+  "name": "Example haptic mouse (placeholder ids)",
+  "match": { "vendorId": 4660, "productId": 22136, "usagePage": 65280 },
+  "reportId": 2,
+  "events": {
+    "enter-interactive": [1, 16, 0],
+    "enter-static": [1, 17, 0],
+    "word-tick": [1, 18, 0],
+    "boundary": [1, 19, 0],
+    "edge-cross": [1, 20, 0],
+    "action-confirm": [1, 21, 0],
+    "error": [1, 22, 0],
+    "page-change": [1, 23, 0]
+  },
+  "intensity": { "byteIndex": 2, "max": 255 }
+}

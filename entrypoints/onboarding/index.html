@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Welcome to iBrowse</title>
+    <style>
+      :root { color-scheme: light dark; --gutter: 16px; }
+      body { font: 1.25rem/1.7 system-ui, sans-serif; margin: 0; }
+      main { max-width: 40rem; margin: 0 auto; padding: var(--gutter); }
+      #step { padding: 1rem; border: 2px solid currentColor; border-radius: 4px; min-height: 6rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+      button { font: inherit; padding: 0.5rem 1rem; }
+      :focus-visible { outline: 3px solid Highlight; outline-offset: 2px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Welcome to iBrowse</h1>
+      <p>
+        This tour is spoken. Press Enter for the next step, Backspace to go back, R to hear a step again,
+        and Escape to skip it.
+      </p>
+      <p id="progress"></p>
+      <p id="step"></p>
+      <div class="controls">
+        <button id="previous" type="button">Previous</button>
+        <button id="repeat" type="button">Hear again</button>
+        <button id="next" type="button">Next</button>
+        <button id="skip" type="button">Skip the tour</button>
+      </div>
+      <p id="status" role="status"></p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

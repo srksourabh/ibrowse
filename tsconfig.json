@@ -1,0 +1,11 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": false,
+    "types": ["chrome"]
+  },
+  "include": [".wxt/wxt.d.ts", "entrypoints", "src", "sdk", "tests", "wxt.config.ts", "vitest.config.ts"]
+}

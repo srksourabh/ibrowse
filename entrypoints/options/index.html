@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="manifest.open_in_tab" content="true" />
+    <title>iBrowse settings</title>
+    <style>
+      :root { color-scheme: light dark; --gutter: 16px; }
+      body { font: 1.125rem/1.6 system-ui, sans-serif; margin: 0; }
+      main { max-width: 44rem; margin: 0 auto; padding: var(--gutter); }
+      section { margin: 2rem 0; }
+      .row { margin: 1rem 0; }
+      label { display: block; font-weight: 600; }
+      .help { margin: 0.25rem 0 0; opacity: 0.85; }
+      input[type='text'], input[type='number'], input[type='password'], select {
+        font: inherit; padding: 0.4rem 0.6rem; min-width: 14rem; max-width: 100%; box-sizing: border-box;
+      }
+      input[type='checkbox'] { width: 1.4rem; height: 1.4rem; }
+      button { font: inherit; padding: 0.5rem 1rem; margin: 0.25rem 0.5rem 0.25rem 0; }
+      #consent { padding: 1rem; border: 3px solid currentColor; border-radius: 4px; }
+      #status { min-height: 3rem; padding: 0.75rem; border: 2px solid currentColor; border-radius: 4px; }
+      :focus-visible { outline: 3px solid Highlight; outline-offset: 2px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>iBrowse settings</h1>
+      <p>
+        Use Tab to move between settings. Each one is read out when you reach it, and every change is
+        spoken. Press Alt, Shift and S at any time to come back here.
+      </p>
+
+      <section id="consent" role="alertdialog" aria-labelledby="consent-title" aria-describedby="consent-text" hidden>
+        <h2 id="consent-title">Allow access to Google?</h2>
+        <p id="consent-text"></p>
+        <button id="allow" type="button">Allow and turn on</button>
+        <button id="cancel" type="button">Cancel</button>
+      </section>
+
+      <form id="settings" aria-label="Settings" onsubmit="return false"></form>
+
+      <section aria-labelledby="key-title">
+        <h2 id="key-title">Google key</h2>
+        <p>
+          Cloud voice and AI use your own Google key. It is kept on this computer and used only by
+          iBrowse's background worker.
+        </p>
+        <div class="row">
+          <label for="key">Google API key</label>
+          <input id="key" type="password" autocomplete="off" spellcheck="false" aria-describedby="key-status" />
+          <p id="key-status" class="help"></p>
+        </div>
+        <button id="save-key" type="button">Save key</button>
+        <button id="test-key" type="button">Test key</button>
+        <button id="remove-key" type="button">Remove key</button>
+      </section>
+
+      <section aria-labelledby="tools-title">
+        <h2 id="tools-title">More</h2>
+        <button id="tour" type="button">Hear the tour again</button>
+        <button id="hardware" type="button">Hardware setup</button>
+        <button id="shortcuts" type="button">Change keyboard shortcuts</button>
+        <button id="latency" type="button">Read out delays</button>
+      </section>
+
+      <h2>Status</h2>
+      <p id="status" role="status"></p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ibrowse/ibrowse/sdk/device-profile.schema.json",
+  "title": "iBrowse haptic device profile",
+  "description": "Describes a USB HID haptic device: which device it is, and the raw output report to send for each haptic event. Schema version 1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "name", "match", "reportId", "events"],
+  "properties": {
+    "schema": { "const": 1, "description": "The profile format version." },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{1,40}$",
+      "description": "A short stable identifier: lower case letters, digits and dashes."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "What a person would call the device. It is spoken aloud."
+    },
+    "match": {
+      "type": "object",
+      "required": ["vendorId"],
+      "properties": {
+        "vendorId": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "productId": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "usagePage": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "usage": { "type": "integer", "minimum": 0, "maximum": 65535 }
+      },
+      "description": "Which attached device this is for. Give as much as is needed to tell it apart from other devices."
+    },
+    "reportId": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255,
+      "description": "The HID output report id the reports are sent with."
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "description": "The report bytes for each haptic event the device can express. Events left out are skipped, not faked.",
+      "properties": {
+        "enter-interactive": { "$ref": "#/$defs/report" },
+        "enter-static": { "$ref": "#/$defs/report" },
+        "word-tick": { "$ref": "#/$defs/report" },
+        "boundary": { "$ref": "#/$defs/report" },
+        "edge-cross": { "$ref": "#/$defs/report" },
+        "action-confirm": { "$ref": "#/$defs/report" },
+        "error": { "$ref": "#/$defs/report" },
+        "page-change": { "$ref": "#/$defs/report" }
+      }
+    },
+    "intensity": {
+      "type": "object",
+      "required": ["byteIndex", "max"],
+      "properties": {
+        "byteIndex": { "type": "integer", "minimum": 0, "maximum": 63 },
+        "max": { "type": "integer", "minimum": 1, "maximum": 255 }
+      },
+      "description": "If present, this byte of every report is replaced by the intensity setting (0 to 1), scaled to 0 to max. It must lie inside every event's report."
+    }
+  },
+  "$defs": {
+    "report": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": { "type": "integer", "minimum": 0, "maximum": 255 },
+      "description": "The bytes of one output report, without the report id."
+    }
+  }
+}

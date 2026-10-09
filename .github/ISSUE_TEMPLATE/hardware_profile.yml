@@ -1,0 +1,42 @@
+name: Hardware profile
+description: Add or fix support for a haptic device or controller
+labels: [hardware]
+body:
+  - type: markdown
+    attributes:
+      value: Profiles are JSON files that follow `sdk/device-profile.schema.json`. No code is needed.
+  - type: input
+    id: device
+    attributes:
+      label: Device name and maker
+    validations:
+      required: true
+  - type: input
+    id: ids
+    attributes:
+      label: USB vendor and product id
+      description: For example 0x1234 and 0x5678.
+  - type: dropdown
+    id: connection
+    attributes:
+      label: How it connects
+      options: [WebHID, Gamepad API, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: profile
+    attributes:
+      label: Profile JSON
+      description: Paste your profile, or describe the report format if you need help writing one.
+      render: json
+  - type: dropdown
+    id: tested
+    attributes:
+      label: Have you tested it on the real device?
+      options: ["Yes, it works", "Yes, partly", "No"]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes on what you felt

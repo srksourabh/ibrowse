@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iBrowse — Tactile & Multimodal Desktop Accessibility Simulator</title>
+  <meta name="description" content="A revolutionary multimodal desktop accessibility system for completely blind individuals using touchscreen monitors, haptic mice, spatial audio, and word-by-word scroll scrubbing.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+  <!-- Audio Permission / Init Splash Overlay -->
+  <div id="audio-init-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-badge">Assistive Technology Suite</div>
+      <h1 class="modal-title">Welcome to iBrowse</h1>
+      <p class="modal-desc">
+        Experience desktop exploration tailored for completely blind users. This system combines:
+      </p>
+      <ul class="feature-checklist">
+        <li><strong>Spatial Hover Exploration:</strong> Mouse and touch movement reads all controls and text with spatial stereo audio.</li>
+        <li><strong>Affordance Detection:</strong> Announces whether an item is <em>"Clickable"</em> or <em>"Text only"</em> accompanied by distinct haptic vibration pulses.</li>
+        <li><strong>Scroll Wheel Scrubbing:</strong> Rotating the wheel over text reads words one-by-one with micro-haptic clicks.</li>
+        <li><strong>Taskbar Status Monitor:</strong> Edge-guided system status readouts at the bottom of the screen.</li>
+      </ul>
+      <button id="btn-start-system" class="btn btn-primary btn-large">
+        <span class="icon">🔊</span> Initialize Audio & Haptics Engine
+      </button>
+      <p class="footnote">Clicking activates Web Audio API and Speech Synthesis.</p>
+    </div>
+  </div>
+
+  <!-- Main System Container -->
+  <div id="desktop-wrapper" class="desktop-wrapper">
+    <!-- Top HUD Navigation / Control Bar -->
+    <header id="system-hud" class="system-hud">
+      <div class="hud-left">
+        <div class="brand">
+          <div class="brand-dot"></div>
+          <span class="brand-name">iBrowse</span>
+          <span class="brand-tag">Tactile OS 1.0</span>
+        </div>
+        <div class="hud-status-chip" id="hud-audio-status">
+          <span class="status-indicator active"></span> Audio Engine: Ready
+        </div>
+        <div class="hud-status-chip" id="hud-haptic-status">
+          <span class="status-indicator haptic"></span> Haptic Actuator: Active
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <!-- Live Speech Telemetry Readout -->
+        <div class="telemetry-box" aria-live="polite">
+          <span class="telemetry-label">SPEECH:</span>
+          <span id="telemetry-speech-text" class="telemetry-value">Move mouse or touch screen to begin exploration...</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <button id="btn-toggle-blind-mode" class="hud-btn" title="Simulate Complete Blindness (Hides Visuals to test pure tactile & audio accessibility)">
+          <span class="icon">👁️</span> Blind Simulation Mode
+        </button>
+        <button id="btn-toggle-settings" class="hud-btn" title="Open Settings Panel">
+          <span class="icon">⚙️</span> Settings
+        </button>
+      </div>
+    </header>
+
+    <!-- Simulated Desktop Environment (Touch & Mouse Surface) -->
+    <main id="desktop-surface" class="desktop-surface">
+      <!-- Desktop Background Grid / Physical Touch Landmarks -->
+      <div class="spatial-grid-overlay"></div>
+
+      <!-- Desktop Shortcut Icons -->
+      <div class="desktop-icons-container">
+        <div class="desktop-icon-item" id="icon-my-computer" tabindex="0" role="button" aria-label="This PC desktop icon">
+          <div class="icon-glyph">💻</div>
+          <span class="icon-label">This PC</span>
+        </div>
+        <div class="desktop-icon-item" id="icon-documents" tabindex="0" role="button" aria-label="Documents Folder">
+          <div class="icon-glyph">📁</div>
+          <span class="icon-label">Documents</span>
+        </div>
+        <div class="desktop-icon-item" id="icon-browser" tabindex="0" role="button" aria-label="Web Browser application">
+          <div class="icon-glyph">🌐</div>
+          <span class="icon-label">Web Browser</span>
+        </div>
+        <div class="desktop-icon-item" id="icon-mail" tabindex="0" role="button" aria-label="Email Client">
+          <div class="icon-glyph">✉️</div>
+          <span class="icon-label">Messages</span>
+        </div>
+      </div>
+
+      <!-- Active Application Window: Web Browser Simulated Window -->
+      <article id="window-browser" class="desktop-window" aria-label="iBrowse Accessible Web Portal Window">
+        <!-- Window Title Bar -->
+        <div class="window-titlebar" id="browser-titlebar">
+          <div class="window-controls">
+            <span class="win-btn win-close" title="Close Window"></span>
+            <span class="win-btn win-min" title="Minimize Window"></span>
+            <span class="win-btn win-max" title="Maximize Window"></span>
+          </div>
+          <div class="window-title-text" id="browser-window-title">iBrowse Accessible Web Portal — Scientific Explorer</div>
+          <div class="window-extra-tag">Active App</div>
+        </div>
+
+        <!-- Window Browser Toolbar -->
+        <nav class="browser-nav-bar" aria-label="Browser navigation bar">
+          <button class="nav-btn" id="btn-browser-back" aria-label="Back button">← Back</button>
+          <button class="nav-btn" id="btn-browser-forward" aria-label="Forward button">Forward →</button>
+          <button class="nav-btn" id="btn-browser-refresh" aria-label="Reload page">↻ Refresh</button>
+          <div class="address-bar-container">
+            <span class="address-lock-icon">🔒</span>
+            <input type="text" id="input-address-bar" class="address-bar-input" value="https://accessibility.discovery.org/tactile-computing" aria-label="Website address URL bar">
+          </div>
+          <button class="btn btn-secondary" id="btn-bookmark" aria-label="Bookmark page button">★ Star</button>
+        </nav>
+
+        <!-- Web Page Content Container (Ideal for Wheel Word Scrubbing & Affordance Testing) -->
+        <div class="browser-viewport" id="browser-viewport">
+          <header class="article-header">
+            <span class="article-category">Emerging Assistive Technology</span>
+            <h1 class="article-heading" id="article-main-title">
+              Spatial Tactile Computing: Bridging Physical Touch, Haptic Mice, and Screen Readers
+            </h1>
+            <p class="article-meta" id="article-author-info">
+              Published on October 8, 2026 • By Dr. Elena Vance • 6 min read
+            </p>
+          </header>
+
+          <hr class="section-divider">
+
+          <!-- Notice Banner (Interactive) -->
+          <div class="alert-banner" id="tip-wheel-scrub" role="region" aria-label="Interactive instructional banner">
+            <div class="alert-icon">💡</div>
+            <div class="alert-content">
+              <strong>Interactive Feature Demo:</strong> Hover your mouse cursor over any paragraph below and rotate your <strong>Mouse Scroll Wheel</strong>. Listen as it reads word-by-word with tactile haptic clicks!
+            </div>
+            <button class="btn btn-small btn-primary" id="btn-dismiss-alert">Dismiss Tip</button>
+          </div>
+
+          <!-- Article Body with Rich Prose (Word-by-word target) -->
+          <section class="article-body" id="article-content-body">
+            <p class="article-paragraph" id="para-1">
+              For decades completely blind computer operators navigated complex digital environments through rigid linear keyboard commands. While keyboard navigation is indispensable for seasoned experts, it fundamentally lacks physical spatial orientation. In the physical realm, humans explore environments through direct spatial reaching and tactile feedback.
+            </p>
+
+            <h2 class="subheading" id="subheading-haptics">How Haptic Actuators Create Physical Boundaries</h2>
+            
+            <p class="article-paragraph" id="para-2">
+              By integrating resonant voice coil actuators into the mouse chassis and scroll wheel, digital boundaries transform into tangible mechanical sensations. Hovering over a clickable button generates a distinct dual-pulse snap, whereas moving over static reading paragraphs produces a soft velvet friction. This tactile separation allows a blind user to differentiate interactive buttons from informative text in milliseconds.
+            </p>
+
+            <!-- Interactive Form Section -->
+            <div class="interactive-card" id="card-research-survey" role="region" aria-label="Accessibility survey card">
+              <h3 class="card-title" id="survey-title">Quick Accessibility Experience Survey</h3>
+              <p class="card-subtitle" id="survey-desc">Test form controls, checkboxes, and buttons with your cursor.</p>
+              
+              <div class="form-row">
+                <label for="input-user-name" class="form-label" id="label-user-name">Preferred User Name:</label>
+                <input type="text" id="input-user-name" class="form-input" placeholder="e.g. Alex Miller" aria-label="Enter preferred user name">
+              </div>
+
+              <div class="form-row checkbox-row">
+                <input type="checkbox" id="chk-enable-speech" class="form-checkbox" checked>
+                <label for="chk-enable-speech" class="form-checkbox-label" id="label-enable-speech">
+                  Enable high-speed speech synthesis
+                </label>
+              </div>
+
+              <div class="form-row checkbox-row">
+                <input type="checkbox" id="chk-enable-haptics" class="form-checkbox" checked>
+                <label for="chk-enable-haptics" class="form-checkbox-label" id="label-enable-haptics">
+                  Enable tactile haptic vibrations on mouse
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btn-submit-survey">
+                  Submit Feedback
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-reset-form">
+                  Reset Controls
+                </button>
+                <a href="#article-main-title" class="link-item" id="link-return-top">Back to article header</a>
+              </div>
+            </div>
+
+            <p class="article-paragraph" id="para-3">
+              Modern touchscreens provide an expansive tactile canvas where edges of the screen act as absolute spatial anchors. A user can place their left hand along the monitor bezels to orient themselves, while the right hand maneuvers the mouse for fine grain word scrubbing.
+            </p>
+          </section>
+        </div>
+      </article>
+
+      <!-- Haptic Waveform & Telemetry Floating Monitor Widget -->
+      <aside id="haptic-telemetry-widget" class="haptic-widget" aria-label="Real-time tactile and affordance monitor">
+        <div class="widget-header">
+          <span class="widget-title">Tactile & Audio Monitor</span>
+          <span class="widget-badge" id="telemetry-affordance-badge">IDLE</span>
+        </div>
+        
+        <!-- Live Waveform Visualizer -->
+        <div class="waveform-container">
+          <canvas id="haptic-canvas" width="260" height="70" aria-label="Haptic pulse waveform visualizer"></canvas>
+        </div>
+
+        <div class="telemetry-data-grid">
+          <div class="data-item">
+            <span class="data-key">Hover Target:</span>
+            <span class="data-value" id="disp-target-tag">None</span>
+          </div>
+          <div class="data-item">
+            <span class="data-key">Affordance:</span>
+            <span class="data-value" id="disp-affordance-state">Resting</span>
+          </div>
+          <div class="data-item">
+            <span class="data-key">Spatial X/Y:</span>
+            <span class="data-value" id="disp-coords">X: 0px, Y: 0px</span>
+          </div>
+          <div class="data-item">
+            <span class="data-key">Audio Pan:</span>
+            <span class="data-value" id="disp-audio-pan">Center (0.0)</span>
+          </div>
+        </div>
+
+        <!-- Word Scrubbing Live Box -->
+        <div class="scrub-box" id="scrub-status-box">
+          <span class="scrub-label">Active Word under Caret:</span>
+          <span class="scrub-word" id="disp-active-word">—</span>
+          <div class="scrub-hint">Roll mouse wheel up/down to scrub words</div>
+        </div>
+      </aside>
+
+      <!-- Settings Flyout Drawer -->
+      <div id="settings-drawer" class="settings-drawer hidden" role="dialog" aria-label="Accessibility Settings">
+        <div class="drawer-header">
+          <h2>Accessibility System Settings</h2>
+          <button id="btn-close-settings" class="btn-icon" aria-label="Close settings">✕</button>
+        </div>
+        <div class="drawer-content">
+          <div class="setting-group">
+            <label for="range-speech-rate" class="setting-label">Speech Rate (<span id="val-speech-rate">1.2x</span>):</label>
+            <input type="range" id="range-speech-rate" min="0.5" max="2.5" step="0.1" value="1.2">
+          </div>
+          <div class="setting-group">
+            <label for="range-speech-pitch" class="setting-label">Speech Pitch (<span id="val-speech-pitch">1.0</span>):</label>
+            <input type="range" id="range-speech-pitch" min="0.5" max="1.5" step="0.1" value="1.0">
+          </div>
+          <div class="setting-group">
+            <label for="range-haptic-strength" class="setting-label">Haptic Vibration Strength (<span id="val-haptic-strength">85%</span>):</label>
+            <input type="range" id="range-haptic-strength" min="10" max="100" step="5" value="85">
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">Affordance Announcement Verbosity:</label>
+            <div class="radio-row">
+              <label><input type="radio" name="verbosity" value="full" checked> Spoken ("Clickable" / "Text only")</label>
+              <label><input type="radio" name="verbosity" value="earcons"> Musical Earcons Only</label>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">Spatial Stereo Panning:</label>
+            <div class="checkbox-row">
+              <input type="checkbox" id="chk-spatial-pan" checked>
+              <label for="chk-spatial-pan">Pan audio channel to match screen X position</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Taskbar & System Monitor (Bottom Edge Touch/Mouse Zone) -->
+    <footer id="desktop-taskbar" class="desktop-taskbar" role="toolbar" aria-label="Desktop Taskbar and System Status Monitor">
+      <div class="taskbar-left">
+        <button id="btn-start-menu" class="taskbar-btn start-btn" aria-label="Start menu button, Clickable">
+          <span class="start-icon">❖</span> Start
+        </button>
+        <div class="taskbar-divider"></div>
+        <button id="taskbar-app-browser" class="taskbar-btn taskbar-app active" aria-label="Web Browser, Running, Clickable">
+          <span class="app-icon">🌐</span> Browser
+        </button>
+        <button id="taskbar-app-files" class="taskbar-btn taskbar-app" aria-label="File Explorer, Clickable">
+          <span class="app-icon">📁</span> Files
+        </button>
+        <button id="taskbar-app-terminal" class="taskbar-btn taskbar-app" aria-label="Terminal, Clickable">
+          <span class="app-icon">⌨️</span> Terminal
+        </button>
+      </div>
+
+      <div class="taskbar-center">
+        <!-- Tactile Taskbar Zone Indicator -->
+        <div class="taskbar-zone-badge" id="taskbar-indicator">
+          <span class="pulse-beacon"></span> Taskbar Edge Monitor Active
+        </div>
+      </div>
+
+      <div class="taskbar-right" id="system-tray">
+        <button class="tray-icon" id="tray-wifi" aria-label="Network Status: Wi-Fi Connected, 5 GHz Full Signal, Clickable">
+          📶
+        </button>
+        <button class="tray-icon" id="tray-volume" aria-label="Sound Volume: 85%, Clickable">
+          🔊
+        </button>
+        <button class="tray-icon" id="tray-battery" aria-label="Battery Status: 92% Charged, Running on AC Power, Clickable">
+          🔋
+        </button>
+        <div class="taskbar-divider"></div>
+        <button class="tray-clock" id="tray-clock" aria-label="Current Time and Date: 7:00 PM, Thursday October 8, Clickable">
+          <span id="clock-time">19:00</span>
+          <span id="clock-date">Thu Oct 8</span>
+        </button>
+        <button class="tray-show-desktop" id="tray-show-desktop" aria-label="Show Desktop button, far right edge, Clickable" title="Show Desktop">
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Simulated Blind Mode Blackout Overlay (Preserves Touch and Mouse) -->
+  <div id="blind-simulation-curtain" class="blind-curtain hidden" aria-hidden="true">
+    <div class="blind-curtain-hud">
+      <div class="curtain-chip">👁️ Blind Exploration Simulation Mode Active</div>
+      <p class="curtain-sub">Visual screen obscured. Rely solely on mouse/touch movements, spatial audio, and haptic feedback.</p>
+      <button id="btn-exit-blind-mode" class="btn btn-secondary">Exit Blind Simulation</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
