@@ -82,7 +82,7 @@ The existing browser simulator is kept as a hosted demo site and haptic visualiz
 ## 5. Functional requirements
 
 ### 5.1 Explore mode and activation
-- **FR-1.1** A hotkey toggles explore mode (default Alt+Shift+E, remappable at `chrome://extensions/shortcuts`).
+- **FR-1.1** A hotkey toggles explore mode (default Alt+Shift+E, remappable at `chrome://extensions/shortcuts`). The toolbar button does the same, and its badge and title say whether explore mode is on in that tab (ADR-0016).
 - **FR-1.2** The setting "Always start in explore mode" enables it on every page load.
 - **FR-1.3** Entering explore mode speaks "Explore mode on", then the page briefing (§5.2). Leaving speaks "Explore mode off".
 - **FR-1.4** When explore mode is off, no wheel, touch or key events are intercepted.

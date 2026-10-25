@@ -54,6 +54,33 @@ test('a toggle message reaches the content script on a web page', async () => {
   expect(result).toEqual({ delivered: true, error: null })
 })
 
+test('the toolbar button shows whether Explore Mode is on in that tab', async () => {
+  const page = await context.newPage()
+  await page.goto(`${PAGE_URL}toolbar`)
+  const worker = await backgroundWorker()
+  const toggleAndRead = () =>
+    worker.evaluate(async (url) => {
+      const [tab] = await chrome.tabs.query({ url: `${url}toolbar` })
+      await chrome.tabs.sendMessage(tab!.id!, { type: 'toggle-explore' })
+      // The page reports its new state back to the worker, which then updates the button.
+      await new Promise((resolve) => setTimeout(resolve, 300))
+      return {
+        badge: await chrome.action.getBadgeText({ tabId: tab!.id! }),
+        title: await chrome.action.getTitle({ tabId: tab!.id! }),
+      }
+    }, PAGE_URL)
+
+  expect(await toggleAndRead()).toEqual({
+    badge: 'ON',
+    title: 'iBrowse: Explore Mode on. Click to turn it off.',
+  })
+  expect(await toggleAndRead()).toEqual({
+    badge: '',
+    title: 'iBrowse: Explore Mode off. Click to turn it on.',
+  })
+  await page.close()
+})
+
 test('sending to a page with no content script fails, which triggers the inaccessible-page notice', async () => {
   const worker = await backgroundWorker()
   const error = await worker.evaluate(async () => {

@@ -9,6 +9,7 @@ import type { HapticNotice, HapticRequest, HapticResponse } from '../haptics/mes
 import { loadProfiles } from '../haptics/profile'
 import type {
   ExploreMessage,
+  ExploreStateNotice,
   FrameActionRequest,
   NavigationNotice,
   SpeechRequest,
@@ -18,6 +19,7 @@ import type {
   TabInfoResponse,
 } from '../shared/messages'
 import { loadSettings } from '../shared/settings'
+import { toolbarState } from '../shared/toolbar'
 
 const INACCESSIBLE_PAGE_MESSAGE =
   'iBrowse cannot run on this page. Chrome blocks extensions on its own pages, the Web Store and the built-in PDF viewer.'
@@ -35,6 +37,7 @@ const resumeKey = (tabId: number): string => `resume:${tabId}`
 type BackgroundMessage =
   | SpeechRequest
   | NavigationNotice
+  | ExploreStateNotice
   | FrameActionRequest
   | TabInfoRequest
   | HapticRequest
@@ -120,6 +123,9 @@ function handleMessage(
         )
       }
       return false
+    case 'explore-state':
+      if (sender.tab?.id !== undefined) showToolbarState(sender.tab.id, message.enabled, b)
+      return false
     case 'will-navigate':
       if (sender.tab?.id !== undefined) {
         chrome.storage.session
@@ -197,6 +203,17 @@ async function toggleExploreMode(b: Background): Promise<void> {
   }
 }
 
+function showToolbarState(tabId: number, enabled: boolean, b: Background): void {
+  const { badge, title } = toolbarState(enabled)
+  chrome.action.setBadgeText({ tabId, text: badge }).catch(b.reportError('toolbar badge'))
+  chrome.action.setTitle({ tabId, title }).catch(b.reportError('toolbar title'))
+}
+
+/** The toolbar button switches Explore Mode like the hotkey. */
+function registerToolbar(b: Background): void {
+  chrome.action.onClicked.addListener(() => void toggleExploreMode(b))
+}
+
 function registerCommands(b: Background): void {
   chrome.commands.onCommand.addListener((command) => {
     if (command === 'toggle-explore') void toggleExploreMode(b)
@@ -231,6 +248,7 @@ export function startBackground(): void {
   registerResume(b)
   registerMenus(b)
   registerCommands(b)
+  registerToolbar(b)
   chrome.runtime.onInstalled.addListener(({ reason }) => {
     void openTourOnFirstInstall(b, reason).catch(reportError('opening the tour'))
   })

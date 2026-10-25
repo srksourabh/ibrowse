@@ -62,7 +62,7 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
 
 ## Quick start
 
-1. Press **Alt+Shift+E** on a page to turn on Explore Mode.
+1. Press **Alt+Shift+E** on a page, or click the iBrowse toolbar button, to turn on Explore Mode.
 2. Listen to the briefing. Press **Y** to have it read, or **N** to skip.
 3. Move the mouse, or drag a finger, to hear what is under it. Click a paragraph to read it.
 4. Press **Alt+Shift+S** for settings and **Alt+Shift+P** for hardware.
@@ -71,7 +71,7 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
 
 | Do this | Keys |
 |---|---|
-| Turn Explore Mode on or off | Alt+Shift+E |
+| Turn Explore Mode on or off | Alt+Shift+E, or the toolbar button (it shows ON while active) |
 | Answer the read question | Y or Enter / N or Esc |
 | Read the clicked paragraph | Click it |
 | Step through words | Scroll wheel over text (Shift+wheel spells the word) |

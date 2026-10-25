@@ -30,6 +30,10 @@ describe('manifest', () => {
     expect(manifest.permissions).not.toContain('https://generativelanguage.googleapis.com/*')
   })
 
+  it('has a toolbar button whose title says Explore Mode is off until a page turns it on', () => {
+    expect(manifest.action.default_title).toBe('iBrowse: Explore Mode off. Click to turn it on.')
+  })
+
   it('stays within the browser limit of four suggested shortcuts', () => {
     const withKeys = Object.values(manifest.commands).filter((c) => 'suggested_key' in c)
     expect(withKeys.length).toBeLessThanOrEqual(4)

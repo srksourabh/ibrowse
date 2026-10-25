@@ -1,4 +1,5 @@
 import { GEMINI_ORIGIN } from './cloud/permissions'
+import { toolbarState } from './shared/toolbar'
 
 /**
  * The extension's permission surface, kept in one place so a test can pin it.
@@ -14,6 +15,8 @@ export const manifest = {
   host_permissions: ['<all_urls>'],
   // Asked for only when the user turns on cloud voice or AI. Until granted, nothing can be sent.
   optional_host_permissions: [GEMINI_ORIGIN],
+  // The toolbar button switches Explore Mode, like Alt+Shift+E. Each page sets its own state (ADR-0016).
+  action: { default_title: toolbarState(false).title },
   commands: {
     'toggle-explore': {
       suggested_key: { default: 'Alt+Shift+E' },

@@ -16,6 +16,9 @@ export type SpeechResponse =
 /** Background to content script: the sound of speech request `id` has begun. */
 export type SpeechStartedNotice = { readonly type: 'speech-started'; readonly id: number }
 
+/** Top frame to background: Explore Mode changed, so the toolbar button can show it. */
+export type ExploreStateNotice = { readonly type: 'explore-state'; readonly enabled: boolean }
+
 /** Content script to background: the page is about to change, so turn Explore Mode back on after. */
 export type NavigationNotice = { readonly type: 'will-navigate' }
 
