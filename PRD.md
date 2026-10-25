@@ -283,7 +283,7 @@ TypeScript (strict), WXT on Vite (Manifest V3), Vitest, Playwright with the exte
 - 80%+ unit test coverage on analyzer, classifier, speech queue and drivers
 - End-to-end tests on a fixed corpus of real sites in CI
 - No console errors in normal operation
-- Accessible name computation validated against the ARIA conformance tests
+- Accessible name computation validated against the ARIA conformance tests (`e2e/accname.spec.ts`, WPT accname in Chromium: 398 of 444 cases agree once whitespace is collapsed for speech; the 46 known differences are listed there with reasons, mostly CSS `::before`/`::after` text)
 
 ---
 
