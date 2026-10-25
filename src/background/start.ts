@@ -124,7 +124,7 @@ function handleMessage(
       }
       return false
     case 'explore-state':
-      if (sender.tab?.id !== undefined) showToolbarState(sender.tab.id, message.enabled, b)
+      if (sender.tab?.id !== undefined) showToolbarState(sender.tab.id, message.enabled)
       return false
     case 'will-navigate':
       if (sender.tab?.id !== undefined) {
@@ -192,8 +192,9 @@ function registerMenus(b: Background): void {
   })
 }
 
-async function toggleExploreMode(b: Background): Promise<void> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+/** Toggles Explore Mode in `clicked`, or in the active tab when a hotkey was pressed. */
+async function toggleExploreMode(b: Background, clicked?: chrome.tabs.Tab): Promise<void> {
+  const tab = clicked ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]
   if (tab?.id === undefined) return
   try {
     await chrome.tabs.sendMessage(tab.id, { type: 'toggle-explore' } satisfies ExploreMessage)
@@ -203,15 +204,16 @@ async function toggleExploreMode(b: Background): Promise<void> {
   }
 }
 
-function showToolbarState(tabId: number, enabled: boolean, b: Background): void {
+function showToolbarState(tabId: number, enabled: boolean): void {
   const { badge, title } = toolbarState(enabled)
-  chrome.action.setBadgeText({ tabId, text: badge }).catch(b.reportError('toolbar badge'))
-  chrome.action.setTitle({ tabId, title }).catch(b.reportError('toolbar title'))
+  // A rejection means the tab closed in the meantime; it has no button left to update.
+  chrome.action.setBadgeText({ tabId, text: badge }).catch(() => {})
+  chrome.action.setTitle({ tabId, title }).catch(() => {})
 }
 
-/** The toolbar button switches Explore Mode like the hotkey. */
+/** The toolbar button switches Explore Mode in the tab it was clicked in. */
 function registerToolbar(b: Background): void {
-  chrome.action.onClicked.addListener(() => void toggleExploreMode(b))
+  chrome.action.onClicked.addListener((tab) => void toggleExploreMode(b, tab))
 }
 
 function registerCommands(b: Background): void {

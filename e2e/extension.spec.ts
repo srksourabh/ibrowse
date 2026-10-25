@@ -58,26 +58,25 @@ test('the toolbar button shows whether Explore Mode is on in that tab', async ()
   const page = await context.newPage()
   await page.goto(`${PAGE_URL}toolbar`)
   const worker = await backgroundWorker()
-  const toggleAndRead = () =>
+  const toggle = () =>
     worker.evaluate(async (url) => {
       const [tab] = await chrome.tabs.query({ url: `${url}toolbar` })
       await chrome.tabs.sendMessage(tab!.id!, { type: 'toggle-explore' })
-      // The page reports its new state back to the worker, which then updates the button.
-      await new Promise((resolve) => setTimeout(resolve, 300))
+    }, PAGE_URL)
+  // The page reports its new state back to the worker, which then updates the button.
+  const button = () =>
+    worker.evaluate(async (url) => {
+      const [tab] = await chrome.tabs.query({ url: `${url}toolbar` })
       return {
         badge: await chrome.action.getBadgeText({ tabId: tab!.id! }),
         title: await chrome.action.getTitle({ tabId: tab!.id! }),
       }
     }, PAGE_URL)
 
-  expect(await toggleAndRead()).toEqual({
-    badge: 'ON',
-    title: 'iBrowse: Explore Mode on. Click to turn it off.',
-  })
-  expect(await toggleAndRead()).toEqual({
-    badge: '',
-    title: 'iBrowse: Explore Mode off. Click to turn it on.',
-  })
+  await toggle()
+  await expect.poll(button).toEqual({ badge: 'ON', title: 'iBrowse: Explore Mode on. Click to turn it off.' })
+  await toggle()
+  await expect.poll(button).toEqual({ badge: '', title: 'iBrowse: Explore Mode off. Click to turn it on.' })
   await page.close()
 })
 

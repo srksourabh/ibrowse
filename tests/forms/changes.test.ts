@@ -66,16 +66,21 @@ describe('submitText', () => {
 
   it('names the button that sent the form', () => {
     const f = form('<form id="t" aria-label="Login"><button id="b">Sign in</button></form>')
-    expect(submitText(f, f.querySelector('#b'))).toBe('Sign in: submitted')
+    expect(submitText(f, f.querySelector('#b'), false)).toBe('Sign in: submitted')
   })
 
   it('names the form when no button sent it, as when Enter is pressed in a field', () => {
-    expect(submitText(form('<form id="t" aria-label="Search the site"><input></form>'), null)).toBe(
+    expect(submitText(form('<form id="t" aria-label="Search the site"><input></form>'), null, false)).toBe(
       'Search the site: submitted',
     )
   })
 
   it('says "Form" when neither has a name', () => {
-    expect(submitText(form('<form id="t"><input></form>'), null)).toBe('Form: submitted')
+    expect(submitText(form('<form id="t"><input></form>'), null, false)).toBe('Form: submitted')
+  })
+
+  it('says nothing when the page stopped the submission, since nothing may have been sent', () => {
+    const f = form('<form id="t"><button id="b">Sign in</button></form>')
+    expect(submitText(f, f.querySelector('#b'), true)).toBeNull()
   })
 })

@@ -97,8 +97,14 @@ export function startExploreSession(): void {
   const handlers = createHandlers(services, tools)
   const mode = new ExploreMode(document, handlers.specs)
 
-  // A new document starts with Explore Mode off; the button may still show the previous page's state.
-  if (isTopFrame) reportState(services, false)
+  if (isTopFrame) {
+    // A new document starts with Explore Mode off; the button may still show the previous page's state.
+    reportState(services, false)
+    // A page restored by Back or Forward keeps its state but does not start again, so say it once more.
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) reportState(services, mode.isEnabled)
+    })
+  }
   manageLifecycle(mode, services, tools, haptics, handlers.cancelPending)
   listenForMessages(mode, services, tools, haptics)
   services.watchSettings((settings) => {

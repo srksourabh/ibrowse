@@ -138,8 +138,15 @@ export async function launchHarness(
     ],
     tourPage: null,
     close: async () => {
-      const errors = await harness.consoleErrors()
-      await context.close()
+      let errors: string[]
+      try {
+        errors = await harness.consoleErrors()
+      } catch {
+        // The worker restarted, which dropped its record of errors: say so rather than pass unchecked.
+        errors = ['the background worker restarted, so its errors could not be checked']
+      } finally {
+        await context.close()
+      }
       if (errors.length > 0) {
         throw new Error(`iBrowse logged errors:\n${errors.map((e) => `  - ${e}`).join('\n')}`)
       }

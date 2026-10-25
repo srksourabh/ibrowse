@@ -173,13 +173,19 @@ function formHandlers(s: Services, t: Tools): Record<string, HandlerSpec> {
         say(invalidText(event.target), false)
       },
     },
-    // Fired only after validation passes. Caught on the way down, so a page that stops it cannot silence it.
+    // Fired only after validation passes. Caught on the way down, then judged once the
+    // page's own handlers have run, so a submission the page stopped is not confirmed.
     submit: {
       capture: true,
       listener: (event) => {
-        if (!(event.target instanceof HTMLFormElement)) return
-        s.earcons.play('confirm', 0)
-        say(submitText(event.target, (event as SubmitEvent).submitter), false)
+        const form = event.target
+        if (!(form instanceof HTMLFormElement)) return
+        setTimeout(() => {
+          const text = submitText(form, (event as SubmitEvent).submitter, event.defaultPrevented)
+          if (!text) return
+          s.earcons.play('confirm', 0)
+          say(text, false)
+        }, 0)
       },
     },
   }
