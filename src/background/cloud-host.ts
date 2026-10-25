@@ -59,6 +59,7 @@ export class CloudHost {
 
   #answer(request: AiRequest): Promise<AiResponse> {
     if (request.task === 'image') return this.#ai.describeImage(request.image)
+    if (request.task === 'question') return this.#ai.answerQuestion(request.question)
     return request.task === 'purpose' ? this.#ai.purpose(request.page) : this.#ai.summarize(request.page)
   }
 }

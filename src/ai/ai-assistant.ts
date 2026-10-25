@@ -2,10 +2,11 @@ import { AudioCache } from '../cloud/audio-cache'
 import { CloudError, type CloudErrorKind, type GeminiClient, type GeminiPart } from '../cloud/gemini-client'
 import type { Settings } from '../shared/settings'
 import { ImageError } from './image-fetch'
-import { imagePrompt, purposePrompt, summaryPrompt } from './prompts'
+import { imagePrompt, purposePrompt, questionPrompt, summaryPrompt } from './prompts'
 
 const PURPOSE_TOKENS = 80
 const SUMMARY_TOKENS = 300
+const ANSWER_TOKENS = 200
 const IMAGE_TOKENS = 160
 const MAX_ANSWER_CHARS = 500
 const REMEMBERED_ANSWERS = 50
@@ -53,6 +54,12 @@ export interface PageInput {
   readonly excerpt: string
 }
 
+export interface QuestionInput extends PageInput {
+  readonly question: string
+  /** The spoken description of what the pointer is on, or ''. */
+  readonly pointedAt: string
+}
+
 export interface ImageInput {
   readonly url: string
   readonly alt: string
@@ -98,6 +105,12 @@ export class AiAssistant {
     return this.#answer(key, SUMMARY_TOKENS, async () => [
       { type: 'text', text: summaryPrompt(page) },
     ])
+  }
+
+  /** A spoken question about the page (PRD FR-11.5). */
+  answerQuestion(input: QuestionInput): Promise<AiResult> {
+    const key = `question|${input.question}|${input.pointedAt}|${input.title}|${input.excerpt.slice(0, 200)}`
+    return this.#answer(key, ANSWER_TOKENS, async () => [{ type: 'text', text: questionPrompt(input) }])
   }
 
   describeImage(image: ImageInput): Promise<AiResult> {

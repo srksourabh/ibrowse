@@ -130,3 +130,21 @@ describe('ListeningController: push to talk', () => {
     expect(deps.recognizer.listen).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('ListeningController.cancelAnswer', () => {
+  it('closes a window opened for an answer', () => {
+    const { controller, sessions } = setup()
+    controller.listenForAnswer()
+    controller.cancelAnswer()
+    expect(sessions[0]!.cancel).toHaveBeenCalled()
+    expect(controller.isListening).toBe(false)
+  })
+
+  it('never cuts off push to talk', () => {
+    const { controller, sessions } = setup()
+    controller.startHold()
+    controller.cancelAnswer()
+    expect(sessions[0]!.cancel).not.toHaveBeenCalled()
+    expect(controller.isListening).toBe(true)
+  })
+})

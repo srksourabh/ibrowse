@@ -111,6 +111,16 @@ test.describe.serial('voice commands', () => {
     await harness.hear(ORIGIN, 'Is there free delivery?')
     await harness.expectSpoken(/^I did not understand\. Say help to hear what you can say\.$/)
   })
+
+  test('with AI on, a question goes to the AI, which asks for a key when there is none', async () => {
+    await harness.store({ settings: { aiAssist: true } })
+    await expect.poll(() => harness.storedSettings().then((s) => s.aiAssist)).toBe(true)
+    await page.waitForTimeout(300) // the page reloads its settings when storage changes
+    await harness.clearSpoken()
+    await harness.hear(ORIGIN, 'Is there free delivery?')
+    await harness.expectSpoken(/^One moment\.$/)
+    await harness.expectSpoken(/^No Google key has been entered\. Add one in settings\.$/)
+  })
 })
 
 const holdTalkKey = async (page: Page, ms: number): Promise<void> => {
@@ -158,5 +168,60 @@ test.describe.serial('push to talk', () => {
   test('closes the microphone side once Explore Mode is off', async () => {
     await harness.toggleExplore(ORIGIN)
     await expect.poll(offscreenOpen).toBe(false)
+  })
+})
+
+test.describe.serial('asking what to do after resting', () => {
+  let harness: Harness
+  let page: Page
+
+  test.beforeAll(async () => {
+    harness = await launchHarness({ '/': LANDMARKS })
+    await harness.store({ settings: { voiceInput: 'chrome' } })
+    page = await harness.context.newPage()
+    await page.goto(`${ORIGIN}/`)
+    await harness.toggleExplore(ORIGIN)
+    await harness.expectSpoken(/Want me to read it\?$/)
+    await page.keyboard.press('Escape')
+  })
+
+  test.afterAll(async () => {
+    await harness.close()
+  })
+
+  const button = () => page.getByRole('button', { name: 'Add to basket' })
+  const asked = async (): Promise<number> =>
+    (await harness.spoken()).filter((t) => t === 'What would you like to do?').length
+
+  test('does not ask while the pointer sweeps across the page', async () => {
+    await harness.clearSpoken()
+    const things = [
+      button(),
+      page.getByText('Easy to grow in sun.'),
+      page.getByRole('link', { name: 'Herbs' }),
+      page.getByRole('link', { name: 'Half price pots' }),
+      page.getByRole('link', { name: 'Contact' }),
+    ]
+    for (const thing of things) {
+      const box = (await thing.boundingBox())!
+      await page.mouse.move(box.x + 5, box.y + 5)
+      await page.waitForTimeout(400) // long enough to be described, too short to be asked
+    }
+    expect(await asked()).toBe(0)
+  })
+
+  test('describes what the pointer rests on, then asks what to do, then listens', async () => {
+    await harness.clearSpoken()
+    const box = (await button().boundingBox())!
+    await page.mouse.move(box.x + 10, box.y + 5)
+    await harness.expectSpoken(/^Add to basket — Button, Clickable$/)
+    await harness.expectSpoken(/^What would you like to do\?$/)
+    await expect.poll(() => harness.worker.evaluate(() => chrome.offscreen.hasDocument())).toBe(true)
+  })
+
+  test('the answer is carried out on what the pointer rests on', async () => {
+    await harness.hear(ORIGIN, 'click')
+    await harness.expectSpoken(/^Add to basket: pressed$/)
+    await harness.expectSpoken(/^Added$/)
   })
 })

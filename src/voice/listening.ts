@@ -69,6 +69,11 @@ export class ListeningController {
     if (this.#session?.held) this.#session.listening.stop()
   }
 
+  /** Closes a window opened for an answer, but never a held push-to-talk request. */
+  cancelAnswer(): void {
+    if (this.#session && !this.#session.held) this.cancel()
+  }
+
   cancel(): void {
     const session = this.#session
     if (!session) return

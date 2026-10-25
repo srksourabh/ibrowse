@@ -62,3 +62,30 @@ export function imagePrompt(input: { alt: string; pageTitle: string; context: st
     `Page: ${input.pageTitle}\nAlt text: ${input.alt}\nCaption or nearby text: ${input.context}`,
   )
 }
+
+/** The longest spoken question passed on. */
+const MAX_QUESTION_CHARS = 300
+
+/** The user's own words, from the recogniser: cleaned the same way, but kept outside the fence. */
+function cleanQuestion(question: string): string {
+  const clean = question
+    .replace(INVISIBLE, '')
+    .replace(CONTROL, ' ')
+    .replace(FENCE_MARKER, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return clean.length <= MAX_QUESTION_CHARS ? clean : clean.slice(0, MAX_QUESTION_CHARS)
+}
+
+export function questionPrompt(input: {
+  question: string
+  title: string
+  excerpt: string
+  pointedAt: string
+}): string {
+  return build(
+    `The person asked: "${cleanQuestion(input.question)}". Answer from the page in one to three short ` +
+      'sentences. If the page does not say, answer that the page does not say, and do not guess.',
+    `Title: ${input.title}\nThe pointer is on: ${input.pointedAt || 'nothing in particular'}\nText: ${input.excerpt}`,
+  )
+}

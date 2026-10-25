@@ -7,6 +7,7 @@ import type { JumpNavigator } from '../navigation/jump-navigator'
 import type { PageNavigator } from '../navigation/page-navigator'
 import type { TextReader } from '../reading/text-reader'
 import type { NavigationNotice } from '../shared/messages'
+import { AskAfterRest } from '../voice/ask-after-rest'
 import { recognitionErrorText } from '../voice/chrome-recognizer'
 import { parseUtterance } from '../voice/commands'
 import { findAnything, findControl } from '../voice/find'
@@ -14,6 +15,7 @@ import { ListeningController } from '../voice/listening'
 import { MessageRecognizer } from '../voice/message-recognizer'
 import type { ListenResponse } from '../voice/messages'
 import { VoiceRunner } from '../voice/runner'
+import type { SessionAi } from './ai'
 import type { Services } from './services'
 
 const NOT_UNDERSTOOD = 'I did not understand. Say help to hear what you can say.'
@@ -26,6 +28,7 @@ export interface VoiceParts {
   readonly navigator: PageNavigator
   readonly whereAmI: () => void
   readonly activate: (el: Element) => void
+  readonly ai: SessionAi
 }
 
 /** The page is about to change because of something said, so Explore Mode resumes after it loads. */
@@ -69,8 +72,8 @@ export function createVoice(s: Services, p: VoiceParts): VoiceRunner {
       el.scrollIntoView({ block: 'center', behavior: 'instant' })
       p.jumps.setCursor(el)
     },
-    // Answering with AI comes in slice 5b.9; without AI this is the answer (PRD FR-11.5).
-    ask: () => say(NOT_UNDERSTOOD),
+    // Questions go to the AI only when the user turned it on; otherwise iBrowse says so (PRD FR-11.5).
+    ask: (question) => (s.settings().aiAssist ? p.ai.answer(question) : say(NOT_UNDERSTOOD)),
     lastSpoken: () => s.speech.lastText,
     speech: s.speech,
     earcons: s.earcons,
@@ -87,5 +90,16 @@ export function createListening(s: Services, runner: VoiceRunner): ListeningCont
     earcons: s.earcons,
     onHeard: (text) => runner.run(parseUtterance(text)),
     onError: (error) => void s.speech.speak({ text: recognitionErrorText(error), rate: s.rate() }),
+  })
+}
+
+/** After the pointer rests on something, asks what to do and listens (PRD FR-11.2). */
+export function createAsk(s: Services, hover: HoverController, listening: ListeningController): AskAfterRest {
+  return new AskAfterRest({
+    isOn: () => s.settings().voiceInput !== 'off',
+    current: () => hover.current,
+    speech: s.speech,
+    listening,
+    getRate: s.rate,
   })
 }

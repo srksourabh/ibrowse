@@ -1,6 +1,6 @@
 import type { EarconEngine, EarconName } from '../audio/earcons'
 import type { LatencyMeter } from '../audio/latency-meter'
-import type { SpeechService } from '../audio/speech-service'
+import type { SpeechOutcome, SpeechService } from '../audio/speech-service'
 import type { Settings } from '../shared/settings'
 import { spokenText } from './affordance-speech'
 import type { ElementInfo } from './describe'
@@ -21,6 +21,10 @@ export interface HoverDeps {
   getSettings(): Pick<Settings, 'shortMode' | 'speechRate'> & Partial<Pick<Settings, 'aiAssist'>>
   /** Called when the pointer arrives on a new element, so the navigation cursor can follow it. */
   onTarget?(el: Element): void
+  /** Called on every change of target, empty space included. */
+  onMove?(target: Element | null): void
+  /** Called with each description as it is spoken, and how that speech ends. */
+  onDescribed?(target: Element, spoken: Promise<SpeechOutcome>): void
 }
 
 function earconFor(info: ElementInfo): EarconName {
@@ -69,6 +73,7 @@ export class HoverController {
     this.#current = target
     this.#anchor = { x, y }
     clearTimeout(this.#dwellTimer)
+    this.#deps.onMove?.(target)
 
     const stopCancelTimer = meter.start('cancel')
     speech.cancel()
@@ -102,9 +107,10 @@ export class HoverController {
     // now began after the pointer arrived (a validation message, a word). Wait for it.
     // From deciding to speak to the sound beginning: the delay a user actually feels.
     const stopSpeechTimer = this.#deps.meter.start('speech')
-    void this.#deps.speech.speak(
+    const spoken = this.#deps.speech.speak(
       { text, rate: speechRate, pan, onStart: () => void stopSpeechTimer() },
       { interrupt: false },
     )
+    this.#deps.onDescribed?.(target, spoken)
   }
 }
