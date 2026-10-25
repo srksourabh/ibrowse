@@ -112,3 +112,51 @@ test.describe.serial('voice commands', () => {
     await harness.expectSpoken(/^I did not understand\. Say help to hear what you can say\.$/)
   })
 })
+
+const holdTalkKey = async (page: Page, ms: number): Promise<void> => {
+  await page.keyboard.down('Alt')
+  await page.keyboard.down('Shift')
+  await page.keyboard.down('KeyV')
+  await page.waitForTimeout(ms)
+  await page.keyboard.up('KeyV')
+  await page.keyboard.up('Shift')
+  await page.keyboard.up('Alt')
+}
+
+test.describe.serial('push to talk', () => {
+  let harness: Harness
+  let page: Page
+
+  test.beforeAll(async () => {
+    harness = await launchHarness({ '/': LANDMARKS })
+    page = await harness.context.newPage()
+    await page.goto(`${ORIGIN}/`)
+    await harness.toggleExplore(ORIGIN)
+    await harness.expectSpoken(/Want me to read it\?$/)
+  })
+
+  test.afterAll(async () => {
+    await harness.close()
+  })
+
+  const offscreenOpen = (): Promise<boolean> => harness.worker.evaluate(() => chrome.offscreen.hasDocument())
+
+  test('says how to turn voice commands on while they are off, and opens no microphone', async () => {
+    await holdTalkKey(page, 100)
+    await harness.expectSpoken(/^Voice commands are off\. Turn them on in settings, opened with Alt\+Shift\+S\.$/)
+    expect(await offscreenOpen()).toBe(false)
+  })
+
+  test('listens through the offscreen recogniser while the key is held', async () => {
+    await harness.store({ settings: { voiceInput: 'chrome' } })
+    await expect.poll(() => harness.storedSettings().then((s) => s.voiceInput)).toBe('chrome')
+    await page.waitForTimeout(300) // the page reloads its settings when storage changes
+    await holdTalkKey(page, 500)
+    await expect.poll(offscreenOpen).toBe(true)
+  })
+
+  test('closes the microphone side once Explore Mode is off', async () => {
+    await harness.toggleExplore(ORIGIN)
+    await expect.poll(offscreenOpen).toBe(false)
+  })
+})

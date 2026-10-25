@@ -43,6 +43,7 @@ function manageLifecycle(
       return
     }
     cancelPending()
+    t.listening.cancel()
     t.hover.stop()
     t.briefer.stop()
     t.live.stop()

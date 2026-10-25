@@ -28,7 +28,7 @@ import { TouchActivator } from '../touch/touch-activator'
 import { VirtualPointer } from '../touch/virtual-pointer'
 import type { SessionAi } from './ai'
 import type { Services } from './services'
-import { createVoice } from './voice'
+import { createListening, createVoice } from './voice'
 
 type Analyze = (scope: 'page' | 'viewport') => ReturnType<typeof analyzePage>
 
@@ -178,6 +178,7 @@ export function createTools(s: Services, isTopFrame: boolean) {
   const navigator = createPageNavigator(s)
   const reader = createReader(s, hover, navigator)
   const whereAmI = createWhereAmI(s)
+  const voice = createVoice(s, { hover, jumps, briefer, reader, navigator, whereAmI, activate: activateElement })
 
   return {
     isTopFrame,
@@ -188,7 +189,8 @@ export function createTools(s: Services, isTopFrame: boolean) {
     reader,
     whereAmI,
     runAction: createActionRunner({ briefer, reader, navigator, jumps, whereAmI, ai }),
-    voice: createVoice(s, { hover, jumps, briefer, reader, navigator, whereAmI, activate: activateElement }),
+    voice,
+    listening: createListening(s, voice),
     meter,
     virtualPointer: new VirtualPointer(),
     typingEcho: new TypingEcho({

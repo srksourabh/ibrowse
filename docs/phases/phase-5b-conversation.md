@@ -26,6 +26,10 @@ Source: PRD §5.11. Decisions: ADR-0017 (supersedes ADR-0008), ADR-0014 (AI cons
 | 5b.11 | **Gemini recogniser**: record one request, transcribe through the worker | Tests with a fake `fetch` |
 | 5b.12 | **End-to-end**: panel briefing, ask after rest, "click" presses, "scroll down" scrolls, a question with and without AI | Five runs in a row |
 
+## Findings
+- The whole listening route was checked in Playwright's Chromium: page, then worker, then the offscreen document, then `webkitSpeechRecognition`. It answered "silence" when its window ran out. Real speech cannot be fed in headless; the end-to-end tests deliver transcripts as the recogniser does.
+- Push to talk works in the top frame only. Pressed while focus is inside an iframe, the key is swallowed and nothing listens. To be revisited if testers hit it.
+
 ## Out of scope
 Continuous listening and a wake word (ADR-0017 #3), dictating into form fields, languages other than the browser's own.
 

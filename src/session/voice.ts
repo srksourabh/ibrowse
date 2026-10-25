@@ -7,7 +7,12 @@ import type { JumpNavigator } from '../navigation/jump-navigator'
 import type { PageNavigator } from '../navigation/page-navigator'
 import type { TextReader } from '../reading/text-reader'
 import type { NavigationNotice } from '../shared/messages'
+import { recognitionErrorText } from '../voice/chrome-recognizer'
+import { parseUtterance } from '../voice/commands'
 import { findAnything, findControl } from '../voice/find'
+import { ListeningController } from '../voice/listening'
+import { MessageRecognizer } from '../voice/message-recognizer'
+import type { ListenResponse } from '../voice/messages'
 import { VoiceRunner } from '../voice/runner'
 import type { Services } from './services'
 
@@ -70,5 +75,17 @@ export function createVoice(s: Services, p: VoiceParts): VoiceRunner {
     speech: s.speech,
     earcons: s.earcons,
     getRate: s.rate,
+  })
+}
+
+/** The microphone side: what is heard is understood and carried out by the runner. */
+export function createListening(s: Services, runner: VoiceRunner): ListeningController {
+  const recognizer = new MessageRecognizer((request) => chrome.runtime.sendMessage<typeof request, ListenResponse>(request))
+  return new ListeningController({
+    recognizer,
+    speech: s.speech,
+    earcons: s.earcons,
+    onHeard: (text) => runner.run(parseUtterance(text)),
+    onError: (error) => void s.speech.speak({ text: recognitionErrorText(error), rate: s.rate() }),
   })
 }
