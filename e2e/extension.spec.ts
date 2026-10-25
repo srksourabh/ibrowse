@@ -28,20 +28,30 @@ test.afterAll(async () => {
   await context.close()
 })
 
-async function backgroundWorker() {
-  return context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
+/**
+ * Runs code in the background worker that is current now. Just after install
+ * Chrome may replace the worker, which closes a handle taken earlier, so a
+ * closed handle is fetched afresh once.
+ */
+async function inWorker<R, A>(fn: (arg: A) => R | Promise<R>, arg?: A): Promise<R> {
+  for (let attempt = 0; ; attempt++) {
+    const worker = context.serviceWorkers().at(-1) ?? (await context.waitForEvent('serviceworker'))
+    try {
+      return await worker.evaluate(fn, arg as A)
+    } catch (error) {
+      if (attempt > 0 || !/closed/i.test(String(error))) throw error
+    }
+  }
 }
 
 test('loads the extension with its background worker', async () => {
-  const worker = await backgroundWorker()
-  expect(await worker.evaluate(() => chrome.runtime.getManifest().name)).toBe('iBrowse')
+  expect(await inWorker(() => chrome.runtime.getManifest().name)).toBe('iBrowse')
 })
 
 test('a toggle message reaches the content script on a web page', async () => {
   const page = await context.newPage()
   await page.goto(PAGE_URL)
-  const worker = await backgroundWorker()
-  const result = await worker.evaluate(async (url) => {
+  const result = await inWorker(async (url: string) => {
     const [tab] = await chrome.tabs.query({ url: `${url}*` })
     if (tab?.id === undefined) return { delivered: false, error: 'tab not found' }
     try {
@@ -57,15 +67,14 @@ test('a toggle message reaches the content script on a web page', async () => {
 test('the toolbar button shows whether Explore Mode is on in that tab', async () => {
   const page = await context.newPage()
   await page.goto(`${PAGE_URL}toolbar`)
-  const worker = await backgroundWorker()
   const toggle = () =>
-    worker.evaluate(async (url) => {
+    inWorker(async (url: string) => {
       const [tab] = await chrome.tabs.query({ url: `${url}toolbar` })
       await chrome.tabs.sendMessage(tab!.id!, { type: 'toggle-explore' })
     }, PAGE_URL)
   // The page reports its new state back to the worker, which then updates the button.
   const button = () =>
-    worker.evaluate(async (url) => {
+    inWorker(async (url: string) => {
       const [tab] = await chrome.tabs.query({ url: `${url}toolbar` })
       return {
         badge: await chrome.action.getBadgeText({ tabId: tab!.id! }),
@@ -81,8 +90,7 @@ test('the toolbar button shows whether Explore Mode is on in that tab', async ()
 })
 
 test('sending to a page with no content script fails, which triggers the inaccessible-page notice', async () => {
-  const worker = await backgroundWorker()
-  const error = await worker.evaluate(async () => {
+  const error = await inWorker(async () => {
     const tab = await chrome.tabs.create({ url: 'chrome://version' })
     try {
       await chrome.tabs.sendMessage(tab.id!, { type: 'toggle-explore' })
