@@ -1,3 +1,4 @@
+import { CloudError } from '../cloud/cloud-error'
 import type { Listening, SpeechRecognizer } from './listening'
 
 /** The parts of the Web Speech API's SpeechRecognition that iBrowse uses. */
@@ -89,9 +90,15 @@ export class ChromeRecognizer implements SpeechRecognizer {
   }
 }
 
-/** What to say when listening failed, from the browser's error code. */
+/** What to say when listening failed, from the browser's error code or Gemini's error kind. */
 export function recognitionErrorText(error: Error): string {
   switch (error.message) {
+    case 'no-key':
+    case 'bad-key':
+    case 'bad-model':
+      return new CloudError(error.message).spoken
+    case 'rate-limit':
+      return "Google's limit has been reached for now. Chrome's speech recognition can be chosen in settings instead."
     case 'not-allowed':
     case 'service-not-allowed':
       return 'The microphone is not allowed. Open settings with Alt+Shift+S and turn on voice to allow it.'

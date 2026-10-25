@@ -1,4 +1,17 @@
-import type { ListenRequest, ListenResponse, OffscreenRequest } from '../voice/messages'
+import type {
+  ListenRequest,
+  ListenResponse,
+  OffscreenRequest,
+  RecordingResponse,
+  VoiceEngine,
+} from '../voice/messages'
+
+export interface VoiceHostDeps {
+  /** The recogniser chosen in settings, read for each request. */
+  engine(): Promise<VoiceEngine>
+  /** Turns a recording into words with Gemini; only the worker holds the key. */
+  transcribe(audio: string): Promise<ListenResponse>
+}
 
 const OFFSCREEN_URL = 'offscreen.html'
 
@@ -26,20 +39,30 @@ const keyOf = (sender: chrome.runtime.MessageSender, id: number): string =>
 
 const toOffscreen = (request: OffscreenRequest): Promise<unknown> => chrome.runtime.sendMessage(request)
 
+async function recognize(id: number, maxMs: number, deps: VoiceHostDeps): Promise<ListenResponse> {
+  const engine = await deps.engine()
+  const answer = await toOffscreen({ target: 'offscreen', type: 'recognize', id, maxMs, engine })
+  if (engine === 'chrome') return answer as ListenResponse
+  const recording = answer as RecordingResponse
+  if (!recording.ok) return recording
+  return recording.audio === null ? { ok: true, text: null } : deps.transcribe(recording.audio)
+}
+
 /** Relays a page's request to listen to the offscreen document, and its answer back. */
 export function handleListen(
   message: ListenRequest,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: ListenResponse) => void,
+  deps: VoiceHostDeps,
 ): boolean {
   const key = keyOf(sender, message.id)
   if (message.type === 'listen-start') {
     const id = nextId++
     ids.set(key, id)
     ensureOffscreen()
-      .then(() => toOffscreen({ target: 'offscreen', type: 'recognize', id, maxMs: message.maxMs }))
+      .then(() => recognize(id, message.maxMs, deps))
       .then(
-        (response) => sendResponse(response as ListenResponse),
+        (response) => sendResponse(response),
         (error: unknown) => sendResponse({ ok: false, error: error instanceof Error ? error.message : 'failed' }),
       )
       .finally(() => ids.delete(key))

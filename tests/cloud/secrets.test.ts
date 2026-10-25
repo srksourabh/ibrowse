@@ -69,4 +69,29 @@ describe('where the key may be used', () => {
       expect(forbidden.test(readFileSync(file, 'utf8')), path.relative(root, file)).toBe(false)
     }
   })
+
+  it('is not reached through any chain of imports from the content script either', () => {
+    const reached = importsFrom(path.join(root, 'entrypoints/content.ts'))
+    const offenders = [...reached].filter((file) => /cloud[\\/](secrets|gemini-client)\.ts$/.test(file))
+    expect(offenders.map((file) => path.relative(root, file))).toEqual([])
+  })
 })
+
+/** Every source file reached by value imports (not `import type`) from `entry`. */
+function importsFrom(entry: string, seen = new Set<string>()): Set<string> {
+  if (seen.has(entry)) return seen
+  seen.add(entry)
+  const code = readFileSync(entry, 'utf8')
+  for (const match of code.matchAll(/^import\s+(?!type\b)[^'"]*from\s+['"](\.[^'"]+)['"]/gm)) {
+    const target = path.resolve(path.dirname(entry), match[1]!)
+    const file = [`${target}.ts`, path.join(target, 'index.ts')].find((candidate) => {
+      try {
+        return statSync(candidate).isFile()
+      } catch {
+        return false
+      }
+    })
+    if (file) importsFrom(file, seen)
+  }
+  return seen
+}

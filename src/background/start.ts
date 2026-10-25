@@ -141,7 +141,10 @@ function handleMessage(
     case 'listen-start':
     case 'listen-stop':
     case 'listen-cancel':
-      return handleListen(message, sender, sendResponse)
+      return handleListen(message, sender, sendResponse, {
+        engine: () => loadSettings(chrome.storage.local).then((s) => (s.voiceInput === 'gemini' ? 'gemini' : 'chrome')),
+        transcribe: (audio) => b.cloud.transcribe(audio),
+      })
     case 'will-navigate':
       if (sender.tab?.id !== undefined) {
         chrome.storage.session

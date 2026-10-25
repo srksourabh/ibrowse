@@ -144,6 +144,17 @@ describe('recognitionErrorText', () => {
     )
   })
 
+  it('uses the cloud wording for Gemini key and model problems', () => {
+    expect(recognitionErrorText(new Error('no-key'))).toBe('No Google key has been entered. Add one in settings.')
+    expect(recognitionErrorText(new Error('bad-key'))).toBe('Google did not accept the key. Check it in settings.')
+  })
+
+  it("says when Google's limit is reached, and what to do instead", () => {
+    expect(recognitionErrorText(new Error('rate-limit'))).toBe(
+      "Google's limit has been reached for now. Chrome's speech recognition can be chosen in settings instead.",
+    )
+  })
+
   it('has a plain fallback', () => {
     expect(recognitionErrorText(new Error('weird'))).toBe('I could not listen just now. Please try again.')
   })

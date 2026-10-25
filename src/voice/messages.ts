@@ -9,8 +9,22 @@ export type ListenResponse =
   | { readonly ok: true; readonly text: string | null }
   | { readonly ok: false; readonly error: string }
 
+/** Which recogniser the user chose (ADR-0017 #1). */
+export type VoiceEngine = 'chrome' | 'gemini'
+
 /** Background to the offscreen document, which alone may use the recogniser. */
 export type OffscreenRequest =
-  | { readonly target: 'offscreen'; readonly type: 'recognize'; readonly id: number; readonly maxMs: number }
+  | {
+      readonly target: 'offscreen'
+      readonly type: 'recognize'
+      readonly id: number
+      readonly maxMs: number
+      readonly engine: VoiceEngine
+    }
   | { readonly target: 'offscreen'; readonly type: 'recognize-stop'; readonly id: number }
   | { readonly target: 'offscreen'; readonly type: 'recognize-cancel'; readonly id: number }
+
+/** For Gemini the offscreen document records, and the worker, which holds the key, transcribes. */
+export type RecordingResponse =
+  | { readonly ok: true; readonly audio: string | null }
+  | { readonly ok: false; readonly error: string }

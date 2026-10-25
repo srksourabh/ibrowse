@@ -243,3 +243,36 @@ describe('SettingsEditor: voice commands', () => {
     expect(last()).toBe('Voice commands: Off.')
   })
 })
+
+describe('SettingsEditor: voice commands with Gemini', () => {
+  it('says what is recorded and where it goes, then waits for Allow', async () => {
+    const { editor, last } = setup()
+    expect(await editor.change('voiceInput', 'gemini')).toBe('pending')
+    expect(last()).toMatch(/records what you say/i)
+    expect(last()).toMatch(/Google/)
+  })
+
+  it('asks for the microphone and for Google, then says to add a key if there is none', async () => {
+    const { editor, store, last, requestMicrophone, requestPermission } = setup()
+    await editor.change('voiceInput', 'gemini')
+    expect(await editor.confirmPending()).toBe('saved')
+    expect(requestMicrophone).toHaveBeenCalledOnce()
+    expect(requestPermission).toHaveBeenCalledWith([GEMINI_ORIGIN])
+    expect((await loadSettings(store)).voiceInput).toBe('gemini')
+    expect(last()).toMatch(/^Voice commands: On, with Google Gemini, using your key\. Hold Alt, Shift and V/)
+    expect(last()).toMatch(/Add your Google key to use it\.$/)
+  })
+
+  it('stays off when Google is not allowed, even with the microphone allowed, and says which was refused', async () => {
+    const { editor, store, last } = setup({ permission: false })
+    await editor.change('voiceInput', 'gemini')
+    expect(await editor.confirmPending()).toBe('denied')
+    expect((await loadSettings(store)).voiceInput).toBe('off')
+    expect(last()).toBe('Permission to contact Google was not granted, so voice commands stay off.')
+  })
+
+  it('warns again when changing from Chrome to Gemini, since speech would now go to Google with the key', async () => {
+    const { editor } = setup({ initial: { settings: { voiceInput: 'chrome' } } })
+    expect(await editor.change('voiceInput', 'gemini')).toBe('pending')
+  })
+})

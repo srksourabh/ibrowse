@@ -108,6 +108,7 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
     options: [
       { value: 'off', label: 'Off' },
       { value: 'chrome', label: "On, with Chrome's speech recognition" },
+      { value: 'gemini', label: 'On, with Google Gemini, using your key' },
     ],
     help: 'Speak commands and questions. Hold Alt, Shift and V to talk, or answer when iBrowse asks what to do.',
   },
@@ -177,8 +178,14 @@ const VOICE_WARNING =
   'Chrome turns speech into text on this computer when it can; otherwise what you say is sent to Google for that. ' +
   'Your browser will ask to use the microphone.'
 
+const GEMINI_VOICE_WARNING =
+  'Voice commands with Gemini use the microphone, only while iBrowse is listening. ' +
+  'iBrowse records what you say and sends it to Google, with your key, to be turned into text. ' +
+  'Your browser will ask to use the microphone, and to contact Google.'
+
 /** What must be said before a setting that sends data off this computer is switched on. */
 export function warningFor(key: FieldSpec['key'], value: unknown): string | null {
+  if (key === 'voiceInput' && value === 'gemini') return GEMINI_VOICE_WARNING
   if (key === 'voiceInput' && value !== 'off') return VOICE_WARNING
   if (key === 'cloudVoice' && value !== 'off') return CLOUD_VOICE_WARNING
   if (key === 'aiAssist' && value === true) return AI_WARNING

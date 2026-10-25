@@ -7,6 +7,8 @@ import type { CloudCancelRequest, CloudSpeechRequest, CloudSpeechResponse } from
 import { loadGeminiKey } from '../cloud/secrets'
 import { CloudVoiceService } from '../cloud/voice-service'
 import { loadSettings } from '../shared/settings'
+import type { ListenResponse } from '../voice/messages'
+import { transcribe } from '../voice/transcriber'
 
 const REMEMBERED_PHRASES = 30
 
@@ -21,12 +23,14 @@ type Respond = (response: CloudSpeechResponse | AiResponse) => void
 export class CloudHost {
   readonly #voice: CloudVoiceService
   readonly #ai: AiAssistant
+  readonly #client: GeminiClient
 
   constructor() {
     const client = new GeminiClient({
       fetch: (input, init) => fetch(input, init),
       getKey: () => loadGeminiKey(chrome.storage.local),
     })
+    this.#client = client
     this.#voice = new CloudVoiceService({
       client,
       getSettings: () => loadSettings(chrome.storage.local),
@@ -37,6 +41,12 @@ export class CloudHost {
       getSettings: () => loadSettings(chrome.storage.local),
       fetchImage: (url) => fetchImage(url, (input, init) => fetch(input, init)),
     })
+  }
+
+  /** Words from one recorded voice request, with the AI model the user chose (ADR-0017 #1). */
+  async transcribe(audio: string): Promise<ListenResponse> {
+    const settings = await loadSettings(chrome.storage.local)
+    return transcribe(this.#client, settings.aiModel, audio)
   }
 
   /** Returns true when the answer will be sent later. */

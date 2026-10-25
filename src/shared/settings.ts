@@ -25,7 +25,7 @@ export interface Settings {
   /** Developer option: report speech and sound delays so they can be read out. */
   readonly latencyReadout: boolean
   /** Spoken commands and questions (ADR-0017). Off until the user allows the microphone. */
-  readonly voiceInput: 'off' | 'chrome'
+  readonly voiceInput: 'off' | 'chrome' | 'gemini'
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -79,7 +79,7 @@ const VALIDATORS: Record<keyof Settings, (value: unknown) => boolean> = {
   aiAssist: isBoolean,
   aiModel: (v) => typeof v === 'string' && /^[a-z0-9.-]{1,60}$/.test(v),
   latencyReadout: isBoolean,
-  voiceInput: oneOf('off', 'chrome'),
+  voiceInput: oneOf('off', 'chrome', 'gemini'),
 }
 
 /** Builds Settings from untrusted stored data. Invalid fields fall back to defaults. */

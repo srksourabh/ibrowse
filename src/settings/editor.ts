@@ -30,9 +30,11 @@ const AI_KEYS =
 
 const TALK_KEYS = ' Hold Alt, Shift and V and speak, or answer when iBrowse asks.'
 
-function alreadyOn(key: FieldSpec['key'], current: Settings): boolean {
+/** True when nothing new would leave this computer, so the warning and permission are not needed again. */
+function alreadyOn(key: FieldSpec['key'], value: unknown, current: Settings): boolean {
   if (key === 'cloudVoice') return current.cloudVoice !== 'off'
-  if (key === 'voiceInput') return current.voiceInput !== 'off'
+  // Moving to Gemini starts sending recordings to Google with the key, so it is asked about again.
+  if (key === 'voiceInput') return current.voiceInput === value || (current.voiceInput !== 'off' && value === 'chrome')
   return key === 'aiAssist' && current.aiAssist
 }
 
@@ -67,7 +69,7 @@ export class SettingsEditor {
     }
 
     const warning = warningFor(key, value)
-    if (warning && !alreadyOn(key, await this.load())) {
+    if (warning && !alreadyOn(key, value, await this.load())) {
       this.#pending = { key, value, label: field.label }
       this.#deps.speak(`${warning} Press Allow and turn on to continue, or Cancel.`)
       return 'pending'
@@ -81,24 +83,33 @@ export class SettingsEditor {
     if (!pending) return 'none'
     this.#pending = null
 
-    const voice = pending.key === 'voiceInput'
-    let granted = false
+    let refusal: string | null
     try {
-      granted = voice ? await this.#deps.requestMicrophone() : await this.#deps.requestPermission([GEMINI_ORIGIN])
+      refusal = await this.#grant(pending)
     } catch {
       this.#deps.speak('The browser could not ask for permission. Try pressing Allow again.')
       return 'denied'
     }
-    if (!granted) {
-      this.#deps.speak(
-        voice
-          ? 'The microphone was not allowed, so voice commands stay off.'
-          : `Permission was not granted, so ${pending.label.toLowerCase()} stays off.`,
-      )
+    if (refusal) {
+      this.#deps.speak(refusal)
       return 'denied'
     }
     await this.#save(fieldFor(pending.key), pending.value)
     return 'saved'
+  }
+
+  /**
+   * Asks the browser for what the change needs, all from the one press of
+   * Allow, the gesture the browser requires. Says what was refused, or null.
+   */
+  async #grant(pending: PendingChange): Promise<string | null> {
+    if (pending.key !== 'voiceInput') {
+      const granted = await this.#deps.requestPermission([GEMINI_ORIGIN])
+      return granted ? null : `Permission was not granted, so ${pending.label.toLowerCase()} stays off.`
+    }
+    if (!(await this.#deps.requestMicrophone())) return 'The microphone was not allowed, so voice commands stay off.'
+    if (pending.value !== 'gemini' || (await this.#deps.requestPermission([GEMINI_ORIGIN]))) return null
+    return 'Permission to contact Google was not granted, so voice commands stay off.'
   }
 
   cancelPending(): void {
@@ -141,7 +152,10 @@ export class SettingsEditor {
   async #save(field: FieldSpec, value: unknown): Promise<void> {
     await saveSettings(this.#deps.store, { [field.key]: value })
     let text = confirmationFor(field, value)
-    const turnedOn = (field.key === 'cloudVoice' && value !== 'off') || (field.key === 'aiAssist' && value === true)
+    const turnedOn =
+      (field.key === 'cloudVoice' && value !== 'off') ||
+      (field.key === 'aiAssist' && value === true) ||
+      (field.key === 'voiceInput' && value === 'gemini')
     if (field.key === 'voiceInput' && value !== 'off') text += TALK_KEYS
     if (turnedOn) {
       const hasKey = await this.hasKey()

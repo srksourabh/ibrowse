@@ -1,15 +1,33 @@
-// The offscreen document: the only place the extension may run the speech recogniser (ADR-0017 #2).
-// It holds no page content; it turns one spoken request at a time into text for the background worker.
+// The offscreen document: the only place the extension may use the microphone (ADR-0017 #2).
+// It holds no page content and no key. For Chrome's recogniser it turns one spoken request into
+// text; for Gemini it records the request, and the background worker, which holds the key, transcribes it.
 import { ChromeRecognizer, chooseMode, type RecognitionClass } from '../../src/voice/chrome-recognizer'
-import type { Listening } from '../../src/voice/listening'
-import type { ListenResponse, OffscreenRequest } from '../../src/voice/messages'
+import type { ListenResponse, OffscreenRequest, RecordingResponse } from '../../src/voice/messages'
+import { recordingToAudio } from '../../src/voice/wav'
+import { SAMPLE_RATE, recordMicrophone } from './recorder'
+
+interface Control {
+  stop(): void
+  cancel(): void
+}
 
 const scope = globalThis as unknown as { SpeechRecognition?: RecognitionClass; webkitSpeechRecognition?: RecognitionClass }
 const Recognition = scope.SpeechRecognition ?? scope.webkitSpeechRecognition
-const active = new Map<number, Listening>()
+const active = new Map<number, Control>()
+/** A stop or cancel that arrived before its request had started. */
+const early = new Map<number, 'stop' | 'cancel'>()
 let recognizer: Promise<ChromeRecognizer> | null = null
 
-function start(id: number, maxMs: number, respond: (r: ListenResponse) => void): void {
+const codeOf = (error: unknown): string => (error instanceof Error ? error.message : 'failed')
+
+function begin(id: number, control: Control): void {
+  active.set(id, control)
+  const pending = early.get(id)
+  early.delete(id)
+  if (pending) control[pending]()
+}
+
+function listenWithChrome(id: number, maxMs: number, respond: (r: ListenResponse) => void): void {
   if (!Recognition) {
     respond({ ok: false, error: 'unsupported' })
     return
@@ -18,27 +36,42 @@ function start(id: number, maxMs: number, respond: (r: ListenResponse) => void):
   recognizer ??= chooseMode(Recognition, lang).then((mode) => new ChromeRecognizer(Recognition, lang, mode))
   void recognizer.then((r) => {
     const listening = r.listen({ maxMs })
-    active.set(id, listening)
+    begin(id, listening)
     listening.result
-      .then(
-        (text) => respond({ ok: true, text }),
-        (error: unknown) => respond({ ok: false, error: error instanceof Error ? error.message : 'failed' }),
-      )
+      .then((text) => respond({ ok: true, text }), (error: unknown) => respond({ ok: false, error: codeOf(error) }))
       .finally(() => active.delete(id))
   })
+}
+
+function recordForGemini(id: number, maxMs: number, respond: (r: RecordingResponse) => void): void {
+  const recording = recordMicrophone(maxMs)
+  begin(id, recording)
+  recording.samples
+    .then(
+      (samples) => respond({ ok: true, audio: recordingToAudio(samples, SAMPLE_RATE) }),
+      (error: unknown) => respond({ ok: false, error: codeOf(error) }),
+    )
+    .finally(() => active.delete(id))
+}
+
+function control(id: number, action: 'stop' | 'cancel'): void {
+  const running = active.get(id)
+  if (running) running[action]()
+  else early.set(id, action)
 }
 
 chrome.runtime.onMessage.addListener((message: OffscreenRequest, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id || message?.target !== 'offscreen') return false
   switch (message.type) {
     case 'recognize':
-      start(message.id, message.maxMs, sendResponse)
+      if (message.engine === 'gemini') recordForGemini(message.id, message.maxMs, sendResponse)
+      else listenWithChrome(message.id, message.maxMs, sendResponse)
       return true // the answer comes when the user has spoken
     case 'recognize-stop':
-      active.get(message.id)?.stop()
+      control(message.id, 'stop')
       return false
     case 'recognize-cancel':
-      active.get(message.id)?.cancel()
+      control(message.id, 'cancel')
       return false
   }
 })

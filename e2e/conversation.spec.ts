@@ -99,6 +99,11 @@ test.describe.serial('voice commands', () => {
     await harness.expectSpoken(/^Added$/)
   })
 
+  test('scroll when asked, and say when the page has no more', async () => {
+    await harness.hear(ORIGIN, 'scroll down')
+    await harness.expectSpoken(/^End of page$/)
+  })
+
   test('repeat what was last said', async () => {
     await harness.clearSpoken()
     await harness.hear(ORIGIN, 'what is on the right')
@@ -223,5 +228,23 @@ test.describe.serial('asking what to do after resting', () => {
     await harness.hear(ORIGIN, 'click')
     await harness.expectSpoken(/^Add to basket: pressed$/)
     await harness.expectSpoken(/^Added$/)
+  })
+})
+
+test.describe.serial('push to talk with the Gemini recogniser', () => {
+  test('records, hands the recording to the worker, and says what is missing when there is no key', async () => {
+    const harness = await launchHarness({ '/': LANDMARKS })
+    try {
+      await harness.store({ settings: { voiceInput: 'gemini' } })
+      const page = await harness.context.newPage()
+      await page.goto(`${ORIGIN}/`)
+      await harness.toggleExplore(ORIGIN)
+      await harness.expectSpoken(/Want me to read it\?$/)
+      // The pretend microphone beeps about once a second; 2.5 s always holds a beep, so it is not silence.
+      await holdTalkKey(page, 2500)
+      await harness.expectSpoken(/^No Google key has been entered\. Add one in settings\.$/)
+    } finally {
+      await harness.close()
+    }
   })
 })

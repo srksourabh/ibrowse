@@ -28,15 +28,19 @@ Source: PRD §5.11. Decisions: ADR-0017 (supersedes ADR-0008), ADR-0014 (AI cons
 
 ## Findings
 - The whole listening route was checked in Playwright's Chromium: page, then worker, then the offscreen document, then `webkitSpeechRecognition`. It answered "silence" when its window ran out. Real speech cannot be fed in headless; the end-to-end tests deliver transcripts as the recogniser does.
+- **Gemini as a recogniser, checked against the live API (2026-10-25).** Gemini's own voice said "Scroll down please"; sent back as an `audio` input item (`data`, `mime_type: audio/wav`), it was transcribed as "Scroll down, please". Gemini does not take Chrome's WebM recordings, so the offscreen document records raw samples and writes WAV.
+- **A test bug, not a product bug:** Chromium's pretend microphone beeps about once a second. A 1.2 s hold could fall between beeps and was correctly treated as silence, so the end-to-end test holds for 2.5 s.
+- **Found while wiring Gemini:** the rule that the key's code never runs in web pages was only checked on direct imports. The test now follows every import from the content script, and caught a real slip (an error wording module that pulled in the Gemini client); the wording now lives in `src/cloud/cloud-error.ts`.
+- **An early stop was lost:** releasing the key before the recogniser had started let it listen for the full 15 s. The offscreen document now remembers an early stop or cancel.
 - Push to talk works in the top frame only. Pressed while focus is inside an iframe, the key is swallowed and nothing listens. To be revisited if testers hit it.
 
 ## Out of scope
 Continuous listening and a wake word (ADR-0017 #3), dictating into form fields, languages other than the browser's own.
 
 ## Exit checklist
-- [ ] Typecheck, tests, build green; coverage ≥ 80%
-- [ ] End-to-end suite five runs in a row
-- [ ] Docs updated (PRD §5.11, `CONTEXT.md` terms, README keys)
+- [x] Typecheck, tests, build green; coverage ≥ 80% (98.6% lines, 92.7% branches, 994 unit tests)
+- [x] End-to-end suite five runs in a row (97 tests)
+- [x] Docs updated (PRD §5.11, `CONTEXT.md` terms, README keys and voice commands, tour, privacy policy)
 - [ ] **Manual:** a real microphone with Chrome's recogniser, on-device and online; accents; a noisy room
 - [ ] **Manual:** NVDA running: iBrowse does not hear NVDA, and push to talk does not clash with NVDA keys
-- [ ] **Manual:** Gemini recogniser with a real key
+- [ ] **Manual:** Gemini recogniser with a real key, through the extension (the API itself was checked live: audio in, words out)

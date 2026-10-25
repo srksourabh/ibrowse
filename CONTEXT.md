@@ -22,6 +22,9 @@ The shared vocabulary for code, tests, docs and spoken strings. Use these terms 
 - **Region**: a meaningful area of the page (hero, navigation, sidebar, main content, footer).
 - **Panel**: one of the five parts the Page Briefing walks in order: header, left panel, main content, right panel, footer. Found from the page's landmarks, or from its layout when it has none.
 - **Voice Command**: something the user says that iBrowse understands on the device: click (optionally by name), scroll, read, next or previous page, back, forward, panel, find, stop, repeat, help, where am I, describe the page. Anything else is a **Question**, answered by AI when it is on.
+- **Push to Talk**: holding Alt+Shift+V to have iBrowse listen; letting go ends the request.
+- **Ask After Rest**: when the pointer rests on something a further second after its description, iBrowse asks "What would you like to do?" and listens briefly for the answer.
+- **Recogniser**: what turns speech into text: Chrome's own (on-device when the language is installed, otherwise Google's service) or Gemini (with the user's key). It runs only in the offscreen document.
 - **Block**: a readable unit of text (paragraph, list, quote, table, heading).
 - **Element Under Pointer**: the most meaningful element at the pointer position.
 - **Affordance**: whether an element is **Interactive** (can be activated) or **Static** (text only).
