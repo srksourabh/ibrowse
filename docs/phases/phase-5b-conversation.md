@@ -41,6 +41,6 @@ Continuous listening and a wake word (ADR-0017 #3), dictating into form fields, 
 - [x] Typecheck, tests, build green; coverage ≥ 80% (98.6% lines, 92.7% branches, 994 unit tests)
 - [x] End-to-end suite five runs in a row (97 tests)
 - [x] Docs updated (PRD §5.11, `CONTEXT.md` terms, README keys and voice commands, tour, privacy policy)
-- [ ] **Manual:** a real microphone with Chrome's recogniser, on-device and online; accents; a noisy room
-- [ ] **Manual:** NVDA running: iBrowse does not hear NVDA, and push to talk does not clash with NVDA keys
-- [ ] **Manual:** Gemini recogniser with a real key, through the extension (the API itself was checked live: audio in, words out)
+- [ ] **Manual:** a real microphone with Chrome's recogniser, on-device and online; accents; a noisy room. Checked so far in Google Chrome 155: the Web Speech API is there, on-device English is "downloadable" (so iBrowse uses, and announces, Google's online service), and the recogniser starts; it does not take a sound file as its microphone, so real speech needs a real microphone.
+- [ ] **Manual:** NVDA running: iBrowse does not hear NVDA, and push to talk does not clash with NVDA keys. `e2e/live/nvda-live.spec.ts` runs the portable NVDA and checks Companion mode from its speech log; it needs an unlocked desktop (on 2026-10-25 the machine was locked, and NVDA reported the lock screen).
+- [x] **Real speech, Gemini recogniser, through the extension** (`e2e/live/voice-live.spec.ts`, 2026-10-25): recorded spoken commands as the microphone, the real Gemini API with a real key. "Scroll down.", "Scroll up.", "Click add to basket.", "What is on the left?" all carried out; resting on a button, hearing "What would you like to do?" and answering "Click." pressed it. Found and fixed: "Click. Click." misread as a name; a transcription request with no time limit.
