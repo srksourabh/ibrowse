@@ -25,7 +25,7 @@ Any hardware with haptics can plug in later through an open driver interface. Au
 | Native C++/Rust daemon, Windows UIA, WASAPI | An extension cannot see outside the browser |
 | Taskbar and system-tray monitor (old §4.4) | Replaced by a browser status zone (§5.8) |
 | 12 ms hardware haptic target | Not measurable without hardware; moved to the native roadmap |
-| Enterprise installer | Distribution is the Chrome Web Store |
+| Enterprise installer | Distribution is the Chrome Web Store. Small Windows and Mac installers that add the store extension were added back by ADR-0016 |
 
 The existing browser simulator is kept as a hosted demo site and haptic visualizer (§12). It is no longer the product.
 
