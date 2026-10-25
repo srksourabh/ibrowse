@@ -20,6 +20,8 @@ import type {
 } from '../shared/messages'
 import { loadSettings } from '../shared/settings'
 import { toolbarState } from '../shared/toolbar'
+import type { ListenRequest, ListenResponse } from '../voice/messages'
+import { handleListen, noteExploreState } from './voice-host'
 
 const INACCESSIBLE_PAGE_MESSAGE =
   'iBrowse cannot run on this page. Chrome blocks extensions on its own pages, the Web Store and the built-in PDF viewer.'
@@ -42,7 +44,14 @@ type BackgroundMessage =
   | TabInfoRequest
   | HapticRequest
   | CloudMessage
-type AnyResponse = SpeechResponse | TabInfoResponse | HapticResponse | CloudSpeechResponse | AiResponse
+  | ListenRequest
+type AnyResponse =
+  | SpeechResponse
+  | TabInfoResponse
+  | HapticResponse
+  | CloudSpeechResponse
+  | AiResponse
+  | ListenResponse
 
 interface Background {
   readonly speech: ChromeTtsProvider
@@ -124,8 +133,15 @@ function handleMessage(
       }
       return false
     case 'explore-state':
-      if (sender.tab?.id !== undefined) showToolbarState(sender.tab.id, message.enabled)
+      if (sender.tab?.id !== undefined) {
+        showToolbarState(sender.tab.id, message.enabled)
+        noteExploreState(sender.tab.id, message.enabled)
+      }
       return false
+    case 'listen-start':
+    case 'listen-stop':
+    case 'listen-cancel':
+      return handleListen(message, sender, sendResponse)
     case 'will-navigate':
       if (sender.tab?.id !== undefined) {
         chrome.storage.session
@@ -214,6 +230,8 @@ function showToolbarState(tabId: number, enabled: boolean): void {
 /** The toolbar button switches Explore Mode in the tab it was clicked in. */
 function registerToolbar(b: Background): void {
   chrome.action.onClicked.addListener((tab) => void toggleExploreMode(b, tab))
+  // A closed tab never reports Explore Mode off.
+  chrome.tabs.onRemoved.addListener((tabId) => noteExploreState(tabId, false))
 }
 
 function registerCommands(b: Background): void {
