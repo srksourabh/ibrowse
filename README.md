@@ -140,6 +140,7 @@ npm test             # unit tests with coverage
 npm run build        # output in .output/chrome-mv3
 npm run test:e2e     # end-to-end, needs a build first
 npm run screenshots  # refresh docs/images
+npm run icons        # render public/icon from scripts/icon.svg
 ```
 
 ## Status
