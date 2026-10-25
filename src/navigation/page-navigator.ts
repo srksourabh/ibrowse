@@ -44,8 +44,13 @@ export class PageNavigator {
       return 'navigated'
     }
 
+    return this.scrollScreen(direction === 'next' ? 'down' : 'up')
+  }
+
+  /** Scrolls one screen, leaving a little overlap, and says what is on screen now. */
+  scrollScreen(direction: 'up' | 'down'): 'scrolled' | 'edge' {
     const { scroll } = this.#deps
-    const forward = direction === 'next'
+    const forward = direction === 'down'
     if (forward ? this.#atBottom() : scroll.y() <= 0) {
       this.#deps.earcons.play('boundary', 0)
       this.#say(forward ? 'End of page' : 'Top of page')
@@ -54,9 +59,22 @@ export class PageNavigator {
 
     const distance = scroll.viewportHeight() * SCREEN_FRACTION
     scroll.by(forward ? distance : -distance)
-    const brief = this.#deps.briefViewport()
-    this.#say(`Scrolled ${forward ? 'down' : 'up'}.${brief ? ` ${brief}` : ''}`)
+    this.#say(`Scrolled ${direction}.${this.#viewport()}`)
     return 'scrolled'
+  }
+
+  /** Jumps to the top or the end of the page. */
+  scrollToEdge(edge: 'top' | 'bottom'): void {
+    const { scroll } = this.#deps
+    scroll.by(edge === 'top' ? -scroll.y() : scroll.maxY() - scroll.y())
+    this.#deps.earcons.play('boundary', 0)
+    if (edge === 'top') this.#say(`Top of page.${this.#viewport()}`)
+    else this.#say(this.#deps.findLink('next') ? 'End of page. Next page is available.' : 'End of page')
+  }
+
+  #viewport(): string {
+    const brief = this.#deps.briefViewport()
+    return brief ? ` ${brief}` : ''
   }
 
   /** Scrolls the page by a pixel amount, announcing the end or top of the page on arrival. */

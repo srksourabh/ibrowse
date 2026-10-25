@@ -39,3 +39,5 @@ export type ExploreMessage =
   | { readonly type: 'next-page' }
   | { readonly type: 'prev-page' }
   | { readonly type: 'action'; readonly action: KeyAction }
+  /** What the user said, from the speech recogniser (ADR-0017). Untrusted text: matched, never run. */
+  | { readonly type: 'voice-transcript'; readonly text: string }

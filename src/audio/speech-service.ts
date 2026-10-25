@@ -46,13 +46,20 @@ export class SpeechService {
   readonly #onError: (error: Error) => void
   #queue: Entry[] = []
   #active: Entry | null = null
+  #lastText: string | null = null
 
   constructor(provider: SpeechProvider, options: SpeechServiceOptions = {}) {
     this.#provider = provider
     this.#onError = options.onError ?? (() => {})
   }
 
+  /** The text of the last Utterance asked for, so the user can have it repeated. */
+  get lastText(): string | null {
+    return this.#lastText
+  }
+
   speak(utterance: Utterance, options: { interrupt?: boolean } = {}): Promise<SpeechOutcome> {
+    this.#lastText = utterance.text
     return new Promise((resolve) => {
       if (options.interrupt ?? true) this.cancel()
       this.#queue.push({ utterance, resolve })

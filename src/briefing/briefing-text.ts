@@ -50,7 +50,7 @@ function items(model: LayoutModel): string[] {
   return [...model.media.map(mediaPhrase), ...regions, ...countPhrases]
 }
 
-const PANEL_NAMES: Readonly<Record<PanelKind, string>> = {
+export const PANEL_NAMES: Readonly<Record<PanelKind, string>> = {
   header: 'Header',
   left: 'Left panel',
   main: 'Main content',
@@ -78,7 +78,7 @@ function panelItems({ contents }: PanelSummary): string[] {
 }
 
 /** "Left panel, Categories: 3 links." The panel's own label wins over its heading. */
-function panelSentence(panel: PanelSummary, detailed: boolean): string {
+export function panelSentence(panel: PanelSummary, detailed: boolean): string {
   const title = panel.label || panel.contents.firstHeading
   const name = title ? `${PANEL_NAMES[panel.kind]}, ${title}` : PANEL_NAMES[panel.kind]
   const all = panelItems(panel)

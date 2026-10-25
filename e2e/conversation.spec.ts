@@ -1,4 +1,4 @@
-import { test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { launchHarness, ORIGIN, type Harness } from './helpers'
 
 const LANDMARKS = `<!doctype html>
@@ -13,7 +13,9 @@ const LANDMARKS = `<!doctype html>
     <a href="/a">Seeds</a> <a href="/b">Tools</a>
   </header>
   <nav aria-label="Categories"><a href="/1">Herbs</a> <a href="/2">Fruit</a> <a href="/3">Flowers</a></nav>
-  <main><h1>Tomatoes</h1><p>Easy to grow in sun.</p><p>Water often.</p><button>Add to basket</button></main>
+  <main><h1>Tomatoes</h1><p>Easy to grow in sun.</p><p>Water often.</p>
+    <button onclick="document.getElementById('status').textContent='Added'">Add to basket</button>
+    <div id="status" role="status"></div></main>
   <aside><h2>Offers</h2><a href="/x">Half price pots</a></aside>
   <footer><a href="/c">Contact</a> <a href="/p">Privacy</a></footer>`
 
@@ -61,5 +63,52 @@ test.describe.serial('the panel briefing', () => {
     await harness.expectSpoken(
       /^Plain News\. Web page\. Header: 2 links\. Left panel: 2 links\. Main content, Rain tomorrow: 1 paragraph\. Right panel: 1 paragraph\. Footer: 1 paragraph\. Want me to read it\?$/,
     )
+  })
+})
+
+test.describe.serial('voice commands', () => {
+  let harness: Harness
+  let page: Page
+
+  test.beforeAll(async () => {
+    harness = await launchHarness({ '/': LANDMARKS })
+    page = await harness.context.newPage()
+    await page.goto(`${ORIGIN}/`)
+  })
+
+  test.afterAll(async () => {
+    await harness.close()
+  })
+
+  test('are ignored while Explore Mode is off', async () => {
+    await harness.hear(ORIGIN, 'go to the left panel')
+    await page.waitForTimeout(300)
+    expect(await harness.spoken()).toEqual([])
+  })
+
+  test('move to a panel and describe it', async () => {
+    await harness.toggleExplore(ORIGIN)
+    await harness.expectSpoken(/Want me to read it\?$/)
+    await harness.hear(ORIGIN, 'go to the left panel')
+    await harness.expectSpoken(/^Left panel, Categories: 3 links\.$/)
+  })
+
+  test('press a button by its name', async () => {
+    await harness.hear(ORIGIN, 'click Add to basket')
+    await harness.expectSpoken(/^Add to basket: pressed$/)
+    await harness.expectSpoken(/^Added$/)
+  })
+
+  test('repeat what was last said', async () => {
+    await harness.clearSpoken()
+    await harness.hear(ORIGIN, 'what is on the right')
+    await harness.expectSpoken(/^Right panel, Offers: 1 link\.$/)
+    await harness.hear(ORIGIN, 'say that again')
+    await expect.poll(async () => (await harness.spoken()).filter((t) => t.startsWith('Right panel')).length).toBe(2)
+  })
+
+  test('without AI, a question gets help instead of a guess', async () => {
+    await harness.hear(ORIGIN, 'Is there free delivery?')
+    await harness.expectSpoken(/^I did not understand\. Say help to hear what you can say\.$/)
   })
 })

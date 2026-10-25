@@ -4,6 +4,7 @@ import type { HapticNotice } from '../haptics/messages'
 import { startLatencyPublisher } from './latency'
 import type { ExploreMessage, ExploreStateNotice, SpeechStartedNotice } from '../shared/messages'
 import { guardTouchScrolling } from '../touch/touch-guard'
+import { parseUtterance } from '../voice/commands'
 import { createHandlers } from './handlers'
 import { createHaptics, type SessionHaptics } from './haptics'
 import { createServices, type Services } from './services'
@@ -78,6 +79,10 @@ function listenForMessages(
         break
       case 'haptic-disconnected':
         haptics.deviceLost()
+        break
+      case 'voice-transcript':
+        // Nothing listens or acts while Explore Mode is off (ADR-0003); only the top frame acts.
+        if (t.isTopFrame && mode.isEnabled) t.voice.run(parseUtterance(message.text))
         break
       case 'speech-started':
         s.handleSpeechStarted(message.id)

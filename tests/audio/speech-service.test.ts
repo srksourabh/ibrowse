@@ -13,6 +13,15 @@ function controllableProvider() {
 }
 
 describe('SpeechService', () => {
+  it('remembers the last thing it was asked to say, so it can be repeated', () => {
+    const { provider } = controllableProvider()
+    const service = new SpeechService(provider)
+    expect(service.lastText).toBeNull()
+    void service.speak({ text: 'Save — Button' })
+    void service.speak({ text: 'End of page' }, { interrupt: false })
+    expect(service.lastText).toBe('End of page')
+  })
+
   it('speaks an utterance and reports it finished', async () => {
     const { provider, pending } = controllableProvider()
     const outcome = new SpeechService(provider).speak({ text: 'Hello' })

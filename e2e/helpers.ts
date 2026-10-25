@@ -22,6 +22,8 @@ export interface Harness {
   clearSpoken(): Promise<void>
   /** Toggles Explore Mode in the tab showing a page on this origin. */
   toggleExplore(origin: string): Promise<void>
+  /** Delivers a transcript to the tab, as the speech recogniser does. */
+  hear(origin: string, text: string): Promise<void>
   /** The extension's own id, for opening its pages. */
   extensionId: string
   /** Writes values straight into the extension's storage, as the options would. */
@@ -125,6 +127,14 @@ export async function launchHarness(
         const [tab] = await chrome.tabs.query({ url: `${url}/*` })
         await chrome.tabs.sendMessage(tab!.id!, { type: 'toggle-explore' })
       }, origin),
+    hear: (origin, text) =>
+      worker.evaluate(
+        async ({ url, said }) => {
+          const [tab] = await chrome.tabs.query({ url: `${url}/*` })
+          await chrome.tabs.sendMessage(tab!.id!, { type: 'voice-transcript', text: said }, { frameId: 0 })
+        },
+        { url: origin, said: text },
+      ),
     extensionId: new URL(worker.url()).host,
     store: (items) => worker.evaluate((values) => chrome.storage.local.set(values), items),
     storedSettings: () =>
