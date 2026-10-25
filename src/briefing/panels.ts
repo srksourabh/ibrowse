@@ -164,17 +164,19 @@ function contentsOf(panel: Element, kind: PanelKind, others: readonly Element[])
     )
   const headings = own('h1,h2,h3,h4,h5,h6,[role="heading"]')
   const images = own('img,[role="img"]').filter((el) => roleOf(el) === 'image')
+  const logo = kind === 'header' ? images.find((img) => img.closest('a[href]') !== null) : undefined
   return {
     links: own('a[href]').length,
     buttons: own('button,[role="button"],input[type="button"],input[type="submit"],input[type="reset"]').length,
     inputs: own('input,select,textarea').filter(
       (el) => !NON_TEXT_INPUTS.has((el.getAttribute('type') ?? '').toLowerCase()),
     ).length,
-    images: images.length,
+    // The logo is named as such, not counted again as a picture.
+    images: images.length - (logo ? 1 : 0),
     headings: headings.length,
     paragraphs: own('p').filter(hasText).length,
     search: own('[role="search"],input').some(isSearch),
-    logo: kind === 'header' && images.some((img) => img.closest('a[href]') !== null),
+    logo: logo !== undefined,
     firstHeading: headings.length > 0 ? mostImportant(headings) : '',
   }
 }

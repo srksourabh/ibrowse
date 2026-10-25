@@ -16,10 +16,11 @@ The shared vocabulary for code, tests, docs and spoken strings. Use these terms 
 
 ## Page understanding
 
-- **Page Briefing**: the short spoken summary given on entering Explore Mode: title, regions, counts. Ends with a **Read Prompt**.
+- **Page Briefing**: the short spoken summary given on entering Explore Mode: title, then each **Panel** and what it holds (or regions and counts, on a page with only main content). Ends with a **Read Prompt**.
 - **Read Prompt**: the question "Want me to read it?" and its Y/N answer window.
 - **Layout Model**: the analyzer's structured view of a page: regions, media, counts, positions.
 - **Region**: a meaningful area of the page (hero, navigation, sidebar, main content, footer).
+- **Panel**: one of the five parts the Page Briefing walks in order: header, left panel, main content, right panel, footer. Found from the page's landmarks, or from its layout when it has none.
 - **Block**: a readable unit of text (paragraph, list, quote, table, heading).
 - **Element Under Pointer**: the most meaningful element at the pointer position.
 - **Affordance**: whether an element is **Interactive** (can be activated) or **Static** (text only).

@@ -46,7 +46,7 @@ describe('findPanels on a page with landmarks', () => {
 
   it('counts what each panel holds', () => {
     const [header, left, main, right, footer] = findPanels(document, env())
-    expect(header!.contents).toMatchObject({ links: 3, logo: true, search: true })
+    expect(header!.contents).toMatchObject({ links: 3, logo: true, search: true, images: 0 })
     expect(left!.contents).toMatchObject({ links: 3, search: false })
     expect(left!.label).toBe('Categories')
     expect(main!.contents).toMatchObject({ paragraphs: 2, buttons: 1, firstHeading: 'Tomatoes' })

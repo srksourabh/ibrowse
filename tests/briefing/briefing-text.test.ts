@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { briefingText, viewportBriefing } from '../../src/briefing/briefing-text'
-import type { LayoutModel } from '../../src/briefing/layout-model'
+import type { LayoutModel, PanelSummary } from '../../src/briefing/layout-model'
 
 const EMPTY_COUNTS = { paragraphs: 0, headings: 0, links: 0, buttons: 0, inputs: 0, forms: 0, frames: 0 }
 
@@ -12,9 +12,65 @@ function model(overrides: Partial<LayoutModel> = {}): LayoutModel {
     media: [],
     counts: EMPTY_COUNTS,
     headings: [],
+    panels: [],
     ...overrides,
   }
 }
+
+const NO_CONTENTS = {
+  links: 0, buttons: 0, inputs: 0, images: 0, headings: 0, paragraphs: 0,
+  search: false, logo: false, firstHeading: '',
+}
+const panel = (
+  kind: PanelSummary['kind'],
+  contents: Partial<PanelSummary['contents']> = {},
+  label = '',
+): PanelSummary => ({ kind, label, contents: { ...NO_CONTENTS, ...contents } })
+
+const SHOP_PANELS = [
+  panel('header', { logo: true, search: true, links: 3 }),
+  panel('left', { links: 3 }, 'Categories'),
+  panel('main', { paragraphs: 2, buttons: 1, images: 1, links: 4, firstHeading: 'Tomatoes' }),
+  panel('right', { links: 1, firstHeading: 'Offers' }),
+  panel('footer', { links: 2 }),
+]
+
+describe('briefingText by panel', () => {
+  const shop = model({ title: 'Garden Shop', kind: 'page', panels: SHOP_PANELS, counts: { ...EMPTY_COUNTS, paragraphs: 2 } })
+
+  it('walks the panels in order, naming each and saying what it holds', () => {
+    expect(briefingText(shop).text).toBe(
+      'Garden Shop. Web page. Header: logo, search box, 3 links. Left panel, Categories: 3 links. ' +
+        'Main content, Tomatoes: 2 paragraphs, 1 picture, 4 links. Right panel, Offers: 1 link. ' +
+        'Footer: 2 links. Want me to read it?',
+    )
+  })
+
+  it('lists everything in a panel in the detailed briefing', () => {
+    expect(briefingText(shop, { detailed: true }).text).toContain(
+      'Main content, Tomatoes: 2 paragraphs, 1 picture, 4 links, 1 button.',
+    )
+  })
+
+  it('names an empty panel without a list', () => {
+    const text = briefingText(model({ panels: [panel('header'), panel('main', { paragraphs: 1 })] })).text
+    expect(text).toContain('Header. Main content: 1 paragraph.')
+  })
+
+  it('mentions embedded frames after the panels', () => {
+    const text = briefingText(
+      model({ panels: SHOP_PANELS, counts: { ...EMPTY_COUNTS, paragraphs: 2, frames: 1 } }),
+    ).text
+    expect(text).toContain('Footer: 2 links. 1 embedded frame. Want me to read it?')
+  })
+
+  it('keeps the plain summary for a page with only main content', () => {
+    const text = briefingText(
+      model({ panels: [panel('main', { paragraphs: 3 })], counts: { ...EMPTY_COUNTS, paragraphs: 3 } }),
+    ).text
+    expect(text).toBe('Dashboard. Article page. 3 paragraphs. Want me to read it?')
+  })
+})
 
 describe('briefingText', () => {
   it('describes the page in the order picture, hero, navigation, sidebar, search, counts', () => {

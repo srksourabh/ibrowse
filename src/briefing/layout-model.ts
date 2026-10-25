@@ -1,5 +1,6 @@
 import { hasText, isHidden, isRendered } from '../hover/hit-test'
 import { roleOf } from '../hover/roles'
+import { findPanels, type Panel } from './panels'
 import { placementOf, type Placement, type Rect, type Viewport } from './placement'
 
 export interface LayoutEnv {
@@ -32,6 +33,9 @@ export interface LayoutCounts {
   readonly frames: number
 }
 
+/** A panel as the briefing speaks it: what it is and what it holds. */
+export type PanelSummary = Omit<Panel, 'element'>
+
 export interface LayoutModel {
   readonly title: string
   readonly kind: 'article' | 'form' | 'page'
@@ -39,6 +43,8 @@ export interface LayoutModel {
   readonly media: readonly MediaInfo[]
   readonly counts: LayoutCounts
   readonly headings: readonly string[]
+  /** Header, left panel, main, right panel, footer, as present. Empty for a viewport briefing. */
+  readonly panels: readonly PanelSummary[]
 }
 
 const ARTICLE_MIN_PARAGRAPHS = 5
@@ -156,6 +162,10 @@ export function analyzePage(doc: Document, env: LayoutEnv): LayoutModel {
   const media = [...mediaOf('picture', pictures, env), ...mediaOf('video', all('video'), env)]
 
   const headingTexts = headings.map((el) => normalise(el.textContent)).filter(Boolean)
+  const panels =
+    env.scope === 'viewport'
+      ? []
+      : findPanels(doc, env).map(({ kind, label, contents }) => ({ kind, label, contents }))
   return {
     title: normalise(doc.title) || headingTexts[0] || '',
     kind,
@@ -163,5 +173,6 @@ export function analyzePage(doc: Document, env: LayoutEnv): LayoutModel {
     media,
     counts,
     headings: headingTexts.slice(0, MAX_HEADINGS_LISTED),
+    panels,
   }
 }
