@@ -63,9 +63,10 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
 ## Quick start
 
 1. Press **Alt+Shift+E** on a page, or click the iBrowse toolbar button, to turn on Explore Mode.
-2. Listen to the briefing. Press **Y** to have it read, or **N** to skip.
+2. Listen to the briefing: the header, left panel, main content, right panel and footer, and what each holds. Press **Y** to have it read, or **N** to skip.
 3. Move the mouse, or drag a finger, to hear what is under it. Click a paragraph to read it.
 4. Press **Alt+Shift+S** for settings and **Alt+Shift+P** for hardware.
+5. Optional: turn on **Voice commands** in settings. Then hold **Alt+Shift+V** and speak, or answer when iBrowse asks "What would you like to do?" after you rest the pointer on something.
 
 ## Keyboard and mouse
 
@@ -87,6 +88,25 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
 | Hardware setup | Alt+Shift+P |
 | Stop speaking | Esc |
 | Touch: explore / activate | Drag or tap / double-tap anywhere |
+| Talk (voice commands on) | Hold Alt+Shift+V, speak, let go |
+
+## Voice commands
+
+With voice commands on, say any of these while holding Alt+Shift+V, or as the answer when iBrowse asks what to do:
+
+| Say | It does |
+|---|---|
+| "click", "press it" | Presses what the pointer is on (reads it, if it is text) |
+| "click sign in" | Presses the control with that name |
+| "scroll down", "scroll up", "go to the top" | Scrolls, then says what is on screen |
+| "read this", "read the page" | Reads aloud |
+| "next page", "go back" | Moves between pages; Explore Mode stays on |
+| "what is on the left", "go to the main content" | Describes or moves to a panel |
+| "find the search box", "where is the login" | Moves to it and says what it is |
+| "stop", "repeat", "where am I", "help" | Just that |
+| Anything else | A question about the page, answered by AI if it is on |
+
+Chrome turns speech into text on your computer when it can, and otherwise sends it to Google for that. iBrowse listens only while you hold the key, or for five seconds after it asks you something.
 
 Change the browser-level shortcuts at `chrome://extensions/shortcuts`.
 
