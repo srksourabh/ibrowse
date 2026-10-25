@@ -153,6 +153,7 @@ npm run icons        # render public/icon from scripts/icon.svg
 | 3 | Operation | Done |
 | 4 | Hardware | Done |
 | 5 | Onboarding, settings, voices, AI | Done |
+| 5b | Conversation: panel briefing, voice commands, questions | In progress |
 | 6 | Closed beta | Not started |
 | 7 | Public release | Not started |
 
