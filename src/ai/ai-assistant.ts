@@ -109,8 +109,8 @@ export class AiAssistant {
 
   /** A spoken question about the page (PRD FR-11.5). */
   answerQuestion(input: QuestionInput): Promise<AiResult> {
-    const key = `question|${input.question}|${input.pointedAt}|${input.title}|${input.excerpt.slice(0, 200)}`
-    return this.#answer(key, ANSWER_TOKENS, async () => [{ type: 'text', text: questionPrompt(input) }])
+    // Never remembered: the answer may depend on any part of a page that can change.
+    return this.#answer(null, ANSWER_TOKENS, async () => [{ type: 'text', text: questionPrompt(input) }])
   }
 
   describeImage(image: ImageInput): Promise<AiResult> {
@@ -123,22 +123,23 @@ export class AiAssistant {
     })
   }
 
+  /** `key` names the answer for reuse; null never reuses it. */
   async #answer(
-    key: string,
+    key: string | null,
     maxOutputTokens: number,
     buildParts: () => Promise<GeminiPart[]>,
   ): Promise<AiResult> {
     const settings = await this.#deps.getSettings()
     if (!settings.aiAssist) return off
-    const cacheKey = `${settings.aiModel}|${key}`
-    const remembered = this.#answers.get(cacheKey)
+    const cacheKey = key === null ? null : `${settings.aiModel}|${key}`
+    const remembered = cacheKey === null ? undefined : this.#answers.get(cacheKey)
     if (remembered !== undefined) return { ok: true, text: remembered }
     try {
       const parts = await buildParts()
       const raw = await this.#deps.client.generate({ model: settings.aiModel, parts, maxOutputTokens })
       const text = cleanAnswer(raw, MAX_ANSWER_CHARS)
       if (text === '') return failureFor(new CloudError('empty'))
-      this.#answers.set(cacheKey, text)
+      if (cacheKey !== null) this.#answers.set(cacheKey, text)
       return { ok: true, text }
     } catch (error) {
       return failureFor(error)
