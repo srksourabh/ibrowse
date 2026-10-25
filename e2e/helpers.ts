@@ -28,6 +28,8 @@ export interface Harness {
   store(items: Record<string, unknown>): Promise<void>
   /** Reads the saved settings back. */
   storedSettings(): Promise<Record<string, unknown>>
+  /** Errors iBrowse logged in pages and in the worker. Normal operation logs none (PRD §9.4). */
+  consoleErrors(): Promise<string[]>
   /** The first-run tour that opened by itself, if `keepTour` was asked for. */
   tourPage: Page | null
   close(): Promise<void>
@@ -76,8 +78,20 @@ export async function launchHarness(
       : route.fulfill({ contentType: 'text/html', body })
   })
 
+  const pageErrors: string[] = []
+  context.on('console', (message) => {
+    if (message.type() === 'error' && message.text().startsWith('iBrowse')) pageErrors.push(message.text())
+  })
+
   const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
   await worker.evaluate(() => {
+    const errors: string[] = []
+    ;(globalThis as unknown as { consoleErrors: string[] }).consoleErrors = errors
+    const logError = console.error.bind(console)
+    console.error = (...args: unknown[]) => {
+      if (String(args[0]).startsWith('iBrowse')) errors.push(args.map(String).join(' '))
+      logError(...args)
+    }
     const spoken: string[] = []
     ;(globalThis as unknown as { spoken: string[] }).spoken = spoken
     chrome.tts.speak = ((text: string, options?: { onEvent?: (e: { type: string }) => void }) => {
@@ -118,8 +132,18 @@ export async function launchHarness(
         const { settings } = await chrome.storage.local.get('settings')
         return (settings ?? {}) as Record<string, unknown>
       }),
+    consoleErrors: async () => [
+      ...pageErrors,
+      ...(await worker.evaluate(() => [...(globalThis as unknown as { consoleErrors: string[] }).consoleErrors])),
+    ],
     tourPage: null,
-    close: () => context.close(),
+    close: async () => {
+      const errors = await harness.consoleErrors()
+      await context.close()
+      if (errors.length > 0) {
+        throw new Error(`iBrowse logged errors:\n${errors.map((e) => `  - ${e}`).join('\n')}`)
+      }
+    },
   }
 
   const tour = await findTourPage(context)
