@@ -17,6 +17,9 @@ export type VoiceCommand =
   | { readonly kind: 'help' }
   | { readonly kind: 'where' }
   | { readonly kind: 'brief' }
+  /** Answers to "Say yes to press it, or no." */
+  | { readonly kind: 'yes' }
+  | { readonly kind: 'no' }
 
 export type Understood =
   | { readonly type: 'command'; readonly command: VoiceCommand }
@@ -28,7 +31,7 @@ const LEADING_FILLER =
   /^(?:(?:hey|ok|okay|ibrowse|please|can you|could you|would you|will you|i want to|i'd like to|id like to|let's|lets|um|uh|er|so|now)\s+)+/
 const TRAILING_FILLER = /(?:\s+(?:please|for me|now|thanks|thank you))+$/
 const ONLY_FILLER = /^(?:(?:hey|ok|okay|ibrowse|please|um|uh|er|so|now)\s*)*$/
-const POINTED = /^(?:it|this|that|here|there|on it|on this|on that|this one|that one)$/
+const POINTED = /^(?:on|it|this|that|here|there|on it|on this|on that|this one|that one)$/
 const ROLE_WORDS = /\s+(?:button|link|tab|checkbox|box|menu|option)$/
 
 const PANEL_WORDS: ReadonlyArray<readonly [RegExp, PanelKind]> = [
@@ -62,6 +65,9 @@ function panelOf(words: string): PanelKind | null {
 type Rule = readonly [RegExp, (match: RegExpMatchArray) => VoiceCommand | null]
 
 const RULES: readonly Rule[] = [
+  [/^(?:yes|yeah|yep|yes please|go ahead|do it|confirm)$/, () => ({ kind: 'yes' })],
+  // "not now" arrives as "not": "now" is a filler word.
+  [/^(?:no|nope|no thanks|no thank you|don't|do not|not|not now)$/, () => ({ kind: 'no' })],
   [/^(?:stop|quiet|be quiet|cancel|shut up|pause|silence)$/, () => ({ kind: 'stop' })],
   [/^(?:repeat(?: that)?|say that again|again|what did you say)$/, () => ({ kind: 'repeat' })],
   [/^(?:help|what can i say|what can you do|commands)$/, () => ({ kind: 'help' })],

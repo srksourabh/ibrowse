@@ -16,7 +16,8 @@ const LANDMARKS = `<!doctype html>
   <main><h1>Tomatoes</h1><p>Easy to grow in sun.</p><p>Water often.</p>
     <button onclick="document.getElementById('status').textContent='Added'">Add to basket</button>
     <div id="status" role="status"></div></main>
-  <aside><h2>Offers</h2><a href="/x">Half price pots</a></aside>
+  <aside><h2>Offers</h2><a href="/x">Half price pots</a>
+    <button onclick="document.getElementById('status').textContent='Account deleted'">Delete account</button></aside>
   <footer><a href="/c">Contact</a> <a href="/p">Privacy</a></footer>`
 
 const BOXES = `<!doctype html>
@@ -51,7 +52,7 @@ test.describe.serial('the panel briefing', () => {
     await page.goto(`${ORIGIN}/`)
     await harness.toggleExplore(ORIGIN)
     await harness.expectSpoken(
-      /^Garden Shop\. Web page\. Header: logo, search box, 3 links\. Left panel, Categories: 3 links\. Main content, Tomatoes: 2 paragraphs, 1 button\. Right panel, Offers: 1 link\. Footer: 2 links\. Want me to read it\?$/,
+      /^Garden Shop\. Web page\. Header: logo, search box, 3 links\. Left panel, Categories: 3 links\. Main content, Tomatoes: 2 paragraphs, 1 button\. Right panel, Offers: 1 link, 1 button\. Footer: 2 links\. Want me to read it\?$/,
     )
     await harness.toggleExplore(ORIGIN)
   })
@@ -99,6 +100,17 @@ test.describe.serial('voice commands', () => {
     await harness.expectSpoken(/^Added$/)
   })
 
+  test('ask for a yes before pressing something that cannot be taken back', async () => {
+    await harness.hear(ORIGIN, 'click delete account')
+    await harness.expectSpoken(/^Delete account\. Say yes to press it, or no\.$/)
+    await harness.hear(ORIGIN, 'no')
+    await harness.expectSpoken(/^Not pressed\.$/)
+    await harness.hear(ORIGIN, 'click delete account')
+    await harness.hear(ORIGIN, 'yes')
+    await harness.expectSpoken(/^Delete account: pressed$/)
+    await harness.expectSpoken(/^Account deleted$/)
+  })
+
   test('scroll when asked, and say when the page has no more', async () => {
     await harness.hear(ORIGIN, 'scroll down')
     await harness.expectSpoken(/^End of page$/)
@@ -107,7 +119,7 @@ test.describe.serial('voice commands', () => {
   test('repeat what was last said', async () => {
     await harness.clearSpoken()
     await harness.hear(ORIGIN, 'what is on the right')
-    await harness.expectSpoken(/^Right panel, Offers: 1 link\.$/)
+    await harness.expectSpoken(/^Right panel, Offers: 1 link, 1 button\.$/)
     await harness.hear(ORIGIN, 'say that again')
     await expect.poll(async () => (await harness.spoken()).filter((t) => t.startsWith('Right panel')).length).toBe(2)
   })

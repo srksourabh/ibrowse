@@ -187,7 +187,18 @@ export function createTools(s: Services, isTopFrame: boolean) {
   const navigator = createPageNavigator(s)
   const reader = createReader(s, hover, navigator)
   const whereAmI = createWhereAmI(s)
-  const voice = createVoice(s, { hover, jumps, briefer, reader, navigator, whereAmI, activate: activateElement, ai })
+  const voice = createVoice(s, {
+    hover,
+    jumps,
+    briefer,
+    reader,
+    navigator,
+    whereAmI,
+    activate: activateElement,
+    ai,
+    // The listening controller is built from this runner, so it is reached late.
+    listenForAnswer: () => listening.listenForAnswer(),
+  })
   const listening = createListening(s, voice)
 
   return {

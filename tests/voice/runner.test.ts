@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Panel } from '../../src/briefing/panels'
 import { HELP_TEXT, VoiceRunner, type VoiceRunnerDeps } from '../../src/voice/runner'
 import type { VoiceCommand } from '../../src/voice/commands'
+import type { ControlMatch } from '../../src/voice/find'
 
 const el = (id: string): Element => {
   const element = document.createElement('div')
@@ -18,7 +19,10 @@ function setup(overrides: Partial<VoiceRunnerDeps> = {}) {
   const spoken: string[] = []
   const deps: VoiceRunnerDeps = {
     pointedAt: vi.fn(() => null),
-    findControl: vi.fn(() => null),
+    findControl: vi.fn((): ControlMatch => ({ kind: 'none' })),
+    isRisky: vi.fn(() => false),
+    askAndListen: vi.fn((text: string) => void spoken.push(text)),
+    now: vi.fn(() => 0),
     findAnything: vi.fn(() => null),
     panels: vi.fn((): Panel[] => []),
     nameOf: vi.fn((e: Element) => e.id),
@@ -73,7 +77,7 @@ describe('VoiceRunner: click', () => {
 
   it('presses a control by its name', () => {
     const signIn = el('Sign in')
-    const { run, deps, spoken } = setup({ findControl: vi.fn(() => signIn) })
+    const { run, deps, spoken } = setup({ findControl: vi.fn((): ControlMatch => ({ kind: 'one', element: signIn })) })
     run({ kind: 'click', target: 'sign in' })
     expect(deps.findControl).toHaveBeenCalledWith('sign in')
     expect(deps.activate).toHaveBeenCalledWith(signIn)
@@ -85,6 +89,59 @@ describe('VoiceRunner: click', () => {
     run({ kind: 'click', target: 'giraffe' })
     expect(deps.activate).not.toHaveBeenCalled()
     expect(spoken).toEqual(['Nothing called giraffe on this page.'])
+  })
+})
+
+describe('VoiceRunner: never guessing what to press', () => {
+  it('asks which one when several controls match', () => {
+    const { run, deps, spoken } = setup({
+      findControl: vi.fn((): ControlMatch => ({ kind: 'several', names: ['Delete account', 'Delete photo', 'Delete all'] })),
+    })
+    run({ kind: 'click', target: 'delete' })
+    expect(deps.activate).not.toHaveBeenCalled()
+    expect(spoken).toEqual(['Which one? Delete account, Delete photo, or Delete all.'])
+  })
+
+  it('says how many share a name, and how to choose', () => {
+    const { run, spoken } = setup({
+      findControl: vi.fn((): ControlMatch => ({ kind: 'several', names: ['Add to basket', 'Add to basket'] })),
+    })
+    run({ kind: 'click', target: 'add to basket' })
+    expect(spoken).toEqual(['There are 2 called Add to basket. Point at the one you want, then say click.'])
+  })
+
+  it('asks for a yes before pressing something that cannot be taken back, then listens', () => {
+    const button = el('Delete account')
+    const { run, deps, spoken } = setup({ pointedAt: () => button, isRisky: () => true })
+    run({ kind: 'click' })
+    expect(deps.activate).not.toHaveBeenCalled()
+    expect(deps.askAndListen).toHaveBeenCalledWith('Delete account. Say yes to press it, or no.')
+    run({ kind: 'yes' })
+    expect(deps.activate).toHaveBeenCalledWith(button)
+    expect(spoken.at(-1)).toBe('Delete account: pressed')
+  })
+
+  it('does not press on no, and says so', () => {
+    const { run, deps, spoken } = setup({ pointedAt: () => el('Pay now'), isRisky: () => true })
+    run({ kind: 'click' })
+    run({ kind: 'no' })
+    expect(deps.activate).not.toHaveBeenCalled()
+    expect(spoken.at(-1)).toBe('Not pressed.')
+  })
+
+  it('forgets the question once anything else is said, or after 15 seconds', () => {
+    let clock = 0
+    const { run, deps, spoken } = setup({ pointedAt: () => el('Buy now'), isRisky: () => true, now: () => clock })
+    run({ kind: 'click' })
+    run({ kind: 'scroll', direction: 'down' })
+    run({ kind: 'yes' })
+    expect(deps.activate).not.toHaveBeenCalled()
+    expect(spoken.at(-1)).toBe('Nothing to confirm.')
+
+    run({ kind: 'click' })
+    clock = 15_001
+    run({ kind: 'yes' })
+    expect(deps.activate).not.toHaveBeenCalled()
   })
 })
 

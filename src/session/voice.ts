@@ -10,7 +10,7 @@ import type { NavigationNotice } from '../shared/messages'
 import { AskAfterRest } from '../voice/ask-after-rest'
 import { recognitionErrorText } from '../voice/chrome-recognizer'
 import { parseUtterance } from '../voice/commands'
-import { findAnything, findControl } from '../voice/find'
+import { findAnything, findControl, isRisky } from '../voice/find'
 import { ListeningController } from '../voice/listening'
 import { MessageRecognizer } from '../voice/message-recognizer'
 import type { ListenResponse } from '../voice/messages'
@@ -29,6 +29,8 @@ export interface VoiceParts {
   readonly whereAmI: () => void
   readonly activate: (el: Element) => void
   readonly ai: SessionAi
+  /** Opens the short answer window; bound once the listening controller exists. */
+  readonly listenForAnswer: () => void
 }
 
 /** The page is about to change because of something said, so Explore Mode resumes after it loads. */
@@ -44,6 +46,13 @@ export function createVoice(s: Services, p: VoiceParts): VoiceRunner {
     pointedAt: () => p.hover.current ?? p.jumps.cursor,
     findControl: (name) => findControl(document, name),
     findAnything: (words) => findAnything(document, words),
+    isRisky,
+    askAndListen: (text) => {
+      void s.speech.speak({ text, rate: s.rate() }).then((outcome) => {
+        if (outcome === 'finished' && s.settings().voiceInput !== 'off') p.listenForAnswer()
+      })
+    },
+    now: () => performance.now(),
     panels: () =>
       findPanels(document, {
         rectOf: (el) => el.getBoundingClientRect(),

@@ -9,7 +9,7 @@ const command = (text: string): VoiceCommand | null => {
 describe('parseUtterance: commands', () => {
   it.each([
     'click', 'Click it.', 'press', 'press this', 'tap that', 'open it', 'select', 'click here',
-    'Please click it', 'can you click this', 'iBrowse, click',
+    'Please click it', 'can you click this', 'iBrowse, click', 'click on', 'press on it',
   ])('"%s" presses what the pointer is on', (text) => {
     expect(command(text)).toEqual({ kind: 'click' })
   })
@@ -78,6 +78,14 @@ describe('parseUtterance: commands', () => {
     ['find the contact link', 'contact link'],
   ])('"%s" finds "%s"', (text, target) => {
     expect(command(text)).toEqual({ kind: 'find', target })
+  })
+
+  it.each(['yes', 'yeah', 'yes please', 'yep', 'go ahead', 'do it', 'confirm'])('"%s" says yes', (text) => {
+    expect(command(text)).toEqual({ kind: 'yes' })
+  })
+
+  it.each(['no', 'nope', 'no thanks', "don't", 'do not', 'not now'])('"%s" says no', (text) => {
+    expect(command(text)).toEqual({ kind: 'no' })
   })
 
   it.each(['stop', 'be quiet', 'quiet', 'cancel', 'shut up', 'pause'])('"%s" stops speech', (text) => {
