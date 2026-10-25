@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { changeText, invalidText } from '../../src/forms/changes'
+import { changeText, invalidText, submitText } from '../../src/forms/changes'
 
 function el(html: string): Element {
   document.body.innerHTML = html
@@ -58,5 +58,24 @@ describe('invalidText', () => {
 
   it('has a fallback when the browser gives no message', () => {
     expect(invalidText(el('<input id="t" aria-label="Email">'))).toBe('Email: Invalid value')
+  })
+})
+
+describe('submitText', () => {
+  const form = (html: string): HTMLFormElement => el(html) as HTMLFormElement
+
+  it('names the button that sent the form', () => {
+    const f = form('<form id="t" aria-label="Login"><button id="b">Sign in</button></form>')
+    expect(submitText(f, f.querySelector('#b'))).toBe('Sign in: submitted')
+  })
+
+  it('names the form when no button sent it, as when Enter is pressed in a field', () => {
+    expect(submitText(form('<form id="t" aria-label="Search the site"><input></form>'), null)).toBe(
+      'Search the site: submitted',
+    )
+  })
+
+  it('says "Form" when neither has a name', () => {
+    expect(submitText(form('<form id="t"><input></form>'), null)).toBe('Form: submitted')
   })
 })

@@ -1,5 +1,5 @@
 import type { HandlerSpec } from '../explore-mode'
-import { changeText, invalidText } from '../forms/changes'
+import { changeText, invalidText, submitText } from '../forms/changes'
 import { ValidationGate } from '../forms/validation-gate'
 import { spokenText } from '../hover/affordance-speech'
 import { describeElement } from '../hover/describe'
@@ -171,6 +171,15 @@ function formHandlers(s: Services, t: Tools): Record<string, HandlerSpec> {
         gate.noteInvalid()
         s.earcons.play('error', 0)
         say(invalidText(event.target), false)
+      },
+    },
+    // Fired only after validation passes. Caught on the way down, so a page that stops it cannot silence it.
+    submit: {
+      capture: true,
+      listener: (event) => {
+        if (!(event.target instanceof HTMLFormElement)) return
+        s.earcons.play('confirm', 0)
+        say(submitText(event.target, (event as SubmitEvent).submitter), false)
       },
     },
   }

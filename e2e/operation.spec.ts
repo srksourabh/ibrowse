@@ -126,6 +126,13 @@ test.describe.serial('operating a page', () => {
     await harness.expectSpoken(/^Email: .+/)
   })
 
+  test('says a form was submitted once it passes validation, and not before', async () => {
+    expect(await count(harness, /: submitted$/)).toBe(0)
+    await page.fill('#email', 'a@example.com')
+    await page.click('#submit')
+    await harness.expectSpoken(/^Submit: submitted$/)
+  })
+
   test('announces live-region updates and dialogs that open', async () => {
     await page.click('#save')
     await harness.expectSpoken(/^Saved$/)
