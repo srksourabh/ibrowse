@@ -119,6 +119,34 @@ describe('findPanels on a page built from plain boxes', () => {
     expect(left.contents).toMatchObject({ search: true, inputs: 1, headings: 2, firstHeading: 'Shop' })
   })
 
+  it('is not fooled by a menu bar of side-by-side links above the real columns', () => {
+    document.body.innerHTML = `
+      <div id="top"><ul id="menu"><li id="m1"><a href="/1">News</a></li><li id="m2"><a href="/2">Sport and weather today</a></li><li id="m3"><a href="/3">TV</a></li></ul></div>
+      <div id="wrap"><div id="cols">
+        <div id="a"><a href="/x">Links</a></div>
+        <div id="b"><h1>Story</h1><p>Text of the story.</p></div>
+        <div id="c"><p>Advert</p></div>
+      </div></div>`
+    rects = {
+      wrap: { left: 0, top: 80, width: 1200, height: 900 },
+      top: TOP,
+      menu: TOP,
+      m1: { left: 0, top: 0, width: 300, height: 80 },
+      m2: { left: 300, top: 0, width: 600, height: 80 },
+      m3: { left: 900, top: 0, width: 300, height: 80 },
+      cols: { left: 0, top: 80, width: 1200, height: 900 },
+      a: LEFT,
+      b: MIDDLE,
+      c: RIGHT,
+    }
+    expect(findPanels(document, env()).map((p) => [p.kind, p.element.id])).toEqual([
+      ['header', 'top'],
+      ['left', 'a'],
+      ['main', 'b'],
+      ['right', 'c'],
+    ])
+  })
+
   it('takes a page with a single column as main content only', () => {
     document.body.innerHTML = '<div id="only"><h1>Hello</h1><p>Text</p></div>'
     rects = { only: { left: 100, top: 0, width: 1000, height: 600 } }
@@ -131,5 +159,32 @@ describe('findPanels on a page built from plain boxes', () => {
 describe('findPanels on an empty page', () => {
   it('finds nothing', () => {
     expect(findPanels(document, env())).toEqual([])
+  })
+})
+
+describe('findPanels: cost on a large page', () => {
+  it('measures each element at most once', () => {
+    document.body.innerHTML = `<div id="cols">${Array.from({ length: 50 }, (_, i) => `<div id="c${i}"><p>Text ${i}</p></div>`).join('')}</div>`
+    const measured = new Map<Element, number>()
+    const rectOf = (el: Element): Rect => {
+      measured.set(el, (measured.get(el) ?? 0) + 1)
+      return { left: 0, top: 0, width: 10, height: 10 }
+    }
+    findPanels(document, { rectOf, viewport: VIEWPORT })
+    expect(Math.max(...measured.values())).toBe(1)
+  })
+
+  it('stops looking for columns after a few thousand elements', () => {
+    const deep = Array.from({ length: 40 }, () => '<div>' + '<span>x</span>'.repeat(200) + '</div>').join('')
+    document.body.innerHTML = `<div>${deep}</div>`
+    let calls = 0
+    findPanels(document, {
+      rectOf: () => {
+        calls++
+        return ZERO
+      },
+      viewport: VIEWPORT,
+    })
+    expect(calls).toBeLessThanOrEqual(5000)
   })
 })

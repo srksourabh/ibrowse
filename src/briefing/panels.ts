@@ -39,6 +39,8 @@ const SIDES = 'nav,[role="navigation"],aside,[role="complementary"]'
 const MIN_ROW_WIDTH = 0.7
 const MIN_FULL_WIDTH = 0.9
 const MAX_SEARCH_DEPTH = 8
+/** Looking for columns stops after measuring this many elements, so a huge page is briefed promptly. */
+const MAX_MEASURED = 2000
 const NON_TEXT_INPUTS = new Set(['hidden', 'button', 'submit', 'reset', 'image'])
 
 const normalise = (text: string | null): string => (text ?? '').replace(/\s+/g, ' ').trim()
@@ -87,15 +89,35 @@ function isRow(rects: readonly Rect[], viewport: Viewport): boolean {
   return sideBySide && span >= viewport.width * MIN_ROW_WIDTH
 }
 
-/** The first set of side-by-side columns, searching from the top of the page down. */
+/** Menus, lists and tab bars lay items side by side too, but they are not the page's columns. */
+const NOT_COLUMNS = 'ul,ol,menu,[role="menubar"],[role="tablist"],[role="list"],header,nav,footer,[role="navigation"],[role="banner"],[role="contentinfo"]'
+/** The widest column must hold this much text, or a heading or paragraph, to be the main content. */
+const MIN_MAIN_TEXT = 80
+
+function holdsContent(el: Element): boolean {
+  return el.querySelector('h1,h2,h3,p') !== null || (el.textContent ?? '').trim().length >= MIN_MAIN_TEXT
+}
+
+function columnsOf(el: Element, env: PanelEnv): Element[] | null {
+  if (el.closest(NOT_COLUMNS)) return null
+  const columns = Array.from(el.children)
+    .filter((child) => visible(child) && env.rectOf(child).width > 0)
+    .sort((a, b) => env.rectOf(a).left - env.rectOf(b).left)
+  if (!isRow(columns.map(env.rectOf), env.viewport)) return null
+  const widest = columns.reduce((a, b) => (env.rectOf(b).width > env.rectOf(a).width ? b : a))
+  return holdsContent(widest) ? columns : null
+}
+
+/** The first set of side-by-side content columns, searching from the top of the page down. */
 function findRow(root: Element, env: PanelEnv): Row | null {
   let level: Element[] = [root]
+  let measured = 0
   for (let depth = 0; depth < MAX_SEARCH_DEPTH && level.length > 0; depth++) {
     for (const el of level) {
-      const columns = Array.from(el.children)
-        .filter((child) => visible(child) && env.rectOf(child).width > 0)
-        .sort((a, b) => env.rectOf(a).left - env.rectOf(b).left)
-      if (isRow(columns.map(env.rectOf), env.viewport)) return { container: el, columns }
+      measured += el.children.length
+      if (measured > MAX_MEASURED) return null
+      const columns = columnsOf(el, env)
+      if (columns) return { container: el, columns }
     }
     level = level.flatMap((el) => Array.from(el.children).filter(visible))
   }
@@ -187,7 +209,19 @@ function contentsOf(panel: Element, kind: PanelKind, others: readonly Element[])
  * can supply it (jsdom has no layout).
  */
 export function findPanels(doc: Document, env: PanelEnv): Panel[] {
-  const assigned = assignPanels(doc, env)
+  // Measuring an element makes the browser lay out the page, so each is measured once.
+  const rects = new Map<Element, Rect>()
+  const measured: PanelEnv = {
+    viewport: env.viewport,
+    rectOf: (el) => {
+      const known = rects.get(el)
+      if (known) return known
+      const rect = env.rectOf(el)
+      rects.set(el, rect)
+      return rect
+    },
+  }
+  const assigned = assignPanels(doc, measured)
   const elements = ORDER.flatMap((kind) => assigned[kind] ?? [])
   return ORDER.flatMap((kind) => {
     const element = assigned[kind]
