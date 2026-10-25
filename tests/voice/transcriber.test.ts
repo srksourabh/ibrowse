@@ -32,3 +32,18 @@ describe('transcribe', () => {
     expect(await transcribe(client(new Error('boom')), 'm', 'UklGRg==')).toEqual({ ok: false, error: 'network' })
   })
 })
+
+describe('transcribe: a request that hangs', () => {
+  it('gives up after a time limit and reports a network problem', async () => {
+    const hanging = {
+      generate: vi.fn(
+        (request: GenerateRequest) =>
+          new Promise<string>((_, reject) =>
+            request.signal?.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))),
+          ),
+      ),
+    }
+    expect(await transcribe(hanging, 'm', 'UklGRg==', 20)).toEqual({ ok: false, error: 'network' })
+    expect(hanging.generate.mock.calls[0]![0].signal).toBeInstanceOf(AbortSignal)
+  })
+})

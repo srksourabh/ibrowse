@@ -100,7 +100,12 @@ function panelCommand(words: string, action: 'describe' | 'go'): VoiceCommand | 
   return panel ? { kind: 'panel', panel, action } : null
 }
 
+/** "click click" or "press, press it": the command said twice, not a name. */
+const REPEATED_VERB = /^(?:click|press|tap|select|open|activate|choose|push)(?: (.*))?$/
+
 function clickCommand(words: string | undefined): VoiceCommand {
+  const again = words?.match(REPEATED_VERB)
+  if (again) return clickCommand(again[1])
   if (!words || POINTED.test(words)) return { kind: 'click' }
   return { kind: 'click', target: withoutArticle(words).replace(ROLE_WORDS, '') }
 }

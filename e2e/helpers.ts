@@ -17,7 +17,7 @@ export interface Harness {
   /** Everything the extension asked the voice to say, in order. */
   spoken(): Promise<string[]>
   /** Waits until something spoken matches. */
-  expectSpoken(pattern: RegExp): Promise<void>
+  expectSpoken(pattern: RegExp, timeoutMs?: number): Promise<void>
   /** Forgets what has been spoken so far. */
   clearSpoken(): Promise<void>
   /** Toggles Explore Mode in the tab showing a page on this origin. */
@@ -41,6 +41,10 @@ export interface HarnessOptions {
   hasTouch?: boolean
   /** Leave the first-run tour open for the test to use. By default it is waited for, then closed. */
   keepTour?: boolean
+  /** Extra browser flags, for example a sound file to use as the microphone. */
+  args?: readonly string[]
+  /** A visible window, for checks with a real screen reader. */
+  headed?: boolean
 }
 
 const TOUR_FIRST_STEP = /^Welcome to iBrowse\. It lets you/
@@ -70,12 +74,14 @@ export async function launchHarness(
     {
       channel: 'chromium',
       hasTouch: options.hasTouch ?? false,
+      headless: !(options.headed ?? false),
       args: [
         `--disable-extensions-except=${extensionPath}`,
         `--load-extension=${extensionPath}`,
         // A pretend microphone, and its permission prompt answered "Allow", so voice setup can run headless.
         '--use-fake-ui-for-media-stream',
         '--use-fake-device-for-media-stream',
+        ...(options.args ?? []),
       ],
     },
   )
@@ -116,9 +122,11 @@ export async function launchHarness(
     context,
     worker,
     spoken,
-    expectSpoken: async (pattern) => {
+    expectSpoken: async (pattern, timeoutMs) => {
       try {
-        await expect.poll(async () => (await spoken()).some((text) => pattern.test(text))).toBe(true)
+        await expect
+          .poll(async () => (await spoken()).some((text) => pattern.test(text)), { timeout: timeoutMs ?? 5000 })
+          .toBe(true)
       } catch {
         const heard = (await spoken()).map((text) => `  - ${text}`).join('\n')
         throw new Error(`Nothing spoken matched ${pattern}. Spoken so far:\n${heard}`)
@@ -156,10 +164,14 @@ export async function launchHarness(
     close: async () => {
       let errors: string[]
       try {
-        errors = await harness.consoleErrors()
+        // A worker that does not answer must not keep the browser open.
+        errors = await Promise.race([
+          harness.consoleErrors(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('no answer')), 5000)),
+        ])
       } catch {
         // The worker restarted, which dropped its record of errors: say so rather than pass unchecked.
-        errors = ['the background worker restarted, so its errors could not be checked']
+        errors = ['the background worker restarted or did not answer, so its errors could not be checked']
       } finally {
         await context.close()
       }

@@ -5,6 +5,8 @@ const PROMPT =
   'Transcribe exactly what the person in this audio says, in the language they speak. ' +
   'Reply with only those words. If nobody speaks, reply with nothing.'
 const MAX_WORDS_TOKENS = 100
+/** A request that has not answered by then is given up, so listening can never hang. */
+const TRANSCRIBE_TIMEOUT_MS = 15_000
 
 /**
  * Gemini as a speech recogniser (ADR-0017 #1). Runs in the background worker,
@@ -14,10 +16,12 @@ export async function transcribe(
   client: Pick<GeminiClient, 'generate'>,
   model: string,
   wavBase64: string,
+  timeoutMs: number = TRANSCRIBE_TIMEOUT_MS,
 ): Promise<ListenResponse> {
   try {
     const text = await client.generate({
       model,
+      signal: AbortSignal.timeout(timeoutMs),
       parts: [
         { type: 'text', text: PROMPT },
         { type: 'audio', data: wavBase64, mimeType: 'audio/wav' },

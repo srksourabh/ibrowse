@@ -10,6 +10,7 @@ describe('parseUtterance: commands', () => {
   it.each([
     'click', 'Click it.', 'press', 'press this', 'tap that', 'open it', 'select', 'click here',
     'Please click it', 'can you click this', 'iBrowse, click', 'click on', 'press on it',
+    'Click. Click.', 'press, press it',
   ])('"%s" presses what the pointer is on', (text) => {
     expect(command(text)).toEqual({ kind: 'click' })
   })
