@@ -8,6 +8,8 @@ export const EARCON_NAMES = [
   'error',
   'confirm',
   'tick',
+  'listen',
+  'listen-end',
 ] as const
 
 export type EarconName = (typeof EARCON_NAMES)[number]
@@ -53,6 +55,21 @@ const EARCONS: Record<EarconName, EarconDefinition> = {
   confirm: { pulses: [{ freq: 523, ms: 35, gain: 0.5 }], gapMs: 0 },
   // The click that marks each word while scrubbing.
   tick: { pulses: [{ freq: 1000, ms: 8, gain: 0.35 }], gapMs: 0 },
+  // Rising: the microphone is open. Falling: it has closed (ADR-0017 #3).
+  listen: {
+    pulses: [
+      { freq: 587, ms: 40, gain: 0.45 },
+      { freq: 880, ms: 60, gain: 0.45 },
+    ],
+    gapMs: 15,
+  },
+  'listen-end': {
+    pulses: [
+      { freq: 880, ms: 40, gain: 0.4 },
+      { freq: 587, ms: 50, gain: 0.4 },
+    ],
+    gapMs: 15,
+  },
 }
 
 const msToSamples = (ms: number, sampleRate: number): number =>

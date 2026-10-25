@@ -79,4 +79,6 @@ export const EARCON_TO_HAPTIC: Readonly<Record<EarconName, HapticEvent>> = {
   edge: 'edge-cross',
   confirm: 'action-confirm',
   error: 'error',
+  listen: 'action-confirm',
+  'listen-end': 'edge-cross',
 }
