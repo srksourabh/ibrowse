@@ -142,6 +142,18 @@ test.describe.serial('the settings page', () => {
     expect((await harness.storedSettings()).cloudVoice).not.toBe('reading')
   })
 
+  test('turns on voice commands only after the microphone warning and Allow, then says how to talk', async () => {
+    await page.selectOption('#setting-voiceInput', 'chrome')
+    await harness.expectSpoken(/Voice commands use the microphone/)
+    await expect(page.locator('#allow')).toBeFocused()
+    expect((await harness.storedSettings()).voiceInput).not.toBe('chrome')
+    await page.keyboard.press('Enter')
+    await harness.expectSpoken(
+      /^Voice commands: On, with Chrome's speech recognition\. Hold Alt, Shift and V and speak, or answer when iBrowse asks\.$/,
+    )
+    await expect.poll(async () => (await harness.storedSettings()).voiceInput).toBe('chrome')
+  })
+
   test('warns about AI in terms of page text and images, and waits for Allow too', async () => {
     await page.focus('#setting-aiAssist')
     await page.keyboard.press('Space')

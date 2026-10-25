@@ -18,6 +18,8 @@ export interface EditorDeps {
   speak(text: string): void
   /** Asks the browser for permission to contact these sites. It needs a fresh user gesture. */
   requestPermission(origins: string[]): Promise<boolean>
+  /** Asks the browser to let the extension use the microphone. It needs a fresh user gesture. */
+  requestMicrophone(): Promise<boolean>
   /** Asks Google whether the saved key works. Throws CloudError if not. */
   checkKey(): Promise<void>
 }
@@ -26,8 +28,11 @@ const ADD_KEY = ' Add your Google key to use it.'
 const AI_KEYS =
   ' Press Alt, Shift and D to describe what is under the pointer, and Alt, Shift and M to summarise the page.'
 
+const TALK_KEYS = ' Hold Alt, Shift and V and speak, or answer when iBrowse asks.'
+
 function alreadyOn(key: FieldSpec['key'], current: Settings): boolean {
   if (key === 'cloudVoice') return current.cloudVoice !== 'off'
+  if (key === 'voiceInput') return current.voiceInput !== 'off'
   return key === 'aiAssist' && current.aiAssist
 }
 
@@ -76,15 +81,20 @@ export class SettingsEditor {
     if (!pending) return 'none'
     this.#pending = null
 
+    const voice = pending.key === 'voiceInput'
     let granted = false
     try {
-      granted = await this.#deps.requestPermission([GEMINI_ORIGIN])
+      granted = voice ? await this.#deps.requestMicrophone() : await this.#deps.requestPermission([GEMINI_ORIGIN])
     } catch {
       this.#deps.speak('The browser could not ask for permission. Try pressing Allow again.')
       return 'denied'
     }
     if (!granted) {
-      this.#deps.speak(`Permission was not granted, so ${pending.label.toLowerCase()} stays off.`)
+      this.#deps.speak(
+        voice
+          ? 'The microphone was not allowed, so voice commands stay off.'
+          : `Permission was not granted, so ${pending.label.toLowerCase()} stays off.`,
+      )
       return 'denied'
     }
     await this.#save(fieldFor(pending.key), pending.value)
@@ -132,6 +142,7 @@ export class SettingsEditor {
     await saveSettings(this.#deps.store, { [field.key]: value })
     let text = confirmationFor(field, value)
     const turnedOn = (field.key === 'cloudVoice' && value !== 'off') || (field.key === 'aiAssist' && value === true)
+    if (field.key === 'voiceInput' && value !== 'off') text += TALK_KEYS
     if (turnedOn) {
       const hasKey = await this.hasKey()
       text += hasKey ? (field.key === 'aiAssist' ? AI_KEYS : '') : ADD_KEY

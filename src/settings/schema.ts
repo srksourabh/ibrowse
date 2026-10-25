@@ -3,6 +3,7 @@ import type { Settings } from '../shared/settings'
 export const SETTING_GROUPS = [
   { id: 'speech', label: 'Speech' },
   { id: 'exploring', label: 'Exploring' },
+  { id: 'voice', label: 'Voice commands' },
   { id: 'screenreader', label: 'Screen reader' },
   { id: 'haptics', label: 'Haptics' },
   { id: 'cloud', label: 'Cloud voice and AI' },
@@ -103,6 +104,14 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
     help: 'Pair a device on the hardware setup page, opened with Alt+Shift+P.',
   },
   {
+    key: 'voiceInput', kind: 'choice', group: 'voice', label: 'Voice commands',
+    options: [
+      { value: 'off', label: 'Off' },
+      { value: 'chrome', label: "On, with Chrome's speech recognition" },
+    ],
+    help: 'Speak commands and questions. Hold Alt, Shift and V to talk, or answer when iBrowse asks what to do.',
+  },
+  {
     key: 'cloudVoice', kind: 'choice', group: 'cloud', label: 'Cloud voice',
     options: [
       { value: 'off', label: 'Off, use the local voice' },
@@ -163,8 +172,14 @@ const AI_WARNING =
   'AI features send page text and images to Google when you use them. ' +
   'Your browser will ask for permission.'
 
+const VOICE_WARNING =
+  'Voice commands use the microphone, only while iBrowse is listening. ' +
+  'Chrome turns speech into text on this computer when it can; otherwise what you say is sent to Google for that. ' +
+  'Your browser will ask to use the microphone.'
+
 /** What must be said before a setting that sends data off this computer is switched on. */
 export function warningFor(key: FieldSpec['key'], value: unknown): string | null {
+  if (key === 'voiceInput' && value !== 'off') return VOICE_WARNING
   if (key === 'cloudVoice' && value !== 'off') return CLOUD_VOICE_WARNING
   if (key === 'aiAssist' && value === true) return AI_WARNING
   return null

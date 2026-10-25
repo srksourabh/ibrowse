@@ -6,7 +6,9 @@ import { DEFAULT_SETTINGS, loadSettings } from '../../src/shared/settings'
 
 const KEY = 'AIzaSyD-example_key_0123456789abcdef'
 
-function setup(options: { permission?: boolean; checkKey?: () => Promise<void>; initial?: Record<string, unknown> } = {}) {
+function setup(
+  options: { permission?: boolean; microphone?: boolean; checkKey?: () => Promise<void>; initial?: Record<string, unknown> } = {},
+) {
   const data: Record<string, unknown> = { ...options.initial }
   const store = {
     data,
@@ -16,13 +18,15 @@ function setup(options: { permission?: boolean; checkKey?: () => Promise<void>; 
   }
   const spoken: string[] = []
   const requestPermission = vi.fn(async (_origins: string[]) => options.permission ?? true)
+  const requestMicrophone = vi.fn(async () => options.microphone ?? true)
   const editor = new SettingsEditor({
     store,
     speak: (text) => void spoken.push(text),
     requestPermission,
+    requestMicrophone,
     checkKey: options.checkKey ?? (async () => {}),
   })
-  return { editor, store, spoken, requestPermission, last: () => spoken.at(-1) }
+  return { editor, store, spoken, requestPermission, requestMicrophone, last: () => spoken.at(-1) }
 }
 
 describe('SettingsEditor.change: ordinary settings', () => {
@@ -198,5 +202,44 @@ describe('SettingsEditor: the key', () => {
     expect(await editor.hasKey()).toBe(false)
     expect(store.data.geminiKey).toBeUndefined()
     expect(last()).toMatch(/key removed/i)
+  })
+})
+
+describe('SettingsEditor: voice commands', () => {
+  it('says the microphone will be used and where speech may go, then waits for Allow', async () => {
+    const { editor, store, last, requestMicrophone } = setup()
+    expect(await editor.change('voiceInput', 'chrome')).toBe('pending')
+    expect(last()).toMatch(/microphone/i)
+    expect(last()).toMatch(/on this computer when it can/i)
+    expect(last()).toMatch(/sent to Google/i)
+    expect(requestMicrophone).not.toHaveBeenCalled()
+    expect((await loadSettings(store)).voiceInput).toBe('off')
+  })
+
+  it('asks for the microphone, not for a website, when Allow is pressed, then says how to talk', async () => {
+    const { editor, store, last, requestMicrophone, requestPermission } = setup()
+    await editor.change('voiceInput', 'chrome')
+    expect(await editor.confirmPending()).toBe('saved')
+    expect(requestMicrophone).toHaveBeenCalledOnce()
+    expect(requestPermission).not.toHaveBeenCalled()
+    expect((await loadSettings(store)).voiceInput).toBe('chrome')
+    expect(last()).toBe(
+      "Voice commands: On, with Chrome's speech recognition. Hold Alt, Shift and V and speak, or answer when iBrowse asks.",
+    )
+  })
+
+  it('stays off when the microphone is refused, and says so', async () => {
+    const { editor, store, last } = setup({ microphone: false })
+    await editor.change('voiceInput', 'chrome')
+    expect(await editor.confirmPending()).toBe('denied')
+    expect((await loadSettings(store)).voiceInput).toBe('off')
+    expect(last()).toBe('The microphone was not allowed, so voice commands stay off.')
+  })
+
+  it('turns off at once', async () => {
+    const { editor, last, requestMicrophone } = setup({ initial: { settings: { voiceInput: 'chrome' } } })
+    expect(await editor.change('voiceInput', 'off')).toBe('saved')
+    expect(requestMicrophone).not.toHaveBeenCalled()
+    expect(last()).toBe('Voice commands: Off.')
   })
 })

@@ -70,7 +70,13 @@ export async function launchHarness(
     {
       channel: 'chromium',
       hasTouch: options.hasTouch ?? false,
-      args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
+      args: [
+        `--disable-extensions-except=${extensionPath}`,
+        `--load-extension=${extensionPath}`,
+        // A pretend microphone, and its permission prompt answered "Allow", so voice setup can run headless.
+        '--use-fake-ui-for-media-stream',
+        '--use-fake-device-for-media-stream',
+      ],
     },
   )
   await context.route(`${ORIGIN}/**`, (route) => {

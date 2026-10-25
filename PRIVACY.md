@@ -26,6 +26,9 @@ We cannot see any of it. Removing the extension deletes it.
 | Cloud voice | The text being read | Google Gemini | You turned it on, gave a key, and allowed the permission |
 | Page summary | Readable page text | Google Gemini | You turned AI on and pressed Alt+Shift+M |
 | Image description | The one image under the pointer | Google Gemini | You turned AI on and pressed Alt+Shift+D |
+| Voice commands | What you say, while iBrowse is listening | Nowhere when Chrome can recognise speech on your computer; otherwise Google, to turn it into text | You turned voice commands on and allowed the microphone |
+
+iBrowse listens only for a few seconds after it asks you something, or while you hold Alt+Shift+V. It keeps no recordings: only the text of one request, until it has been carried out.
 
 Never sent: form field values, passwords, cookies, your browsing history, or anything while Explore Mode is off. Requests carry your key in a header, never in an address.
 
