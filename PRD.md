@@ -121,7 +121,7 @@ Every element is classified as **interactive** or **static**, using role and nam
 
 - **FR-4.1** On hover over a readable block (paragraph, list, quote, table, article body), the extension says what it is and offers to read it: *"Paragraph: The quick brown fox jumps. Click to read."* v1 offers this for paragraphs; other text blocks are announced as "Text only" and can still be clicked or scrubbed.
 - **FR-4.2** **Click on a non-interactive block reads it.** Click on an interactive control activates it. Touch follows the same rule through the activation style in §5.7.
-- **FR-4.3** Reading a block speaks it as a unit, interruptible, with the word under speech highlighted visually for sighted helpers.
+- **FR-4.3** Reading a block speaks it as a unit, interruptible. (Highlighting the spoken word for sighted helpers was dropped on 2026-10-25: iBrowse is built for blind users, and the highlight served only an onlooker.)
 - **FR-4.4** The false-interactivity target is in §10.
 
 ### 5.5 Reading and next page
