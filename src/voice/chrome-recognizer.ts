@@ -78,7 +78,14 @@ export class ChromeRecognizer implements SpeechRecognizer {
       }
     })
     const timer = setTimeout(() => recognition.stop(), maxMs)
-    recognition.start()
+    try {
+      recognition.start()
+    } catch (error) {
+      // For example another recognition is still running: fail now rather than wait out the window.
+      clearTimeout(timer)
+      const failed = Promise.reject(error instanceof Error ? error : new Error('failed'))
+      return { result: failed, stop: () => {}, cancel: () => {} }
+    }
     return {
       result,
       stop: () => recognition.stop(),
@@ -93,6 +100,8 @@ export class ChromeRecognizer implements SpeechRecognizer {
 /** What to say when listening failed, from the browser's error code or Gemini's error kind. */
 export function recognitionErrorText(error: Error): string {
   switch (error.message) {
+    case 'voice-off':
+      return 'Voice commands are off. Turn them on in settings, opened with Alt+Shift+S.'
     case 'no-key':
     case 'bad-key':
     case 'bad-model':

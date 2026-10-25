@@ -159,3 +159,23 @@ describe('recognitionErrorText', () => {
     expect(recognitionErrorText(new Error('weird'))).toBe('I could not listen just now. Please try again.')
   })
 })
+
+describe('ChromeRecognizer: a start that fails', () => {
+  it('fails at once, rather than waiting out the window', async () => {
+    class Broken extends FakeRecognition {
+      override start = vi.fn(() => {
+        throw new Error('InvalidStateError')
+      })
+    }
+    const listening = new ChromeRecognizer(Broken as unknown as RecognitionClass, 'en-GB', 'online').listen({ maxMs: 5000 })
+    await expect(listening.result).rejects.toThrow('InvalidStateError')
+  })
+})
+
+describe('recognitionErrorText: voice turned off', () => {
+  it('says voice commands are off and where to turn them on', () => {
+    expect(recognitionErrorText(new Error('voice-off'))).toBe(
+      'Voice commands are off. Turn them on in settings, opened with Alt+Shift+S.',
+    )
+  })
+})

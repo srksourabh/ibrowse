@@ -32,6 +32,8 @@ export interface ListeningDeps {
 interface Session {
   readonly listening: Listening
   readonly held: boolean
+  /** The talk key was let go; the request is now being turned into text. */
+  released: boolean
 }
 
 /**
@@ -58,7 +60,8 @@ export class ListeningController {
   }
 
   startHold(): void {
-    if (this.#session?.held) return
+    // Still held is a key repeat; once released, a new press starts a new request.
+    if (this.#session?.held && !this.#session.released) return
     this.cancel()
     // Whatever iBrowse was saying stops, so the microphone hears only the user.
     this.#deps.speech.cancel()
@@ -66,7 +69,10 @@ export class ListeningController {
   }
 
   endHold(): void {
-    if (this.#session?.held) this.#session.listening.stop()
+    const session = this.#session
+    if (!session?.held || session.released) return
+    session.released = true
+    session.listening.stop()
   }
 
   /** Closes a window opened for an answer, but never a held push-to-talk request. */
@@ -83,7 +89,7 @@ export class ListeningController {
 
   #begin(maxMs: number, held: boolean): void {
     this.#deps.earcons.play('listen', 0)
-    const session: Session = { listening: this.#deps.recognizer.listen({ maxMs }), held }
+    const session: Session = { listening: this.#deps.recognizer.listen({ maxMs }), held, released: false }
     this.#session = session
     session.listening.result.then(
       (text) => {

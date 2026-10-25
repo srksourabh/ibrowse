@@ -148,3 +148,14 @@ describe('ListeningController.cancelAnswer', () => {
     expect(controller.isListening).toBe(true)
   })
 })
+
+describe('ListeningController: pressing the talk key again', () => {
+  it('starts afresh when the key is pressed again while the last request is still being turned into text', () => {
+    const { controller, deps, sessions } = setup()
+    controller.startHold()
+    controller.endHold()
+    controller.startHold()
+    expect(sessions[0]!.cancel).toHaveBeenCalled()
+    expect(deps.recognizer.listen).toHaveBeenCalledTimes(2)
+  })
+})

@@ -39,31 +39,45 @@ export function recordMicrophone(maxMs: number): Recording {
     finish(ended)
   }
 
+  const until = (): Promise<boolean> =>
+    new Promise<boolean>((resolve) => {
+      finish = resolve
+      if (ended !== null) resolve(ended)
+      setTimeout(() => resolve(false), maxMs)
+    })
+
   const samples = (async () => {
     const stream = await navigator.mediaDevices
       .getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } })
       .catch((error: unknown) => {
         throw new Error(codeFor(error))
       })
-    const context = new AudioContext({ sampleRate: SAMPLE_RATE })
+    try {
+      return await capture(stream, until)
+    } finally {
+      // Whatever happened, the microphone is let go of.
+      stream.getTracks().forEach((track) => track.stop())
+    }
+  })()
+
+  return { samples, stop: () => end(false), cancel: () => end(true) }
+}
+
+/** Collects samples from the stream until `until` settles: true means cancelled. */
+async function capture(stream: MediaStream, until: () => Promise<boolean>): Promise<Float32Array> {
+  const context = new AudioContext({ sampleRate: SAMPLE_RATE })
+  try {
     const source = context.createMediaStreamSource(stream)
     const processor = context.createScriptProcessor(BUFFER_SIZE, 1, 1)
     const chunks: Float32Array[] = []
     processor.onaudioprocess = (event) => chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)))
     source.connect(processor)
     processor.connect(context.destination)
-
-    const cancelled = await new Promise<boolean>((resolve) => {
-      finish = resolve
-      if (ended !== null) resolve(ended)
-      setTimeout(() => resolve(false), maxMs)
-    })
+    const cancelled = await until()
     processor.disconnect()
     source.disconnect()
-    stream.getTracks().forEach((track) => track.stop())
-    await context.close()
     return cancelled ? new Float32Array(0) : concat(chunks)
-  })()
-
-  return { samples, stop: () => end(false), cancel: () => end(true) }
+  } finally {
+    await context.close()
+  }
 }

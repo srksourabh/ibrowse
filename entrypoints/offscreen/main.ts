@@ -34,13 +34,14 @@ function listenWithChrome(id: number, maxMs: number, respond: (r: ListenResponse
   }
   const lang = navigator.language
   recognizer ??= chooseMode(Recognition, lang).then((mode) => new ChromeRecognizer(Recognition, lang, mode))
-  void recognizer.then((r) => {
-    const listening = r.listen({ maxMs })
-    begin(id, listening)
-    listening.result
-      .then((text) => respond({ ok: true, text }), (error: unknown) => respond({ ok: false, error: codeOf(error) }))
-      .finally(() => active.delete(id))
-  })
+  recognizer
+    .then((r) => {
+      const listening = r.listen({ maxMs })
+      begin(id, listening)
+      return listening.result.finally(() => active.delete(id))
+    })
+    // The page is always answered, so its listening can never hang.
+    .then((text) => respond({ ok: true, text }), (error: unknown) => respond({ ok: false, error: codeOf(error) }))
 }
 
 function recordForGemini(id: number, maxMs: number, respond: (r: RecordingResponse) => void): void {

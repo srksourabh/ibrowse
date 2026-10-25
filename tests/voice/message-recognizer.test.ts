@@ -4,7 +4,7 @@ import type { ListenRequest, ListenResponse } from '../../src/voice/messages'
 
 function setup(answer: ListenResponse = { ok: true, text: 'scroll down' }) {
   const send = vi.fn(async (_request: ListenRequest): Promise<ListenResponse> => answer)
-  return { recognizer: new MessageRecognizer(send), send }
+  return { recognizer: new MessageRecognizer(send, { firstId: 1 }), send }
 }
 
 describe('MessageRecognizer', () => {
@@ -34,8 +34,29 @@ describe('MessageRecognizer', () => {
     const send = vi.fn(async () => {
       throw new Error('Could not establish connection')
     })
-    await expect(new MessageRecognizer(send).listen({ maxMs: 5000 }).result).rejects.toThrow(
+    await expect(new MessageRecognizer(send, { firstId: 1 }).listen({ maxMs: 5000 }).result).rejects.toThrow(
       'Could not establish connection',
     )
+  })
+})
+
+describe('MessageRecognizer: never stuck', () => {
+  it('numbers requests from a random start, so a reloaded page does not reuse the old numbers', () => {
+    const send = vi.fn(async (_r: ListenRequest): Promise<ListenResponse> => ({ ok: true, text: null }))
+    new MessageRecognizer(send, { firstId: 4242 }).listen({ maxMs: 5000 })
+    expect(send).toHaveBeenCalledWith({ type: 'listen-start', id: 4242, maxMs: 5000 })
+  })
+
+  it('gives up with an error if no answer ever comes', async () => {
+    vi.useFakeTimers()
+    try {
+      const never = vi.fn(() => new Promise<ListenResponse>(() => {}))
+      const result = new MessageRecognizer(never, { firstId: 1, graceMs: 1000 }).listen({ maxMs: 5000 }).result
+      const settled = expect(result).rejects.toThrow('timeout')
+      await vi.advanceTimersByTimeAsync(6000)
+      await settled
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

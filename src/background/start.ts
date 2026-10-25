@@ -21,7 +21,8 @@ import type {
 import { loadSettings } from '../shared/settings'
 import { toolbarState } from '../shared/toolbar'
 import type { ListenRequest, ListenResponse } from '../voice/messages'
-import { handleListen, noteExploreState } from './voice-host'
+import type { VoiceRelay } from '../voice/voice-relay'
+import { createVoiceHost, handleListen } from './voice-host'
 
 const INACCESSIBLE_PAGE_MESSAGE =
   'iBrowse cannot run on this page. Chrome blocks extensions on its own pages, the Web Store and the built-in PDF viewer.'
@@ -57,6 +58,7 @@ interface Background {
   readonly speech: ChromeTtsProvider
   readonly hidHost: HidHost
   readonly cloud: CloudHost
+  readonly voice: VoiceRelay
   reportError(context: string): (error: unknown) => void
   sendToTopFrame(tabId: number, message: ExploreMessage): Promise<unknown>
 }
@@ -135,16 +137,13 @@ function handleMessage(
     case 'explore-state':
       if (sender.tab?.id !== undefined) {
         showToolbarState(sender.tab.id, message.enabled)
-        noteExploreState(sender.tab.id, message.enabled)
+        b.voice.noteExploreState(sender.tab.id, message.enabled)
       }
       return false
     case 'listen-start':
     case 'listen-stop':
     case 'listen-cancel':
-      return handleListen(message, sender, sendResponse, {
-        engine: () => loadSettings(chrome.storage.local).then((s) => (s.voiceInput === 'gemini' ? 'gemini' : 'chrome')),
-        transcribe: (audio) => b.cloud.transcribe(audio),
-      })
+      return handleListen(b.voice, message, sender, sendResponse)
     case 'will-navigate':
       if (sender.tab?.id !== undefined) {
         chrome.storage.session
@@ -234,7 +233,7 @@ function showToolbarState(tabId: number, enabled: boolean): void {
 function registerToolbar(b: Background): void {
   chrome.action.onClicked.addListener((tab) => void toggleExploreMode(b, tab))
   // A closed tab never reports Explore Mode off.
-  chrome.tabs.onRemoved.addListener((tabId) => noteExploreState(tabId, false))
+  chrome.tabs.onRemoved.addListener((tabId) => b.voice.noteExploreState(tabId, false))
 }
 
 function registerCommands(b: Background): void {
@@ -252,9 +251,14 @@ export function startBackground(): void {
   const reportError = (context: string) => (error: unknown) => {
     console.error(`iBrowse ${context}:`, error instanceof Error ? error.message : 'unknown')
   }
+  const cloud = new CloudHost()
   const b: Background = {
     speech: new ChromeTtsProvider(chrome.tts),
-    cloud: new CloudHost(),
+    cloud,
+    voice: createVoiceHost({
+      engine: () => loadSettings(chrome.storage.local).then((s) => s.voiceInput),
+      transcribe: (audio) => cloud.transcribe(audio),
+    }),
     hidHost: new HidHost({
       loadSettings: () => loadSettings(chrome.storage.local),
       loadProfiles: () => loadProfiles(chrome.storage.local),
