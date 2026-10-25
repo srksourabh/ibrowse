@@ -10,7 +10,7 @@ export interface AskAfterRestDeps {
   isOn(): boolean
   /** What the pointer rests on now. */
   current(): Element | null
-  speech: Pick<SpeechService, 'speak'>
+  speech: Pick<SpeechService, 'speak' | 'isBusy'>
   listening: Pick<ListeningController, 'listenForAnswer' | 'cancelAnswer'>
   getRate(): number
 }
@@ -55,7 +55,10 @@ export class AskAfterRest {
       { text: ASK_QUESTION, rate: this.#deps.getRate() },
       { interrupt: false },
     )
-    if (outcome === 'finished' && this.#still(round, target)) this.#deps.listening.listenForAnswer()
+    // Never while something else is still to be said (an alert, a message): the microphone would hear it.
+    if (outcome === 'finished' && !this.#deps.speech.isBusy && this.#still(round, target)) {
+      this.#deps.listening.listenForAnswer()
+    }
   }
 
   #still(round: number, target: Element): boolean {

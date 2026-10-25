@@ -9,17 +9,21 @@ export interface MessageRecognizerOptions {
   /** The first request number; random by default, so a reloaded page never reuses the old ones. */
   readonly firstId?: number
   readonly graceMs?: number
+  /** Where speech went, said the first time each recogniser is used; called after the answer is acted on. */
+  readonly onNotice?: (text: string) => void
 }
 
 /** The page's view of the recogniser, which runs in the offscreen document behind the background worker. */
 export class MessageRecognizer implements SpeechRecognizer {
   readonly #send: (request: ListenRequest) => Promise<ListenResponse>
   readonly #graceMs: number
+  readonly #onNotice: (text: string) => void
   #nextId: number
 
   constructor(send: (request: ListenRequest) => Promise<ListenResponse>, options: MessageRecognizerOptions = {}) {
     this.#send = send
     this.#graceMs = options.graceMs ?? GRACE_MS
+    this.#onNotice = options.onNotice ?? (() => {})
     this.#nextId = options.firstId ?? Math.floor(Math.random() * ID_SPACE)
   }
 
@@ -27,6 +31,9 @@ export class MessageRecognizer implements SpeechRecognizer {
     const id = this.#nextId++
     const answered = this.#send({ type: 'listen-start', id, maxMs }).then((response) => {
       if (!response.ok) throw new Error(response.error)
+      const { notice } = response
+      // After the command's own reply, so the reply comes first.
+      if (notice) setTimeout(() => this.#onNotice(notice), 0)
       return response.text
     })
     // A request that never answers would leave listening stuck, so it is given up.

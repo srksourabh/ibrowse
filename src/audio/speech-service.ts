@@ -53,6 +53,11 @@ export class SpeechService {
     this.#onError = options.onError ?? (() => {})
   }
 
+  /** True while anything is being spoken or waiting to be. */
+  get isBusy(): boolean {
+    return this.#active !== null || this.#queue.length > 0
+  }
+
   /** The text of the last Utterance asked for, so the user can have it repeated. */
   get lastText(): string | null {
     return this.#lastText

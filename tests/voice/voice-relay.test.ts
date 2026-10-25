@@ -55,7 +55,7 @@ describe('VoiceRelay.start', () => {
     const spoken = relay.start('tab:0:1', 5000)
     await flush()
     answer({ ok: true, audio: 'UklGRg==' })
-    expect(await spoken).toEqual({ ok: true, text: 'scroll down' })
+    expect(await spoken).toMatchObject({ ok: true, text: 'scroll down', mode: 'gemini' })
     expect(deps.transcribe).toHaveBeenCalledWith('UklGRg==')
 
     const silent = setup({ engine: vi.fn(async () => 'gemini' as const) })
@@ -132,5 +132,66 @@ describe('VoiceRelay: ids and the offscreen document', () => {
     relay.noteExploreState(2, true)
     relay.noteExploreState(1, false)
     expect(deps.closeOffscreen).not.toHaveBeenCalled()
+  })
+})
+
+describe('VoiceRelay: saying where speech goes', () => {
+  /** Answers the most recent recognize request. */
+  function answerLatest(sent: OffscreenRequest[], _deps: VoiceRelayDeps, value: unknown): void {
+    const latest = sent.filter((r) => r.type === 'recognize').at(-1)!
+    latestAnswer.get(latest.id)!(value)
+  }
+  const latestAnswer = new Map<number, (value: unknown) => void>()
+
+  function relayWithAnswers(engine: 'chrome' | 'gemini') {
+    const sent: OffscreenRequest[] = []
+    const deps: VoiceRelayDeps = {
+      engine: vi.fn(async () => engine),
+      ensureOffscreen: vi.fn(async () => {}),
+      closeOffscreen: vi.fn(),
+      toOffscreen: vi.fn((request: OffscreenRequest) => {
+        sent.push(request)
+        if (request.type !== 'recognize') return Promise.resolve(undefined)
+        return new Promise((resolve) => latestAnswer.set(request.id, resolve))
+      }),
+      transcribe: vi.fn(async () => ({ ok: true as const, text: 'scroll down' })),
+      firstId: 1,
+    }
+    return { relay: new VoiceRelay(deps), sent, deps }
+  }
+
+  it("says once, with the first answer, that Google's online service turned speech into text", async () => {
+    const { relay, sent, deps } = relayWithAnswers('chrome')
+    const first = relay.start('tab:0:1', 5000)
+    await flush()
+    answerLatest(sent, deps, { ok: true, text: 'click', mode: 'online' })
+    expect(await first).toEqual({
+      ok: true,
+      text: 'click',
+      mode: 'online',
+      notice: "Speech is turned into text by Google's online service.",
+    })
+    const second = relay.start('tab:0:2', 5000)
+    await flush()
+    answerLatest(sent, deps, { ok: true, text: 'stop', mode: 'online' })
+    expect(await second).toEqual({ ok: true, text: 'stop', mode: 'online' })
+  })
+
+  it('says so when speech stays on this computer', async () => {
+    const { relay, sent, deps } = relayWithAnswers('chrome')
+    const result = relay.start('tab:0:1', 5000)
+    await flush()
+    answerLatest(sent, deps, { ok: true, text: 'click', mode: 'on-device' })
+    expect((await result) as { notice?: string }).toMatchObject({ notice: 'Speech is turned into text on this computer.' })
+  })
+
+  it('says that a recording went to Gemini, once', async () => {
+    const { relay, sent, deps } = relayWithAnswers('gemini')
+    const result = relay.start('tab:0:1', 5000)
+    await flush()
+    answerLatest(sent, deps, { ok: true, audio: 'UklGRg==' })
+    expect((await result) as { notice?: string }).toMatchObject({
+      notice: 'What you said was sent to Google Gemini, with your key, to be turned into text.',
+    })
   })
 })

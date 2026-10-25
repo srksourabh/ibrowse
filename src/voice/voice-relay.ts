@@ -1,5 +1,11 @@
 import type { Settings } from '../shared/settings'
-import type { ListenResponse, OffscreenRequest, RecordingResponse } from './messages'
+import type { ListenResponse, OffscreenRequest, RecognizerMode, RecordingResponse } from './messages'
+
+const NOTICES: Readonly<Record<RecognizerMode, string>> = {
+  'on-device': 'Speech is turned into text on this computer.',
+  online: "Speech is turned into text by Google's online service.",
+  gemini: 'What you said was sent to Google Gemini, with your key, to be turned into text.',
+}
 
 export interface VoiceRelayDeps {
   /** The recogniser chosen in settings, read for each request; 'off' refuses. */
@@ -32,6 +38,8 @@ export class VoiceRelay {
   readonly #deps: VoiceRelayDeps
   readonly #requests = new Map<string, Request>()
   readonly #exploring = new Set<number>()
+  /** Where speech has gone so far, so each is said only once. */
+  readonly #told = new Set<RecognizerMode>()
   #nextId: number
 
   constructor(deps: VoiceRelayDeps) {
@@ -51,7 +59,7 @@ export class VoiceRelay {
       if (request.cancelled) return SILENCE
       const answer = this.#send(request, { target: 'offscreen', type: 'recognize', id: request.id, maxMs, engine })
       if (request.stopped) this.#tell(request, 'stop')
-      return await this.#finish(request, engine, await answer)
+      return this.#withNotice(await this.#finish(request, engine, await answer))
     } finally {
       if (this.#requests.get(key) === request) this.#requests.delete(key)
       this.#closeIfIdle()
@@ -89,7 +97,14 @@ export class VoiceRelay {
     if (!recording.ok) return recording
     // A cancelled or silent recording never leaves this computer.
     if (request.cancelled || recording.audio === null) return SILENCE
-    return this.#deps.transcribe(recording.audio)
+    const words = await this.#deps.transcribe(recording.audio)
+    return words.ok ? { ...words, mode: 'gemini' } : words
+  }
+
+  #withNotice(response: ListenResponse): ListenResponse {
+    if (!response.ok || !response.mode || this.#told.has(response.mode)) return response
+    this.#told.add(response.mode)
+    return { ...response, notice: NOTICES[response.mode] }
   }
 
   #closeIfIdle(): void {

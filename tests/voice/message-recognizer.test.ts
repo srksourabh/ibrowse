@@ -60,3 +60,14 @@ describe('MessageRecognizer: never stuck', () => {
     }
   })
 })
+
+describe('MessageRecognizer: where speech went', () => {
+  it('passes on a notice after the answer has been acted on', async () => {
+    const order: string[] = []
+    const send = vi.fn(async (): Promise<ListenResponse> => ({ ok: true, text: 'click', notice: 'Speech is turned into text on this computer.' }))
+    const recognizer = new MessageRecognizer(send, { firstId: 1, onNotice: (text) => order.push(`notice: ${text}`) })
+    await recognizer.listen({ maxMs: 5000 }).result.then((text) => order.push(`acted on: ${text}`))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(order).toEqual(['acted on: click', 'notice: Speech is turned into text on this computer.'])
+  })
+})

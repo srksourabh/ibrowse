@@ -4,9 +4,15 @@ export type ListenRequest =
   | { readonly type: 'listen-stop'; readonly id: number }
   | { readonly type: 'listen-cancel'; readonly id: number }
 
-/** What was heard (null for silence), or the recogniser's error code. */
+/** Where speech was turned into text. */
+export type RecognizerMode = 'on-device' | 'online' | 'gemini'
+
+/**
+ * What was heard (null for silence), or the recogniser's error code. `notice`
+ * says where speech went, the first time each recogniser is used (ADR-0017 #6).
+ */
 export type ListenResponse =
-  | { readonly ok: true; readonly text: string | null }
+  | { readonly ok: true; readonly text: string | null; readonly mode?: RecognizerMode; readonly notice?: string }
   | { readonly ok: false; readonly error: string }
 
 /** Which recogniser the user chose (ADR-0017 #1). */

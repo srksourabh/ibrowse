@@ -11,6 +11,9 @@ export type KeyAction =
   | 'describe-this'
   | 'summarize-page'
   | 'stop-speech'
+  /** Push to talk pressed and let go inside an iframe, carried out by the top frame. */
+  | 'talk-start'
+  | 'talk-end'
 
 export interface KeyLike {
   readonly key: string

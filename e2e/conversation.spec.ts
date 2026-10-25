@@ -260,3 +260,25 @@ test.describe.serial('push to talk with the Gemini recogniser', () => {
     }
   })
 })
+
+const FRAMED = `<!doctype html><title>Framed</title>
+  <main><h1>Outer</h1><iframe src="/inner" style="width:300px;height:100px;border:0"></iframe></main>`
+const INNER = `<!doctype html><title>Inner</title><button>Inside</button>`
+
+test.describe.serial('push to talk inside an iframe', () => {
+  test('is carried out by the top frame, which says voice is off', async () => {
+    const harness = await launchHarness({ '/': FRAMED, '/inner': INNER })
+    try {
+      const page = await harness.context.newPage()
+      await page.goto(`${ORIGIN}/`)
+      await harness.toggleExplore(ORIGIN)
+      await harness.expectSpoken(/^Explore mode on$/)
+      await page.frameLocator('iframe').locator('button').focus()
+      await harness.clearSpoken()
+      await holdTalkKey(page, 100)
+      await harness.expectSpoken(/^Voice commands are off\. Turn them on in settings, opened with Alt\+Shift\+S\.$/)
+    } finally {
+      await harness.close()
+    }
+  })
+})

@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SpeechOutcome } from '../../src/audio/speech-service'
 import { ASK_QUESTION, AskAfterRest, REST_MS } from '../../src/voice/ask-after-rest'
 
-function setup(options: { on?: boolean; questionOutcome?: SpeechOutcome } = {}) {
+function setup(options: { on?: boolean; questionOutcome?: SpeechOutcome; busyAfter?: boolean } = {}) {
   const button = document.createElement('button')
   let current: Element | null = button
   const deps = {
     isOn: () => options.on ?? true,
     current: () => current,
-    speech: { speak: vi.fn(async () => options.questionOutcome ?? ('finished' as const)) },
+    speech: { speak: vi.fn(async () => options.questionOutcome ?? ('finished' as const)), isBusy: options.busyAfter ?? false },
     listening: { listenForAnswer: vi.fn(), cancelAnswer: vi.fn() },
     getRate: () => 1,
   }
@@ -54,6 +54,14 @@ describe('AskAfterRest', () => {
     const { ask, deps, button } = setup({ questionOutcome: 'cancelled' })
     ask.described(button, Promise.resolve('finished'))
     await vi.advanceTimersByTimeAsync(REST_MS)
+    expect(deps.listening.listenForAnswer).not.toHaveBeenCalled()
+  })
+
+  it('does not listen while something else is still being said, so it never hears itself', async () => {
+    const { ask, deps, button } = setup({ busyAfter: true })
+    ask.described(button, Promise.resolve('finished'))
+    await vi.advanceTimersByTimeAsync(REST_MS)
+    expect(deps.speech.speak).toHaveBeenCalled()
     expect(deps.listening.listenForAnswer).not.toHaveBeenCalled()
   })
 

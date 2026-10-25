@@ -32,7 +32,7 @@ Source: PRD §5.11. Decisions: ADR-0017 (supersedes ADR-0008), ADR-0014 (AI cons
 - **A test bug, not a product bug:** Chromium's pretend microphone beeps about once a second. A 1.2 s hold could fall between beeps and was correctly treated as silence, so the end-to-end test holds for 2.5 s.
 - **Found while wiring Gemini:** the rule that the key's code never runs in web pages was only checked on direct imports. The test now follows every import from the content script, and caught a real slip (an error wording module that pulled in the Gemini client); the wording now lives in `src/cloud/cloud-error.ts`.
 - **An early stop was lost:** releasing the key before the recogniser had started let it listen for the full 15 s. The offscreen document now remembers an early stop or cancel.
-- Push to talk works in the top frame only. Pressed while focus is inside an iframe, the key is swallowed and nothing listens. To be revisited if testers hit it.
+- Push to talk pressed inside an iframe is passed up to the top frame, which listens, like the other shortcuts.
 
 ## Out of scope
 Continuous listening and a wake word (ADR-0017 #3), dictating into form fields, languages other than the browser's own.

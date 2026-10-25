@@ -19,6 +19,14 @@ import type { SessionAi } from './ai'
 import type { Services } from './services'
 
 const NOT_UNDERSTOOD = 'I did not understand. Say help to hear what you can say.'
+const VOICE_OFF = 'Voice commands are off. Turn them on in settings, opened with Alt+Shift+S.'
+
+/** Push to talk in the top frame, whichever frame the key was pressed in. */
+export function talk(s: Services, listening: ListeningController, start: boolean): void {
+  if (!start) listening.endHold()
+  else if (s.settings().voiceInput === 'off') void s.speech.speak({ text: VOICE_OFF, rate: s.rate() })
+  else listening.startHold()
+}
 
 export interface VoiceParts {
   readonly hover: HoverController
@@ -49,7 +57,7 @@ export function createVoice(s: Services, p: VoiceParts): VoiceRunner {
     isRisky,
     askAndListen: (text) => {
       void s.speech.speak({ text, rate: s.rate() }).then((outcome) => {
-        if (outcome === 'finished' && s.settings().voiceInput !== 'off') p.listenForAnswer()
+        if (outcome === 'finished' && !s.speech.isBusy && s.settings().voiceInput !== 'off') p.listenForAnswer()
       })
     },
     now: () => performance.now(),
@@ -92,7 +100,10 @@ export function createVoice(s: Services, p: VoiceParts): VoiceRunner {
 
 /** The microphone side: what is heard is understood and carried out by the runner. */
 export function createListening(s: Services, runner: VoiceRunner): ListeningController {
-  const recognizer = new MessageRecognizer((request) => chrome.runtime.sendMessage<typeof request, ListenResponse>(request))
+  const recognizer = new MessageRecognizer(
+    (request) => chrome.runtime.sendMessage<typeof request, ListenResponse>(request),
+    { onNotice: (text) => void s.speech.speak({ text, rate: s.rate() }, { interrupt: false }) },
+  )
   return new ListeningController({
     recognizer,
     speech: s.speech,

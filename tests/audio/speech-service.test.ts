@@ -22,6 +22,18 @@ describe('SpeechService', () => {
     expect(service.lastText).toBe('End of page')
   })
 
+  it('says whether anything is being spoken or waiting to be', () => {
+    const { provider, pending } = controllableProvider()
+    const service = new SpeechService(provider)
+    expect(service.isBusy).toBe(false)
+    void service.speak({ text: 'one' })
+    void service.speak({ text: 'two' }, { interrupt: false })
+    expect(service.isBusy).toBe(true)
+    service.cancel()
+    expect(service.isBusy).toBe(false)
+    void pending
+  })
+
   it('speaks an utterance and reports it finished', async () => {
     const { provider, pending } = controllableProvider()
     const outcome = new SpeechService(provider).speak({ text: 'Hello' })
