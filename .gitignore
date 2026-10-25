@@ -10,3 +10,7 @@ playwright-report/
 Thumbs.db
 bin/
 obj/
+.env
+.env.*
+!.env.example
+NVDA/
