@@ -170,7 +170,8 @@ const CLOUD_VOICE_WARNING =
   'Cloud voice sends the text it speaks to Google, to be turned into speech. ' +
   'That text comes from the pages you read. Your browser will ask for permission.'
 const AI_WARNING =
-  'AI features send page text and images to Google when you use them. ' +
+  'AI features send page text and images to Google: part of each page you explore, so the briefing can say ' +
+  'what the page is for, and more when you ask for a summary, an image description or an answer. ' +
   'Your browser will ask for permission.'
 
 const VOICE_WARNING =

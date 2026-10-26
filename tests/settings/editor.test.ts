@@ -110,6 +110,12 @@ describe('SettingsEditor: settings that send data off the computer', () => {
     expect(last()).toMatch(/page text and images/i)
   })
 
+  it('says AI sends part of every page explored, not only when a feature is used', async () => {
+    const { editor, last } = setup()
+    await editor.change('aiAssist', true)
+    expect(last()).toMatch(/part of each page you explore/i)
+  })
+
   it('turns them off at once, with no warning and no permission', async () => {
     const { editor, store, last, requestPermission } = setup({
       initial: { settings: { cloudVoice: 'reading', aiAssist: true } },

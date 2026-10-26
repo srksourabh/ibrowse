@@ -12,7 +12,7 @@ export const manifest = {
   description:
     'Explore and operate any website by touch, mouse and audio. Built for blind users.',
   // offscreen: the speech recogniser runs in an offscreen document, the only place it may (ADR-0017 #2).
-  permissions: ['activeTab', 'contextMenus', 'offscreen', 'scripting', 'storage', 'tts'],
+  permissions: ['contextMenus', 'offscreen', 'storage', 'tts'],
   host_permissions: ['<all_urls>'],
   // Asked for only when the user turns on cloud voice or AI. Until granted, nothing can be sent.
   optional_host_permissions: [GEMINI_ORIGIN],
