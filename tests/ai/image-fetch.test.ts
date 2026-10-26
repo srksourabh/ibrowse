@@ -86,3 +86,45 @@ describe('fetchImage', () => {
     expect(error.message).not.toContain('XYZ')
   })
 })
+
+describe("fetchImage: images on the user's own network", () => {
+  it.each([
+    'http://localhost/a.png',
+    'http://router/a.png',
+    'http://printer.local/a.png',
+    'http://nas.home.arpa/a.png',
+    'http://127.0.0.1/a.png',
+    'http://2130706433/a.png', // 127.0.0.1 written as one number
+    'http://10.1.2.3/a.png',
+    'http://172.20.0.1/a.png',
+    'http://192.168.1.1/a.png',
+    'http://169.254.169.254/a.png',
+    'http://100.64.0.1/a.png',
+    'http://0.0.0.0/a.png',
+    'http://[::1]/a.png',
+    'http://[fd00::1]/a.png',
+    'http://[fe80::1]/a.png',
+    'http://[::ffff:192.168.1.1]/a.png',
+  ])('refuses %s, and never fetches it', async (url) => {
+    const fetchFn = vi.fn(async () => imageResponse([1, 2, 3]))
+    const error = await caught(fetchImage(url, fetchFn as unknown as typeof fetch))
+    expect(error.spoken).toBe('That image is on a private network, so it is not sent.')
+    expect(fetchFn).not.toHaveBeenCalled()
+  })
+
+  it.each(['https://example.com/a.png', 'https://172.15.0.1/a.png', 'https://8.8.8.8/a.png', 'https://[2001:4860::8888]/a.png'])(
+    'fetches a public address (%s)',
+    async (url) => {
+      const fetchFn = vi.fn(async () => imageResponse([1, 2, 3]))
+      await expect(fetchImage(url, fetchFn as unknown as typeof fetch)).resolves.toMatchObject({ mimeType: 'image/png' })
+    },
+  )
+
+  it('refuses an image that was redirected to a private address', async () => {
+    const redirected = imageResponse([1, 2, 3])
+    Object.defineProperty(redirected, 'url', { value: 'http://192.168.1.1/a.png' })
+    const fetchFn = vi.fn(async () => redirected)
+    const error = await caught(fetchImage('https://example.com/a.png', fetchFn as unknown as typeof fetch))
+    expect(error.spoken).toBe('That image is on a private network, so it is not sent.')
+  })
+})

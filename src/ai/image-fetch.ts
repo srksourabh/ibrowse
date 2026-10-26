@@ -1,3 +1,5 @@
+import { isPrivateHost } from './private-network'
+
 /** Larger images are refused: they cost more, and take too long to be useful to someone waiting. */
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024
 
@@ -18,6 +20,7 @@ export class ImageError extends Error {
 const UNDESCRIBABLE = 'That image cannot be described.'
 const TOO_LARGE = 'That image is too large to describe.'
 const COULD_NOT_LOAD = 'Could not load that image.'
+const PRIVATE = 'That image is on a private network, so it is not sent.'
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = ''
@@ -40,8 +43,8 @@ function fromDataUrl(url: string): { base64: string; mimeType: string } | null {
 
 /**
  * Gets an image to describe. Only web and data addresses are accepted, never
- * with the user's cookies, and never an image that is too big or of a kind
- * that cannot be described.
+ * with the user's cookies, never from the user's own network, and never an
+ * image that is too big or of a kind that cannot be described.
  */
 export async function fetchImage(
   url: string,
@@ -57,6 +60,8 @@ export async function fetchImage(
     throw new ImageError(UNDESCRIBABLE)
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new ImageError(UNDESCRIBABLE)
+  // A page could point at a router or printer at home; the worker would fetch it and send it to Google.
+  if (isPrivateHost(parsed.hostname)) throw new ImageError(PRIVATE)
 
   let response: Response
   try {
@@ -65,6 +70,7 @@ export async function fetchImage(
     throw new ImageError(COULD_NOT_LOAD)
   }
   if (!response.ok) throw new ImageError(COULD_NOT_LOAD)
+  if (response.url && isPrivateHost(new URL(response.url).hostname)) throw new ImageError(PRIVATE)
 
   const mimeType = (response.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase()
   if (!ALLOWED_TYPES.has(mimeType)) throw new ImageError(UNDESCRIBABLE)
