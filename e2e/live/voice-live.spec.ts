@@ -6,12 +6,11 @@
 // The WAV files are made by scripts/make-speech.mjs-style recording: scroll-down, scroll-up,
 // click-basket and left-panel. The key is read from .env.local and given to the extension's storage.
 import { expect, test } from '@playwright/test'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { launchHarness, ORIGIN, type Harness } from '../helpers'
+import { geminiKey, seconds } from './live-helpers'
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const speechDir = process.env.IBROWSE_SPEECH_DIR ?? ''
 const live = process.env.IBROWSE_LIVE === '1'
 /** A real round trip to Google, after the key is let go, can take several seconds. */
@@ -31,19 +30,6 @@ const PAGE = `<!doctype html>
     <div id="status" role="status"></div></main>
   <aside><h2>Offers</h2><a href="/x">Half price pots</a></aside>
   <footer><a href="/c">Contact</a></footer>`
-
-function geminiKey(): string {
-  const env = readFileSync(path.join(root, '.env.local'), 'utf8')
-  const key = /^GEMINI_API_KEY=(.*)$/m.exec(env)?.[1]?.trim()
-  if (!key || key === 'your-key-here') throw new Error('No GEMINI_API_KEY in .env.local')
-  return key
-}
-
-/** Seconds of sound in a WAV file. */
-function seconds(file: string): number {
-  const wav = readFileSync(file)
-  return wav.readUInt32LE(40) / wav.readUInt16LE(32) / wav.readUInt32LE(24)
-}
 
 async function sayCommand(phrase: string, before?: (h: Harness) => Promise<void>): Promise<Harness> {
   const wav = path.join(speechDir, `${phrase}.wav`)
