@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iBrowse: hear any website</title>
+<meta name="description" content="How iBrowse lets blind and low-vision people explore and use any website by mouse, touch, keyboard and voice.">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<a class="skip" href="#slide-1">Skip to the slides. Use the arrow keys, Page Up and Page Down, or the Previous and Next buttons to move between slides.</a>
+<div class="progress" aria-hidden="true"></div>
+<main class="deck" aria-roledescription="presentation" aria-label="iBrowse presentation">
+
+<!-- 1 -->
+<section class="slide" id="slide-1" aria-roledescription="slide" aria-labelledby="t1" style="--accent: var(--pink)">
+  <div class="cols">
+    <div>
+      <p class="eyebrow">Accessibility · Chrome extension</p>
+      <h1 id="t1"><span class="grad">iBrowse</span></h1>
+      <p class="lede">Hear any website. Explore it by <strong>mouse</strong>, <strong>touch</strong>, <strong>keyboard</strong> and <strong>voice</strong>, built for blind and low-vision people.</p>
+      <p class="small" style="margin-top:28px">Free and open source · github.com/srksourabh/ibrowse</p>
+    </div>
+    <svg class="float" viewBox="0 0 420 420" role="img" aria-labelledby="g1">
+      <title id="g1">The iBrowse pointer sending sound waves</title>
+      <defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#db2777"/></linearGradient></defs>
+      <rect x="40" y="40" width="340" height="340" rx="80" fill="url(#lg1)"/>
+      <path d="M120 100 L120 290 L165 248 L195 314 L226 300 L196 236 L256 236 Z" fill="#fff"/>
+      <path d="M278 170 a60 60 0 0 1 0 90" stroke="#fde047" stroke-width="16" fill="none" stroke-linecap="round"/>
+      <path d="M310 135 a105 105 0 0 1 0 160" stroke="#fdba74" stroke-width="16" fill="none" stroke-linecap="round" opacity=".85"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="slide" id="slide-2" aria-roledescription="slide" aria-labelledby="t2" style="--accent: var(--orange)">
+  <p class="eyebrow">Why it matters</p>
+  <h2 id="t2">The web is built to be <span class="grad">looked at</span>.</h2>
+  <p class="lede">Layout tells sighted people where things are: the menu on the left, the offers on the right, the button under the picture. Without sight, that map is missing.</p>
+  <div class="row" style="margin-top:40px">
+    <div class="stat"><strong class="grad">2.2 billion</strong><span>people live with a near or distance vision impairment (WHO, World report on vision, 2019).</span></div>
+    <div class="stat"><strong class="grad">Where?</strong><span>Screen readers read in order. iBrowse adds <em>where</em>: what is under your hand, and what is on each side.</span></div>
+    <div class="stat"><strong class="grad">Any site</strong><span>No changes to websites needed. iBrowse reads the page you are on.</span></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide" id="slide-3" aria-roledescription="slide" aria-labelledby="t3" style="--accent: var(--teal)">
+  <p class="eyebrow">How it works · in five steps</p>
+  <h2 id="t3">Turn it on, listen, explore, <span class="grad">talk</span>, act.</h2>
+  <svg viewBox="0 0 1120 300" role="img" aria-labelledby="g3" style="width:100%;margin-top:24px">
+    <title id="g3">Five steps: press Alt+Shift+E, hear the page briefing, explore with the pointer, talk to iBrowse, and it acts on the page.</title>
+    <defs>
+      <linearGradient id="s1" x1="0" x2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+      <linearGradient id="s2" x1="0" x2="1"><stop offset="0" stop-color="#db2777"/><stop offset="1" stop-color="#f472b6"/></linearGradient>
+      <linearGradient id="s3" x1="0" x2="1"><stop offset="0" stop-color="#f97316"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+      <linearGradient id="s4" x1="0" x2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#14b8a6"/></linearGradient>
+      <linearGradient id="s5" x1="0" x2="1"><stop offset="0" stop-color="#22c55e"/><stop offset="1" stop-color="#84cc16"/></linearGradient>
+    </defs>
+    <g font-family="Segoe UI, sans-serif" text-anchor="middle" fill="#fff">
+      <g><rect x="0" y="40" width="200" height="200" rx="34" fill="url(#s1)"/><text x="100" y="125" font-size="54">⌨</text><text x="100" y="178" font-size="24" font-weight="800">Turn on</text><text x="100" y="208" font-size="17">Alt+Shift+E</text></g>
+      <g><rect x="230" y="40" width="200" height="200" rx="34" fill="url(#s2)"/><text x="330" y="125" font-size="54">🔊</text><text x="330" y="178" font-size="24" font-weight="800">Briefing</text><text x="330" y="208" font-size="17">panel by panel</text></g>
+      <g><rect x="460" y="40" width="200" height="200" rx="34" fill="url(#s3)"/><text x="560" y="125" font-size="54">🖱</text><text x="560" y="178" font-size="24" font-weight="800">Explore</text><text x="560" y="208" font-size="17">hover, touch, wheel</text></g>
+      <g><rect x="690" y="40" width="200" height="200" rx="34" fill="url(#s4)"/><text x="790" y="125" font-size="54">🎤</text><text x="790" y="178" font-size="24" font-weight="800">Talk</text><text x="790" y="208" font-size="17">hold Alt+Shift+V</text></g>
+      <g><rect x="920" y="40" width="200" height="200" rx="34" fill="url(#s5)"/><text x="1020" y="125" font-size="54">✓</text><text x="1020" y="178" font-size="24" font-weight="800">Act</text><text x="1020" y="208" font-size="17">click, scroll, read</text></g>
+    </g>
+  </svg>
+  <p class="lede" style="margin-top:18px">Nothing happens until you turn Explore Mode on. Off, the page behaves exactly as usual.</p>
+</section>
+
+<!-- 4 -->
+<section class="slide" id="slide-4" aria-roledescription="slide" aria-labelledby="t4" style="--accent: var(--violet)">
+  <div class="cols">
+    <div>
+      <p class="eyebrow">Page briefing</p>
+      <h2 id="t4">A map of the page, <span class="grad">spoken</span>.</h2>
+      <p class="lede">iBrowse finds the header, the side panels, the main content and the footer, from landmarks or from the layout itself, and says what each one holds.</p>
+      <p class="speech" style="margin-top:26px"><b>iBrowse says</b>Header: search box, 4 links. Left panel, Categories: 3 links. Main content, Cherry tomatoes: 2 paragraphs, 1 picture, 2 buttons. Right panel, Offers: 2 links. Want me to read it?</p>
+    </div>
+    <svg viewBox="0 0 460 420" role="img" aria-labelledby="g4">
+      <title id="g4">A web page split into five coloured panels: header on top, left panel, main content, right panel, footer at the bottom.</title>
+      <g font-family="Segoe UI, sans-serif" font-weight="800" font-size="22" fill="#fff" text-anchor="middle">
+        <rect x="10" y="10" width="440" height="70" rx="18" fill="#7c3aed"/><text x="230" y="53">Header</text>
+        <rect x="10" y="94" width="110" height="230" rx="18" fill="#0ea5e9"/><text x="65" y="215">Left</text>
+        <rect x="134" y="94" width="192" height="230" rx="18" fill="#db2777"/><text x="230" y="205">Main</text><text x="230" y="235" font-size="16" font-weight="500">content</text>
+        <rect x="340" y="94" width="110" height="230" rx="18" fill="#f97316"/><text x="395" y="215">Right</text>
+        <rect x="10" y="338" width="440" height="70" rx="18" fill="#22c55e"/><text x="230" y="381">Footer</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide" id="slide-5" aria-roledescription="slide" aria-labelledby="t5" style="--accent: var(--orange)">
+  <p class="eyebrow">Explore by pointer and touch</p>
+  <h2 id="t5">Whatever is under your hand, <span class="grad">named</span>.</h2>
+  <div class="row" style="margin-top:30px">
+    <div class="card"><div class="icon i-orange" aria-hidden="true">🖱</div><h3>Hover</h3><p>"Add to basket — Button, Clickable." Speech stops the moment you move on.</p></div>
+    <div class="card"><div class="icon i-violet" aria-hidden="true">🎧</div><h3>Sound in space</h3><p>Short earcons mark links, buttons, text and edges, panned left or right to match where they are.</p></div>
+    <div class="card"><div class="icon i-teal" aria-hidden="true">☝</div><h3>Touch</h3><p>Drag a finger to explore, double-tap to activate, and hear an edge tone at the side of the screen.</p></div>
+    <div class="card"><div class="icon i-green" aria-hidden="true">💬</div><h3>Rest to ask</h3><p>Rest on something and iBrowse asks "What would you like to do?". Answer out loud.</p></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide" id="slide-6" aria-roledescription="slide" aria-labelledby="t6" style="--accent: var(--sky)">
+  <div class="cols">
+    <div>
+      <p class="eyebrow">Reading</p>
+      <h2 id="t6">Click to read. <span class="grad">Scroll</span> word by word.</h2>
+      <p class="lede">Click a paragraph to hear it. Over text, the mouse wheel steps one word at a time, Shift + wheel spells a word, and Alt+Shift+R reads on from where you are.</p>
+    </div>
+    <svg viewBox="0 0 460 360" role="img" aria-labelledby="g6">
+      <title id="g6">A sentence with one highlighted word and a mouse wheel moving to the next word.</title>
+      <rect x="0" y="40" width="460" height="150" rx="24" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.2)"/>
+      <g font-family="Segoe UI, sans-serif" font-size="30" fill="#e2e8f0">
+        <text x="28" y="105">Sweet, easy to</text>
+        <rect x="222" y="74" width="92" height="44" rx="10" fill="#0ea5e9"/><text x="232" y="105" fill="#fff" font-weight="800">grow</text>
+        <text x="28" y="155">in a sunny pot.</text>
+      </g>
+      <rect x="180" y="220" width="100" height="130" rx="50" fill="none" stroke="#14b8a6" stroke-width="8"/>
+      <rect x="222" y="244" width="16" height="36" rx="8" fill="#fde047"/>
+      <path d="M330 270 l30 0 m-12 -12 l12 12 l-12 12" stroke="#fde047" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <text x="372" y="280" font-family="Segoe UI" font-size="22" fill="#fde047">next word</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide" id="slide-7" aria-roledescription="slide" aria-labelledby="t7" style="--accent: var(--amber)">
+  <p class="eyebrow">Voice conversation</p>
+  <h2 id="t7">Can't click? <span class="grad">Say it.</span></h2>
+  <div class="cols" style="height:auto;margin-top:10px;align-items:start">
+    <div class="chips" aria-label="Things you can say">
+      <span class="chip hot">"Click"</span><span class="chip hot">"Click add to basket"</span><span class="chip">"Scroll down"</span><span class="chip">"Scroll up"</span>
+      <span class="chip">"What is on the left?"</span><span class="chip">"Read the page"</span><span class="chip">"Next page"</span><span class="chip">"Go back"</span>
+      <span class="chip">"Find the search box"</span><span class="chip">"Where am I?"</span><span class="chip">"Stop"</span><span class="chip">"Help"</span>
+      <p class="small" style="margin:14px 0 0">Commands are understood on your computer. Anything else is a question, answered from the page if you turn on AI.</p>
+    </div>
+    <div style="display:grid;gap:14px">
+      <p class="speech you" style="justify-self:end;margin:0"><b>You say</b>Click buy now.</p>
+      <p class="speech" style="margin:0"><b>iBrowse says</b>Buy now. Say yes to press it, or no.</p>
+      <p class="speech you" style="justify-self:end;margin:0"><b>You say</b>Yes.</p>
+      <p class="small" style="margin:0">Anything that can't be taken back (paying, sending, deleting, agreeing) waits for a spoken yes, and a harmless label alone can't hide it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide" id="slide-8" aria-roledescription="slide" aria-labelledby="t8" style="--accent: var(--pink)">
+  <p class="eyebrow">See it · and hear it</p>
+  <h2 id="t8" style="font-size:44px">iBrowse in action</h2>
+  <video controls preload="metadata" poster="../media/ibrowse-demo-poster.png" aria-describedby="v8">
+    <source src="../media/ibrowse-demo.mp4" type="video/mp4">
+    <track kind="captions" src="../media/ibrowse-demo.vtt" srclang="en" label="English" default>
+    <a href="../media/ibrowse-demo.mp4">Download the demo video</a>
+  </video>
+  <p id="v8" class="small" style="margin-top:10px">A recording of iBrowse on a made-up shop page, with captions. The user's voice commands are simulated, and both voices are synthesised.</p>
+</section>
+
+<!-- 9 -->
+<section class="slide" id="slide-9" aria-roledescription="slide" aria-labelledby="t9" style="--accent: var(--green)">
+  <p class="eyebrow">Plays well with others</p>
+  <h2 id="t9">Your screen reader, your <span class="grad">hardware</span>.</h2>
+  <div class="row" style="margin-top:26px">
+    <div class="card"><div class="icon i-green" aria-hidden="true">🗣</div><h3>Companion mode</h3><p>NVDA speaks for iBrowse, so you hear one voice. Checked with NVDA: the briefing and hover descriptions were spoken once, and push to talk worked while NVDA ran.</p></div>
+    <div class="card"><div class="icon i-orange" aria-hidden="true">🎮</div><h3>Feel it</h3><p>Every sound has a matching touch effect: a rumbling game controller, or a USB haptic device described in JSON.</p></div>
+    <div class="card"><div class="icon i-violet" aria-hidden="true">🧩</div><h3>Open SDK</h3><p>Hardware makers get a schema, an example profile, an example driver and conformance checks.</p></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide" id="slide-10" aria-roledescription="slide" aria-labelledby="t10" style="--accent: var(--teal)">
+  <div class="cols">
+    <div>
+      <p class="eyebrow">Private by default</p>
+      <h2 id="t10">It stays on <span class="grad">your computer</span>.</h2>
+      <p class="lede">No servers, no accounts, no analytics. Optional Google Gemini features (a natural voice, AI summaries and answers, image descriptions) use your own key. iBrowse says what will be sent before you allow it.</p>
+      <p class="small" style="margin-top:18px">Never sent: form values, passwords, cookies, browsing history, or anything while Explore Mode is off.</p>
+    </div>
+    <svg viewBox="0 0 400 420" role="img" aria-labelledby="g10">
+      <title id="g10">A shield with a lock, meaning private by default.</title>
+      <defs><linearGradient id="sh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14b8a6"/><stop offset="1" stop-color="#0ea5e9"/></linearGradient></defs>
+      <path d="M200 20 L360 80 L360 200 C360 300 290 370 200 400 C110 370 40 300 40 200 L40 80 Z" fill="url(#sh)"/>
+      <rect x="140" y="190" width="120" height="100" rx="18" fill="#0b1020"/>
+      <path d="M160 190 v-30 a40 40 0 0 1 80 0 v30" stroke="#0b1020" stroke-width="18" fill="none"/>
+      <circle cx="200" cy="235" r="14" fill="#fde047"/><rect x="194" y="240" width="12" height="28" rx="6" fill="#fde047"/>
+    </svg>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide" id="slide-11" aria-roledescription="slide" aria-labelledby="t11" style="--accent: var(--violet)">
+  <p class="eyebrow">Under the hood</p>
+  <h2 id="t11" style="font-size:48px">A small, tested Chrome extension</h2>
+  <svg viewBox="0 0 1120 400" role="img" aria-labelledby="g11" style="width:100%">
+    <title id="g11">Architecture: the page script reads the page and speaks; the background worker holds settings, voices and the key; a hidden page runs speech recognition; Google Gemini is optional.</title>
+    <g font-family="Segoe UI, sans-serif" fill="#fff">
+      <rect x="0" y="40" width="330" height="300" rx="28" fill="#7c3aed"/>
+      <text x="30" y="90" font-size="28" font-weight="800">In every page</text>
+      <text x="30" y="135" font-size="20">• briefing and panels</text><text x="30" y="170" font-size="20">• hover, touch, reading</text>
+      <text x="30" y="205" font-size="20">• forms and live changes</text><text x="30" y="240" font-size="20">• voice commands</text>
+      <text x="30" y="300" font-size="16" opacity=".85">content script, every frame</text>
+      <rect x="395" y="40" width="330" height="300" rx="28" fill="#db2777"/>
+      <text x="425" y="90" font-size="28" font-weight="800">Background worker</text>
+      <text x="425" y="135" font-size="20">• the computer's voices</text><text x="425" y="170" font-size="20">• settings, toolbar, keys</text>
+      <text x="425" y="205" font-size="20">• the Gemini key, locked away</text><text x="425" y="240" font-size="20">• haptic devices</text>
+      <rect x="790" y="40" width="330" height="135" rx="28" fill="#f97316"/>
+      <text x="820" y="92" font-size="26" font-weight="800">Speech recognition</text><text x="820" y="132" font-size="18">hidden page, only while listening</text>
+      <rect x="790" y="205" width="330" height="135" rx="28" fill="none" stroke="#14b8a6" stroke-width="4" stroke-dasharray="12 8"/>
+      <text x="820" y="257" font-size="26" font-weight="800" fill="#5eead4">Google Gemini</text><text x="820" y="297" font-size="18" fill="#99f6e4">optional, your own key</text>
+    </g>
+    <g stroke="#fde047" stroke-width="5" fill="none" stroke-linecap="round">
+      <path d="M338 190 h48 m-12 -12 l12 12 l-12 12"/><path d="M733 108 h48 m-12 -12 l12 12 l-12 12"/><path d="M733 272 h48 m-12 -12 l12 12 l-12 12"/>
+    </g>
+  </svg>
+</section>
+
+<!-- 12 -->
+<section class="slide" id="slide-12" aria-roledescription="slide" aria-labelledby="t12" style="--accent: var(--green)">
+  <p class="eyebrow">Quality</p>
+  <h2 id="t12">Tested like it <span class="grad">matters</span>.</h2>
+  <div class="row" style="margin-top:30px">
+    <div class="stat"><strong class="grad">1,094</strong><span>unit tests, about 98% of lines covered</span></div>
+    <div class="stat"><strong class="grad">99 × 5</strong><span>end-to-end tests in real Chromium, five runs in a row for every speech change</span></div>
+    <div class="stat"><strong class="grad">398 / 444</strong><span>official W3C accessible-name tests matched</span></div>
+  </div>
+  <div class="row" style="margin-top:22px">
+    <div class="stat"><strong class="grad">Real voice</strong><span>A person said "Scroll down" into a real microphone, and iBrowse scrolled</span></div>
+    <div class="stat"><strong class="grad">Real NVDA</strong><span>Companion mode checked against NVDA's own speech log</span></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide" id="slide-13" aria-roledescription="slide" aria-labelledby="t13" style="--accent: var(--pink)">
+  <p class="eyebrow">Get started · help shape it</p>
+  <h2 id="t13">Try it, then <span class="grad">tell us</span>.</h2>
+  <div class="row" style="margin-top:20px">
+    <div class="card"><div class="icon i-violet" aria-hidden="true">1</div><h3>Build</h3><p><kbd>npm install</kbd> then <kbd>npm run build</kbd></p></div>
+    <div class="card"><div class="icon i-orange" aria-hidden="true">2</div><h3>Load</h3><p>chrome://extensions, Developer mode, Load unpacked, choose <kbd>.output/chrome-mv3</kbd></p></div>
+    <div class="card"><div class="icon i-teal" aria-hidden="true">3</div><h3>Explore</h3><p>A spoken tour opens. Then press <kbd>Alt+Shift+E</kbd> on any page.</p></div>
+  </div>
+  <p class="lede" style="margin-top:34px">Next: a closed beta with blind testers, then the Chrome Web Store. Free and open source under the MIT licence.</p>
+  <p style="font-size:24px;margin-top:14px"><a href="https://github.com/srksourabh/ibrowse">github.com/srksourabh/ibrowse</a></p>
+</section>
+
+</main>
+<nav class="controls" aria-label="Slide controls">
+  <button type="button" id="prev">← Previous</button>
+  <span class="counter" id="counter" aria-hidden="true">1 / 13</span>
+  <button type="button" id="next">Next →</button>
+</nav>
+<div id="announce" class="skip" aria-live="polite"></div>
+<script src="deck.js"></script>
+</body>
+</html>
