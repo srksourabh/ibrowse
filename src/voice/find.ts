@@ -13,7 +13,9 @@ const HEADINGS = 'h1,h2,h3,h4,h5,h6,[role="heading"]'
 const ROLE_WORDS = /\s+(?:button|link|box|field|tab|checkbox|menu|heading|section)$/
 /** Controls whose effect may not be taken back, which voice presses only after a spoken yes. */
 const RISKY =
-  /\b(?:delete|remove|erase|buy|pay|purchase|order|checkout|check out|submit|send|confirm|unsubscribe|close account|sign out|log out|transfer|donate|subscribe)\b/i
+  /\b(?:delete|remove|erase|buy|pay|purchase|order|checkout|check out|submit|send|confirm|unsubscribe|close account|sign out|log out|transfer|donate|subscribe|accept|agree|authori[sz]e|install|reset|publish|post)\b/i
+/** Form fields that mean money is involved: a card number, expiry or security code. */
+const PAYMENT_FIELDS = 'input[autocomplete^="cc-"]'
 
 const EXACT = 3
 const STARTS = 2
@@ -66,9 +68,27 @@ export function findControl(root: ParentNode, name: string): ControlMatch {
   return { kind: 'several', names: matches.map(controlName) }
 }
 
-/** True for a control whose effect may not be taken back: buying, sending, deleting and the like. */
+/** The form this control would send if pressed, or null. */
+function formSentBy(el: Element): HTMLFormElement | null {
+  if (el instanceof HTMLButtonElement) return el.type === 'submit' ? el.form : null
+  if (el instanceof HTMLInputElement) return el.type === 'submit' || el.type === 'image' ? el.form : null
+  return null
+}
+
+/** A form that changes something: one posted to the site, or one taking card details. */
+function changesSomething(form: HTMLFormElement): boolean {
+  return form.method === 'post' || form.querySelector(PAYMENT_FIELDS) !== null
+}
+
+/**
+ * True for a control whose effect may not be taken back: buying, sending, deleting and the like.
+ * The page chooses a control's name, so its visible text and the form it sends count too.
+ */
 export function isRisky(el: Element): boolean {
-  return RISKY.test(controlName(el))
+  const words = [controlName(el), el.textContent ?? '', el.getAttribute('value') ?? '']
+  if (words.some((text) => RISKY.test(text))) return true
+  const form = formSentBy(el)
+  return form !== null && changesSomething(form)
 }
 
 function findByText(root: ParentNode, wanted: string): Element | null {
