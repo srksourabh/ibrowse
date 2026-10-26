@@ -136,6 +136,7 @@ Everything runs on your device. Nothing is sent anywhere unless you turn on a Go
 
 | File | What it holds |
 |---|---|
+| [docs/FEATURES.md](docs/FEATURES.md) | Everything iBrowse can do, in one list |
 | [PRD.md](PRD.md) | Requirements, scope, milestones |
 | [CONTEXT.md](CONTEXT.md) | Shared vocabulary used in code, tests and speech |
 | [CLAUDE.md](CLAUDE.md) | Working rules for AI agents and contributors |
