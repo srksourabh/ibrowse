@@ -47,6 +47,8 @@ export interface HarnessOptions {
   headed?: boolean
   /** The computer's own microphone in place of the pretend one, for checks with a person speaking. */
   realMicrophone?: boolean
+  /** Records every page as video into this folder, for the demo video. */
+  recordVideoDir?: string
 }
 
 const TOUR_FIRST_STEP = /^Welcome to iBrowse\. It lets you/
@@ -77,6 +79,9 @@ export async function launchHarness(
       channel: 'chromium',
       hasTouch: options.hasTouch ?? false,
       headless: !(options.headed ?? false),
+      ...(options.recordVideoDir
+        ? { viewport: { width: 1280, height: 720 }, recordVideo: { dir: options.recordVideoDir, size: { width: 1280, height: 720 } } }
+        : {}),
       args: [
         `--disable-extensions-except=${extensionPath}`,
         `--load-extension=${extensionPath}`,
