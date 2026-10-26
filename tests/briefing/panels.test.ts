@@ -46,7 +46,7 @@ describe('findPanels on a page with landmarks', () => {
 
   it('counts what each panel holds', () => {
     const [header, left, main, right, footer] = findPanels(document, env())
-    expect(header!.contents).toMatchObject({ links: 3, logo: true, search: true, images: 0 })
+    expect(header!.contents).toMatchObject({ links: 3, logo: true, search: true, images: 0, inputs: 0 }) // the search box is not also a field
     expect(left!.contents).toMatchObject({ links: 3, search: false })
     expect(left!.label).toBe('Categories')
     expect(main!.contents).toMatchObject({ paragraphs: 2, buttons: 1, firstHeading: 'Tomatoes' })
@@ -116,7 +116,7 @@ describe('findPanels on a page built from plain boxes', () => {
     document.querySelector('#a')!.innerHTML =
       '<div role="heading" aria-level="3">Menu</div><div role="heading" aria-level="1">Shop</div><input placeholder="Search products">'
     const left = findPanels(document, env()).find((p) => p.kind === 'left')!
-    expect(left.contents).toMatchObject({ search: true, inputs: 1, headings: 2, firstHeading: 'Shop' })
+    expect(left.contents).toMatchObject({ search: true, inputs: 0, headings: 2, firstHeading: 'Shop' })
   })
 
   it('is not fooled by a menu bar of side-by-side links above the real columns', () => {

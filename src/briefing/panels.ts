@@ -190,8 +190,9 @@ function contentsOf(panel: Element, kind: PanelKind, others: readonly Element[])
   return {
     links: own('a[href]').length,
     buttons: own('button,[role="button"],input[type="button"],input[type="submit"],input[type="reset"]').length,
+    // A search box is named as such, not counted again as a field.
     inputs: own('input,select,textarea').filter(
-      (el) => !NON_TEXT_INPUTS.has((el.getAttribute('type') ?? '').toLowerCase()),
+      (el) => !NON_TEXT_INPUTS.has((el.getAttribute('type') ?? '').toLowerCase()) && !isSearch(el),
     ).length,
     // The logo is named as such, not counted again as a picture.
     images: images.length - (logo ? 1 : 0),
