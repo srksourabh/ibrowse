@@ -96,7 +96,9 @@ export async function launchHarness(
 
   const pageErrors: string[] = []
   context.on('console', (message) => {
-    if (message.type() === 'error' && message.text().startsWith('iBrowse')) pageErrors.push(message.text())
+    // Worker messages arrive here too; the welcome's failure on a voiceless machine is skipped below as well.
+    const text = message.text()
+    if (message.type() === 'error' && text.startsWith('iBrowse') && !text.startsWith('iBrowse welcome')) pageErrors.push(text)
   })
 
   const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))

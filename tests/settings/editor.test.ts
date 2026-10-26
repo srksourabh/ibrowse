@@ -9,24 +9,28 @@ const KEY = 'AIzaSyD-example_key_0123456789abcdef'
 function setup(
   options: { permission?: boolean; microphone?: boolean; checkKey?: () => Promise<void>; initial?: Record<string, unknown> } = {},
 ) {
-  const data: Record<string, unknown> = { ...options.initial }
-  const store = {
+  const { geminiKey, ...rest } = options.initial ?? {}
+  const memory = (data: Record<string, unknown>) => ({
     data,
     get: async (key: string) => ({ [key]: data[key] }),
     set: async (items: Record<string, unknown>) => void Object.assign(data, items),
     remove: async (key: string) => void delete data[key],
-  }
+  })
+  const store = memory({ ...rest })
+  // The key lives apart from the settings, where nothing running in a web page can read it.
+  const secrets = memory(geminiKey === undefined ? {} : { geminiKey })
   const spoken: string[] = []
   const requestPermission = vi.fn(async (_origins: string[]) => options.permission ?? true)
   const requestMicrophone = vi.fn(async () => options.microphone ?? true)
   const editor = new SettingsEditor({
     store,
+    secrets,
     speak: (text) => void spoken.push(text),
     requestPermission,
     requestMicrophone,
     checkKey: options.checkKey ?? (async () => {}),
   })
-  return { editor, store, spoken, requestPermission, requestMicrophone, last: () => spoken.at(-1) }
+  return { editor, store, secrets, spoken, requestPermission, requestMicrophone, last: () => spoken.at(-1) }
 }
 
 describe('SettingsEditor.change: ordinary settings', () => {
@@ -162,17 +166,18 @@ describe('SettingsEditor: settings that send data off the computer', () => {
 
 describe('SettingsEditor: the key', () => {
   it('saves a key and says so, without repeating it', async () => {
-    const { editor, spoken, store } = setup()
+    const { editor, spoken, store, secrets } = setup()
     expect(await editor.saveKey(KEY)).toBe(true)
-    expect(store.data.geminiKey).toBe(KEY)
+    expect(secrets.data.geminiKey).toBe(KEY)
+    expect(store.data.geminiKey).toBeUndefined()
     expect(spoken.at(-1)).toMatch(/key saved/i)
     expect(spoken.join(' ')).not.toContain(KEY)
   })
 
   it('refuses something that cannot be a key, without repeating it', async () => {
-    const { editor, spoken, store } = setup()
+    const { editor, spoken, secrets } = setup()
     expect(await editor.saveKey('not a key!')).toBe(false)
-    expect(store.data.geminiKey).toBeUndefined()
+    expect(secrets.data.geminiKey).toBeUndefined()
     expect(spoken.at(-1)).toMatch(/does not look like/i)
     expect(spoken.join(' ')).not.toContain('not a key!')
   })
@@ -202,11 +207,11 @@ describe('SettingsEditor: the key', () => {
   })
 
   it('removes a key', async () => {
-    const { editor, store, last } = setup({ initial: { geminiKey: KEY } })
+    const { editor, secrets, last } = setup({ initial: { geminiKey: KEY } })
     expect(await editor.hasKey()).toBe(true)
     await editor.removeKey()
     expect(await editor.hasKey()).toBe(false)
-    expect(store.data.geminiKey).toBeUndefined()
+    expect(secrets.data.geminiKey).toBeUndefined()
     expect(last()).toMatch(/key removed/i)
   })
 })

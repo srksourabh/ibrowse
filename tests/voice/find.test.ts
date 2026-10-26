@@ -80,6 +80,30 @@ describe('isRisky', () => {
     expect(isRisky(document.getElementById('contact')!)).toBe(false)
     expect(isRisky(document.getElementById('continue')!)).toBe(false)
   })
+
+  it('is not fooled by a harmless label over risky visible text', () => {
+    document.body.insertAdjacentHTML('beforeend', '<button id="disguised" aria-label="Continue">Pay now</button>')
+    expect(isRisky(document.getElementById('disguised')!)).toBe(true)
+  })
+
+  it('counts a button that sends a form which changes something, whatever its name', () => {
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      `<form method="post"><button id="post-go">Continue</button><button id="post-plain" type="button">Show more</button></form>
+       <form><input autocomplete="cc-number" aria-label="Card"><input id="card-go" type="submit" value="Next"></form>`,
+    )
+    expect(isRisky(document.getElementById('post-go')!)).toBe(true)
+    expect(isRisky(document.getElementById('card-go')!)).toBe(true)
+    expect(isRisky(document.getElementById('post-plain')!)).toBe(false) // does not send the form
+  })
+
+  it.each(['Accept', 'I agree', 'Authorise payment', 'Install', 'Reset password', 'Publish', 'Post'])(
+    'knows "%s" cannot be taken back',
+    (name) => {
+      document.body.insertAdjacentHTML('beforeend', `<button id="word">${name}</button>`)
+      expect(isRisky(document.getElementById('word')!)).toBe(true)
+    },
+  )
 })
 
 describe('findAnything', () => {

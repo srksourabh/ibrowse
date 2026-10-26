@@ -1,7 +1,8 @@
 import { latencyText } from '../../src/audio/latency-text'
 import type { LatencyReport } from '../../src/audio/latency-meter'
 import { GeminiClient } from '../../src/cloud/gemini-client'
-import { loadGeminiKey } from '../../src/cloud/secrets'
+import { keyVault, loadVaultKey } from '../../src/cloud/key-vault'
+import { moveKeyOut } from '../../src/cloud/secrets'
 import { byId, createPageSpeaker } from '../../src/pages/page-speaker'
 import { SettingsEditor } from '../../src/settings/editor'
 import {
@@ -173,13 +174,15 @@ async function requestMicrophone(): Promise<boolean> {
 
 async function main(): Promise<void> {
   const store = chrome.storage.local
+  await moveKeyOut(store, keyVault)
   const initial = await loadSettings(store)
   const companion = initial.screenReaderMode === 'companion'
   const speak = createPageSpeaker(byId('status'), companion)
 
-  const client = new GeminiClient({ fetch: (input, init) => fetch(input, init), getKey: () => loadGeminiKey(store) })
+  const client = new GeminiClient({ fetch: (input, init) => fetch(input, init), getKey: loadVaultKey })
   const editor = new SettingsEditor({
     store,
+    secrets: keyVault,
     speak,
     requestPermission: (origins) => chrome.permissions.request({ origins }),
     requestMicrophone,
