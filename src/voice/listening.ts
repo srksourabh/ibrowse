@@ -3,6 +3,8 @@ import type { SpeechService } from '../audio/speech-service'
 
 /** How long iBrowse waits for an answer after asking a question (ADR-0017 #3). */
 export const ANSWER_WINDOW_MS = 5000
+/** Said when the talk key was held but nothing was made out. */
+export const NOTHING_HEARD = "I didn't catch that. Hold Alt+Shift+V and try again."
 /** The longest a held key keeps the microphone open. */
 export const HOLD_MAX_MS = 15000
 
@@ -26,6 +28,8 @@ export interface ListeningDeps {
   readonly speech: Pick<SpeechService, 'cancel'>
   readonly earcons: { play(name: EarconName, pan: number): void }
   onHeard(text: string): void
+  /** The user held the talk key but nothing was made out. */
+  onNothingHeard(): void
   onError(error: Error): void
 }
 
@@ -96,6 +100,7 @@ export class ListeningController {
         if (this.#session !== session) return // cancelled or replaced: a late result is dropped
         this.#end(session)
         if (text && text.trim()) this.#deps.onHeard(text.trim())
+        else if (session.held) this.#deps.onNothingHeard()
       },
       (error: unknown) => {
         if (this.#session !== session) return

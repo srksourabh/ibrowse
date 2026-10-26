@@ -45,6 +45,8 @@ export interface HarnessOptions {
   args?: readonly string[]
   /** A visible window, for checks with a real screen reader. */
   headed?: boolean
+  /** The computer's own microphone in place of the pretend one, for checks with a person speaking. */
+  realMicrophone?: boolean
 }
 
 const TOUR_FIRST_STEP = /^Welcome to iBrowse\. It lets you/
@@ -80,7 +82,7 @@ export async function launchHarness(
         `--load-extension=${extensionPath}`,
         // A pretend microphone, and its permission prompt answered "Allow", so voice setup can run headless.
         '--use-fake-ui-for-media-stream',
-        '--use-fake-device-for-media-stream',
+        ...(options.realMicrophone ? [] : ['--use-fake-device-for-media-stream']),
         ...(options.args ?? []),
       ],
     },

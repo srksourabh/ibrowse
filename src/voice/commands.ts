@@ -110,15 +110,23 @@ function clickCommand(words: string | undefined): VoiceCommand {
   return { kind: 'click', target: withoutArticle(words).replace(ROLE_WORDS, '') }
 }
 
+/** "scroll down scroll down": one phrase said more than once. */
+const SAID_AGAIN = /^(.+?)(?: \1)+$/
+
+function commandIn(text: string): VoiceCommand | null {
+  for (const [pattern, build] of RULES) {
+    const match = text.match(pattern)
+    const command = match ? build(match) : null
+    if (command) return command
+  }
+  return null
+}
+
 /** Turns what was heard into a command, a question for the AI, or nothing. */
 export function parseUtterance(transcript: string): Understood {
   const said = transcript.trim()
   const text = normalise(said)
   if (text === '' || ONLY_FILLER.test(text)) return { type: 'nothing' }
-  for (const [pattern, build] of RULES) {
-    const match = text.match(pattern)
-    const command = match ? build(match) : null
-    if (command) return { type: 'command', command }
-  }
-  return { type: 'question', text: said }
+  const command = commandIn(text) ?? commandIn(text.match(SAID_AGAIN)?.[1] ?? '')
+  return command ? { type: 'command', command } : { type: 'question', text: said }
 }

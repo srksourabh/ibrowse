@@ -101,6 +101,13 @@ describe('parseUtterance: commands', () => {
     expect(command(text)).toEqual({ kind: 'help' })
   })
 
+  it.each(['Scroll down. Scroll down.', 'scroll down, scroll down, scroll down', 'Down. Down.'])(
+    '"%s", a command said more than once, is carried out once',
+    (text) => {
+      expect(command(text)).toEqual({ kind: 'scroll', direction: 'down' })
+    },
+  )
+
   it('"where am I" says where the user is', () => {
     expect(command('where am I')).toEqual({ kind: 'where' })
   })

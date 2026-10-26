@@ -38,6 +38,18 @@ describe('isSilent', () => {
     const tone = Float32Array.from({ length: 1600 }, (_, i) => 0.2 * Math.sin(i / 3))
     expect(isSilent(tone)).toBe(false)
   })
+
+  it('is false for a short command in a long hold of the talk key', () => {
+    // 6 s at 16 kHz of a quiet room, with half a second of ordinary speech in it.
+    const hold = Float32Array.from({ length: 96000 }, (_, i) =>
+      i >= 16000 && i < 24000 ? 0.04 * Math.sin(i / 3) : 0.002 * Math.sin(i),
+    )
+    expect(isSilent(hold)).toBe(false)
+  })
+
+  it('is true for a long hold of a quiet room', () => {
+    expect(isSilent(Float32Array.from({ length: 96000 }, (_, i) => 0.003 * Math.sin(i)))).toBe(true)
+  })
 })
 
 describe('recordingToAudio', () => {

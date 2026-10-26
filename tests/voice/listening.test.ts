@@ -32,6 +32,7 @@ function setup() {
     speech: { cancel: vi.fn() },
     earcons: { play: vi.fn() },
     onHeard: vi.fn(),
+    onNothingHeard: vi.fn(),
     onError: vi.fn(),
   }
   return { controller: new ListeningController(deps), deps, sessions }
@@ -157,5 +158,33 @@ describe('ListeningController: pressing the talk key again', () => {
     controller.startHold()
     expect(sessions[0]!.cancel).toHaveBeenCalled()
     expect(deps.recognizer.listen).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('ListeningController: when nothing is heard', () => {
+  it('says so after the talk key is let go, so the user knows to try again', async () => {
+    const { controller, deps, sessions } = setup()
+    controller.startHold()
+    controller.endHold()
+    sessions[0]!.resolve(null)
+    await flush()
+    expect(deps.onNothingHeard).toHaveBeenCalledTimes(1)
+    expect(deps.onHeard).not.toHaveBeenCalled()
+  })
+
+  it('stays quiet when an answer window passes in silence: not answering is an answer', async () => {
+    const { controller, deps, sessions } = setup()
+    controller.listenForAnswer()
+    sessions[0]!.resolve('  ')
+    await flush()
+    expect(deps.onNothingHeard).not.toHaveBeenCalled()
+  })
+
+  it('stays quiet when the request was cancelled', async () => {
+    const { controller, deps } = setup()
+    controller.startHold()
+    controller.cancel()
+    await flush()
+    expect(deps.onNothingHeard).not.toHaveBeenCalled()
   })
 })

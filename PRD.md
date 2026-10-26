@@ -184,7 +184,7 @@ Heading jumps are on Alt+Shift+arrows, not the plain `Shift+H` first proposed, b
 ### 5.11 Voice conversation (ADR-0017)
 - **FR-11.1 Panel briefing.** The briefing walks the page by panel, in order: header, left panel, main content, right panel, footer. For each, it says what the panel holds ("Header: logo, search box, 6 links").
 - **FR-11.2 Ask after hover.** Resting on an element names it, then asks "What would you like to do?". For a short time after the question ends, iBrowse listens.
-- **FR-11.3 Push to talk.** Holding a key listens at any time during Explore Mode. An earcon marks the start and end of listening.
+- **FR-11.3 Push to talk.** Holding a key listens at any time during Explore Mode. An earcon marks the start and end of listening. If nothing is made out, iBrowse says "I didn't catch that." A command said twice ("Scroll down. Scroll down.") is carried out once.
 - **FR-11.4 Commands.** These are understood on the device: click or press, scroll up and down, read this, read the page, next and previous page, go back, the panel commands, find, stop, repeat and help.
 - **FR-11.5 Questions.** Anything that is not a command is a question. With AI on, it is answered from the readable page text. Without AI, iBrowse says it did not understand and suggests commands.
 - **FR-11.6 Recogniser.** Chrome's own, preferring on-device recognition when available, or Gemini (a setting). Turning voice on says which recogniser is in use and where audio goes.

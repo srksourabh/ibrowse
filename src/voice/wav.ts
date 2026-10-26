@@ -27,10 +27,19 @@ export function encodeWav(samples: Float32Array, sampleRate: number): Uint8Array
   return bytes
 }
 
+/** Loudness is judged over short stretches (50 ms at the recorder's 16 kHz), so a brief command in a long hold counts. */
+const FRAME = 800
+
+function loudness(samples: Float32Array): number {
+  return Math.sqrt(samples.reduce((sum, s) => sum + s * s, 0) / samples.length)
+}
+
+/** True when no stretch of the recording is as loud as speech. */
 export function isSilent(samples: Float32Array): boolean {
-  if (samples.length === 0) return true
-  const power = samples.reduce((sum, s) => sum + s * s, 0) / samples.length
-  return Math.sqrt(power) < SILENCE_RMS
+  for (let start = 0; start < samples.length; start += FRAME) {
+    if (loudness(samples.subarray(start, start + FRAME)) >= SILENCE_RMS) return false
+  }
+  return true
 }
 
 function toBase64(bytes: Uint8Array): string {

@@ -11,7 +11,7 @@ import { AskAfterRest } from '../voice/ask-after-rest'
 import { recognitionErrorText } from '../voice/chrome-recognizer'
 import { parseUtterance } from '../voice/commands'
 import { findAnything, findControl, isRisky } from '../voice/find'
-import { ListeningController } from '../voice/listening'
+import { ListeningController, NOTHING_HEARD } from '../voice/listening'
 import { MessageRecognizer } from '../voice/message-recognizer'
 import type { ListenResponse } from '../voice/messages'
 import { VoiceRunner } from '../voice/runner'
@@ -109,6 +109,7 @@ export function createListening(s: Services, runner: VoiceRunner): ListeningCont
     speech: s.speech,
     earcons: s.earcons,
     onHeard: (text) => runner.run(parseUtterance(text)),
+    onNothingHeard: () => void s.speech.speak({ text: NOTHING_HEARD, rate: s.rate() }),
     onError: (error) => void s.speech.speak({ text: recognitionErrorText(error), rate: s.rate() }),
   })
 }
