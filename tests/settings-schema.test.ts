@@ -126,3 +126,14 @@ describe('warningFor', () => {
     expect(warningFor('aiAssist', false)).toBeNull()
   })
 })
+
+describe('voice commands setting', () => {
+  it('is off until the user turns it on, since it needs the microphone', () => {
+    expect(DEFAULT_SETTINGS.voiceInput).toBe('off')
+  })
+
+  it('warns before turning on, and not before turning off', () => {
+    expect(warningFor('voiceInput', 'chrome')).toMatch(/microphone/i)
+    expect(warningFor('voiceInput', 'off')).toBeNull()
+  })
+})

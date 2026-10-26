@@ -1,0 +1,46 @@
+# Phase 5b — Conversation
+
+Goal: opening a page, the user hears what is in the header, the left panel, the main content and the right panel. Resting on something, they hear what it is and are asked what to do, and can answer by voice: press it, read it, scroll, go back, or ask a question about the page.
+
+Source: PRD §5.11. Decisions: ADR-0017 (supersedes ADR-0008), ADR-0014 (AI consent), ADR-0003.
+
+## Decisions taken while planning (can be revisited)
+- Voice input is **off by default**. The setup flow and the settings page turn it on, grant the microphone once, and say which recogniser is in use.
+- "What would you like to do?" is asked only when the pointer **rests a further 1 second** after the description, and only while voice is on. Sweeping across a page stays quick.
+- Push to talk: **hold Alt+Shift+V** (V for voice). Alt+Space is taken by Windows' window menu. To be confirmed in slice 5b.10 with a real keyboard and NVDA.
+
+## Slices (each is red, green, refactor)
+
+| # | Slice | Done when |
+|---|---|---|
+| 5b.1 | **Panel model**: assign the page's landmarks and regions to header, left panel, main, right panel and footer, by role and by geometry; count what each holds | Tests with fake geometry: landmark pages, div-only pages, one-column pages |
+| 5b.2 | **Panel briefing**: the opening briefing walks the panels in order; detailed form on request | Tests pin the wording; the old briefing tests updated |
+| 5b.3 | **Command grammar**: a transcript becomes a `VoiceCommand` or a question ("click", "press it", "scroll up", "go back", "read the page", "what's on the left", "find search") | Tests: many phrasings per command, filler words, unknown input is a question |
+| 5b.4 | **Command runner**: carries out a command on the element under the pointer or the navigation cursor, and says what happened | Tests with fakes |
+| 5b.5 | **Ask after rest**: the follow-up question, the listening window after it ends, cancelled by moving | Tests with fake timers |
+| 5b.6 | **`SpeechRecognizer` and the listening controller**: never listens while speaking; earcons at start and end; 5 s window; one request at a time | Tests with a fake recogniser |
+| 5b.7 | **Chrome recogniser in an offscreen document**: on-device when available, otherwise Google's service; created only while Explore Mode and voice are on | Unit tests for the choice; end-to-end with transcripts fed in |
+| 5b.8 | **Voice setup**: setting `voiceInput` (off, chrome, gemini); microphone granted on a visible page; spoken consent | End-to-end, keyboard only |
+| 5b.9 | **Questions to AI**: page text as untrusted data, answer spoken; refusal without AI | Tests with a fake client |
+| 5b.10 | **Push to talk**: hold Alt+Shift+V | Tests, then end-to-end |
+| 5b.11 | **Gemini recogniser**: record one request, transcribe through the worker | Tests with a fake `fetch` |
+| 5b.12 | **End-to-end**: panel briefing, ask after rest, "click" presses, "scroll down" scrolls, a question with and without AI | Five runs in a row |
+
+## Findings
+- The whole listening route was checked in Playwright's Chromium: page, then worker, then the offscreen document, then `webkitSpeechRecognition`. It answered "silence" when its window ran out. Real speech cannot be fed in headless; the end-to-end tests deliver transcripts as the recogniser does.
+- **Gemini as a recogniser, checked against the live API (2026-10-25).** Gemini's own voice said "Scroll down please"; sent back as an `audio` input item (`data`, `mime_type: audio/wav`), it was transcribed as "Scroll down, please". Gemini does not take Chrome's WebM recordings, so the offscreen document records raw samples and writes WAV.
+- **A test bug, not a product bug:** Chromium's pretend microphone beeps about once a second. A 1.2 s hold could fall between beeps and was correctly treated as silence, so the end-to-end test holds for 2.5 s.
+- **Found while wiring Gemini:** the rule that the key's code never runs in web pages was only checked on direct imports. The test now follows every import from the content script, and caught a real slip (an error wording module that pulled in the Gemini client); the wording now lives in `src/cloud/cloud-error.ts`.
+- **An early stop was lost:** releasing the key before the recogniser had started let it listen for the full 15 s. The offscreen document now remembers an early stop or cancel.
+- Push to talk pressed inside an iframe is passed up to the top frame, which listens, like the other shortcuts.
+
+## Out of scope
+Continuous listening and a wake word (ADR-0017 #3), dictating into form fields, languages other than the browser's own.
+
+## Exit checklist
+- [x] Typecheck, tests, build green; coverage ≥ 80% (98.6% lines, 92.7% branches, 994 unit tests)
+- [x] End-to-end suite five runs in a row (97 tests)
+- [x] Docs updated (PRD §5.11, `CONTEXT.md` terms, README keys and voice commands, tour, privacy policy)
+- [x] **Manual:** a real microphone with Chrome's recogniser, on-device and online; accents; a noisy room. Checked so far in Google Chrome 155: the Web Speech API is there, on-device English is "downloadable" (so iBrowse uses, and announces, Google's online service), and the recogniser starts; it does not take a sound file as its microphone, so real speech needs a real microphone. On 2026-10-26 `e2e/live/chrome-mic.spec.ts` played "Scroll down." through the laptop speakers, but the built-in microphone array did not pick it up (its level stayed at the room's 0.013 while the sound played), so Chrome heard nothing. This needs a person speaking into the microphone. On 2026-10-26 a person spoke into the real microphone (a JBL USB microphone). Chrome's recogniser wrote down "scroll down" each time (once first as "crawl down", then corrected). Through iBrowse itself, with the Gemini recogniser, the person held Alt+Shift+V and said "Scroll down"; Gemini returned "Scroll down", and iBrowse scrolled and said "Scrolled down. 1 paragraph." (`e2e/live/person-voice.spec.ts`). That check found two bugs, both fixed: a short command in a long hold was judged silence, because loudness was averaged over the whole recording (it is now judged over 50 ms stretches); and silence after a held key said nothing at all (it now says "I didn't catch that"). Accents and a noisy room are still to try in the beta.
+- [x] **Manual:** NVDA running: iBrowse does not hear NVDA, and push to talk does not clash with NVDA keys. `e2e/live/nvda-live.spec.ts` runs the portable NVDA and checks Companion mode from its speech log; it needs an unlocked desktop (on 2026-10-25 the machine was locked, and NVDA reported the lock screen). Passed on 2026-10-26 with NVDA portable: NVDA said "Explore mode on" once, then the briefing ("Garden Shop. Web page. 1 paragraph, 1 heading, 1 button. Want me to read it?") and "Add to basket — Button, Clickable" on hover, and iBrowse spoke nothing itself. The second check uses a page with a header, side panels and a footer: NVDA read "Header: 2 links. Left panel, Categories: 3 links. Main content, Tomatoes: 2 paragraphs, 1 button. Right panel, Offers: 1 link. Footer: 1 link." Then Alt+Shift+V was held as real key presses (through NVDA's keyboard hook) while the recorded "Scroll down." played as the microphone, and NVDA said "Scrolled down. Navigation on the left, sidebar on the right, 1 paragraph." NVDA did not take the keys. Both passed on two clean runs; a third failed only because someone was using the computer and NVDA followed their window. These checks need the desktop to be left alone.
+- [x] **Real speech, Gemini recogniser, through the extension** (`e2e/live/voice-live.spec.ts`, 2026-10-25): recorded spoken commands as the microphone, the real Gemini API with a real key. "Scroll down.", "Scroll up.", "Click add to basket.", "What is on the left?" all carried out; resting on a button, hearing "What would you like to do?" and answering "Click." pressed it. Found and fixed: "Click. Click." misread as a name; a transcription request with no time limit.

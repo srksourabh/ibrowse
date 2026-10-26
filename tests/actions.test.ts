@@ -9,9 +9,19 @@ function setup(options: { readFromHere?: boolean; cursor?: Element | null } = {}
   const jumps = { jump: vi.fn(), cursor: options.cursor ?? null }
   const whereAmI = vi.fn()
   const ai = { describeThis: vi.fn(), summarize: vi.fn() }
-  const run = createActionRunner({ briefer, reader, navigator, jumps, whereAmI, ai })
-  return { run, briefer, reader, navigator, jumps, whereAmI, ai }
+  const talk = vi.fn()
+  const run = createActionRunner({ briefer, reader, navigator, jumps, whereAmI, ai, talk })
+  return { run, briefer, reader, navigator, jumps, whereAmI, ai, talk }
 }
+
+describe('createActionRunner: push to talk passed up from an iframe', () => {
+  it('starts and ends talking in the top frame', () => {
+    const { run, talk } = setup()
+    run('talk-start')
+    run('talk-end')
+    expect(talk.mock.calls).toEqual([[true], [false]])
+  })
+})
 
 describe('createActionRunner', () => {
   it('gives the detailed briefing', () => {

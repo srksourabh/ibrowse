@@ -11,6 +11,8 @@ export interface ActionDeps {
   jumps: Pick<JumpNavigator, 'jump' | 'cursor'>
   whereAmI(): void
   ai: { describeThis(): void; summarize(): void }
+  /** Push to talk: true when the key goes down, false when it is let go. */
+  talk(start: boolean): void
 }
 
 /**
@@ -56,6 +58,10 @@ export function createActionRunner(deps: ActionDeps): (action: KeyAction) => voi
         break
       case 'stop-speech':
         briefer.stop()
+        break
+      case 'talk-start':
+      case 'talk-end':
+        deps.talk(action === 'talk-start')
         break
     }
   }

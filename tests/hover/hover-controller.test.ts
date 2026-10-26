@@ -30,8 +30,12 @@ function setup(
   let clock = 0
   const meter = new LatencyMeter(() => clock)
   const onTarget = vi.fn()
+  const onMove = vi.fn()
+  const onDescribed = vi.fn()
   const controller = new HoverController({
     onTarget,
+    onMove,
+    onDescribed,
     resolve: () => target,
     describe: (el) => infos.get(el)!,
     speech,
@@ -49,6 +53,8 @@ function setup(
     controller,
     infos,
     onTarget,
+    onMove,
+    onDescribed,
     hover: (el: Element | null, x = 500, y = 100) => {
       target = el
       controller.onPointerMove(x, y)
@@ -201,6 +207,23 @@ describe('HoverController', () => {
     expect(controller.current).toBe(button)
     hover(paragraph, 400)
     expect(onTarget).toHaveBeenLastCalledWith(paragraph)
+  })
+
+  it('reports every change of target, empty space included, so a question can be dropped', () => {
+    const { hover, button, onMove } = setup()
+    hover(button, 100)
+    hover(button, 110)
+    hover(null, 400)
+    expect(onMove.mock.calls).toEqual([[button], [null]])
+  })
+
+  it('hands over the description it spoke, so a question can wait until it has finished', async () => {
+    const { hover, button, onDescribed } = setup()
+    hover(button, 100)
+    expect(onDescribed).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(DWELL_MS)
+    expect(onDescribed).toHaveBeenCalledWith(button, expect.any(Promise))
+    await expect(onDescribed.mock.calls[0]![1]).resolves.toBe('finished')
   })
 
   it('does not report empty space as a target', () => {

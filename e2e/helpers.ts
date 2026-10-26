@@ -17,17 +17,21 @@ export interface Harness {
   /** Everything the extension asked the voice to say, in order. */
   spoken(): Promise<string[]>
   /** Waits until something spoken matches. */
-  expectSpoken(pattern: RegExp): Promise<void>
+  expectSpoken(pattern: RegExp, timeoutMs?: number): Promise<void>
   /** Forgets what has been spoken so far. */
   clearSpoken(): Promise<void>
   /** Toggles Explore Mode in the tab showing a page on this origin. */
   toggleExplore(origin: string): Promise<void>
+  /** Delivers a transcript to the tab, as the speech recogniser does. */
+  hear(origin: string, text: string): Promise<void>
   /** The extension's own id, for opening its pages. */
   extensionId: string
   /** Writes values straight into the extension's storage, as the options would. */
   store(items: Record<string, unknown>): Promise<void>
   /** Reads the saved settings back. */
   storedSettings(): Promise<Record<string, unknown>>
+  /** Errors iBrowse logged in pages and in the worker. Normal operation logs none (PRD §9.4). */
+  consoleErrors(): Promise<string[]>
   /** The first-run tour that opened by itself, if `keepTour` was asked for. */
   tourPage: Page | null
   close(): Promise<void>
@@ -37,6 +41,12 @@ export interface HarnessOptions {
   hasTouch?: boolean
   /** Leave the first-run tour open for the test to use. By default it is waited for, then closed. */
   keepTour?: boolean
+  /** Extra browser flags, for example a sound file to use as the microphone. */
+  args?: readonly string[]
+  /** A visible window, for checks with a real screen reader. */
+  headed?: boolean
+  /** The computer's own microphone in place of the pretend one, for checks with a person speaking. */
+  realMicrophone?: boolean
 }
 
 const TOUR_FIRST_STEP = /^Welcome to iBrowse\. It lets you/
@@ -66,7 +76,15 @@ export async function launchHarness(
     {
       channel: 'chromium',
       hasTouch: options.hasTouch ?? false,
-      args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
+      headless: !(options.headed ?? false),
+      args: [
+        `--disable-extensions-except=${extensionPath}`,
+        `--load-extension=${extensionPath}`,
+        // A pretend microphone, and its permission prompt answered "Allow", so voice setup can run headless.
+        '--use-fake-ui-for-media-stream',
+        ...(options.realMicrophone ? [] : ['--use-fake-device-for-media-stream']),
+        ...(options.args ?? []),
+      ],
     },
   )
   await context.route(`${ORIGIN}/**`, (route) => {
@@ -76,8 +94,23 @@ export async function launchHarness(
       : route.fulfill({ contentType: 'text/html', body })
   })
 
+  const pageErrors: string[] = []
+  context.on('console', (message) => {
+    if (message.type() === 'error' && message.text().startsWith('iBrowse')) pageErrors.push(message.text())
+  })
+
   const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
   await worker.evaluate(() => {
+    const errors: string[] = []
+    ;(globalThis as unknown as { consoleErrors: string[] }).consoleErrors = errors
+    const logError = console.error.bind(console)
+    console.error = (...args: unknown[]) => {
+      // The install welcome starts on the real voice before this takes over; a machine with no
+      // voices (CI) can fail it, which says nothing about iBrowse.
+      if (String(args[0]).startsWith('iBrowse welcome')) return logError(...args)
+      if (String(args[0]).startsWith('iBrowse')) errors.push(args.map(String).join(' '))
+      logError(...args)
+    }
     const spoken: string[] = []
     ;(globalThis as unknown as { spoken: string[] }).spoken = spoken
     chrome.tts.speak = ((text: string, options?: { onEvent?: (e: { type: string }) => void }) => {
@@ -94,9 +127,11 @@ export async function launchHarness(
     context,
     worker,
     spoken,
-    expectSpoken: async (pattern) => {
+    expectSpoken: async (pattern, timeoutMs) => {
       try {
-        await expect.poll(async () => (await spoken()).some((text) => pattern.test(text))).toBe(true)
+        await expect
+          .poll(async () => (await spoken()).some((text) => pattern.test(text)), { timeout: timeoutMs ?? 5000 })
+          .toBe(true)
       } catch {
         const heard = (await spoken()).map((text) => `  - ${text}`).join('\n')
         throw new Error(`Nothing spoken matched ${pattern}. Spoken so far:\n${heard}`)
@@ -111,6 +146,14 @@ export async function launchHarness(
         const [tab] = await chrome.tabs.query({ url: `${url}/*` })
         await chrome.tabs.sendMessage(tab!.id!, { type: 'toggle-explore' })
       }, origin),
+    hear: (origin, text) =>
+      worker.evaluate(
+        async ({ url, said }) => {
+          const [tab] = await chrome.tabs.query({ url: `${url}/*` })
+          await chrome.tabs.sendMessage(tab!.id!, { type: 'voice-transcript', text: said }, { frameId: 0 })
+        },
+        { url: origin, said: text },
+      ),
     extensionId: new URL(worker.url()).host,
     store: (items) => worker.evaluate((values) => chrome.storage.local.set(values), items),
     storedSettings: () =>
@@ -118,8 +161,29 @@ export async function launchHarness(
         const { settings } = await chrome.storage.local.get('settings')
         return (settings ?? {}) as Record<string, unknown>
       }),
+    consoleErrors: async () => [
+      ...pageErrors,
+      ...(await worker.evaluate(() => [...(globalThis as unknown as { consoleErrors: string[] }).consoleErrors])),
+    ],
     tourPage: null,
-    close: () => context.close(),
+    close: async () => {
+      let errors: string[]
+      try {
+        // A worker that does not answer must not keep the browser open.
+        errors = await Promise.race([
+          harness.consoleErrors(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('no answer')), 5000)),
+        ])
+      } catch {
+        // The worker restarted, which dropped its record of errors: say so rather than pass unchecked.
+        errors = ['the background worker restarted or did not answer, so its errors could not be checked']
+      } finally {
+        await context.close()
+      }
+      if (errors.length > 0) {
+        throw new Error(`iBrowse logged errors:\n${errors.map((e) => `  - ${e}`).join('\n')}`)
+      }
+    },
   }
 
   const tour = await findTourPage(context)

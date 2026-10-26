@@ -156,6 +156,21 @@ function bindForm(
   }
 }
 
+/**
+ * Asks Chrome to let iBrowse use the microphone. The grant belongs to the
+ * extension, so the offscreen recogniser can use it later; the stream itself
+ * is closed at once (ADR-0017 #2).
+ */
+async function requestMicrophone(): Promise<boolean> {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    stream.getTracks().forEach((track) => track.stop())
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function main(): Promise<void> {
   const store = chrome.storage.local
   const initial = await loadSettings(store)
@@ -167,6 +182,7 @@ async function main(): Promise<void> {
     store,
     speak,
     requestPermission: (origins) => chrome.permissions.request({ origins }),
+    requestMicrophone,
     checkKey: () => client.checkKey(),
   })
 

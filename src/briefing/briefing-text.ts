@@ -1,7 +1,9 @@
-import type { LayoutModel, MediaInfo, RegionInfo } from './layout-model'
+import type { LayoutModel, MediaInfo, PanelSummary, RegionInfo } from './layout-model'
+import type { PanelKind } from './panels'
 import { placementPhrase } from './placement'
 
 const MAX_ITEMS = 7
+const MAX_PANEL_ITEMS = 3
 const MAX_TITLE_LENGTH = 60
 
 const KIND_LABELS: Readonly<Record<LayoutModel['kind'], string>> = {
@@ -48,6 +50,53 @@ function items(model: LayoutModel): string[] {
   return [...model.media.map(mediaPhrase), ...regions, ...countPhrases]
 }
 
+export const PANEL_NAMES: Readonly<Record<PanelKind, string>> = {
+  header: 'Header',
+  left: 'Left panel',
+  main: 'Main content',
+  right: 'Right panel',
+  footer: 'Footer',
+}
+
+/** What a panel holds, most telling first. Headings are left out: the panel is named after its main one. */
+function panelItems({ contents }: PanelSummary): string[] {
+  return [
+    ...(contents.logo ? ['logo'] : []),
+    ...(contents.search ? ['search box'] : []),
+    ...(
+      [
+        [contents.paragraphs, 'paragraph'],
+        [contents.images, 'picture'],
+        [contents.links, 'link'],
+        [contents.buttons, 'button'],
+        [contents.inputs, 'field'],
+      ] as const
+    )
+      .filter(([count]) => count > 0)
+      .map(([count, noun]) => plural(count, noun)),
+  ]
+}
+
+/** "Left panel, Categories: 3 links." The panel's own label wins over its heading. */
+export function panelSentence(panel: PanelSummary, detailed: boolean): string {
+  const title = panel.label || panel.contents.firstHeading
+  const name = title ? `${PANEL_NAMES[panel.kind]}, ${title}` : PANEL_NAMES[panel.kind]
+  const all = panelItems(panel)
+  const shown = detailed ? all : all.slice(0, MAX_PANEL_ITEMS)
+  return shown.length === 0 ? `${name}.` : `${name}: ${shown.join(', ')}.`
+}
+
+/** A page with more than its main content is briefed panel by panel. */
+const hasPanels = (model: LayoutModel): boolean => model.panels.length >= 2
+
+function panelSentences(model: LayoutModel, detailed: boolean): string[] {
+  const frames = model.counts.frames
+  return [
+    ...model.panels.map((panel) => panelSentence(panel, detailed)),
+    ...(frames > 0 ? [`${plural(frames, 'embedded frame')}.`] : []),
+  ]
+}
+
 /** Joins items into one phrase, lower-casing every item after the first. */
 function joinItems(parts: readonly string[]): string {
   return parts
@@ -72,7 +121,7 @@ export interface Briefing {
 export function briefingText(model: LayoutModel, options: { detailed?: boolean } = {}): Briefing {
   const title = shortTitle(model.title)
   const all = items(model)
-  if (all.length === 0) {
+  if (all.length === 0 && !hasPanels(model)) {
     return { text: `${title}. Nothing to read on this page.`, askToRead: false }
   }
 
@@ -82,7 +131,7 @@ export function briefingText(model: LayoutModel, options: { detailed?: boolean }
   const sentences = [
     `${title}.`,
     `${KIND_LABELS[model.kind]}.`,
-    `${joinItems(shown)}.`,
+    ...(hasPanels(model) ? panelSentences(model, detailed) : [`${joinItems(shown)}.`]),
     ...(detailed && model.headings.length > 0 ? [`Headings: ${model.headings.join('; ')}.`] : []),
     ...(askToRead ? ['Want me to read it?'] : []),
   ]

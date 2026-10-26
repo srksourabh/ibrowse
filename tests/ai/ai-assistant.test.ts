@@ -101,6 +101,30 @@ describe('AiAssistant.summarize', () => {
   })
 })
 
+describe('AiAssistant.answerQuestion', () => {
+  const QUESTION = { ...PAGE, question: 'Do roses need sun?', pointedAt: '' }
+
+  it('answers from the page, with room for a few sentences', async () => {
+    const { assistant, generate } = setup({ answer: 'Yes, roses need sun.' })
+    expect(await assistant.answerQuestion(QUESTION)).toEqual({ ok: true, text: 'Yes, roses need sun.' })
+    expect(generate.mock.calls[0]![0].maxOutputTokens).toBeGreaterThan(100)
+  })
+
+  it('never reuses an answer, since the page may have changed below its first lines', async () => {
+    const { assistant, generate } = setup({ answer: 'Five pounds.' })
+    const head = 'x'.repeat(300)
+    await assistant.answerQuestion({ ...QUESTION, excerpt: `${head} Price: 5 pounds.` })
+    await assistant.answerQuestion({ ...QUESTION, excerpt: `${head} Price: 9 pounds.` })
+    expect(generate).toHaveBeenCalledTimes(2)
+  })
+
+  it('is refused while AI is off, without sending anything', async () => {
+    const { assistant, generate } = setup({ settings: { aiAssist: false } })
+    expect(await assistant.answerQuestion(QUESTION)).toMatchObject({ ok: false, kind: 'disabled' })
+    expect(generate).not.toHaveBeenCalled()
+  })
+})
+
 describe('AiAssistant.describeImage', () => {
   const IMAGE = { url: 'https://a.example/kite.png', alt: '', pageTitle: 'Kites', context: '' }
 

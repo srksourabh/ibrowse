@@ -1,5 +1,7 @@
 import type { AiRequest, AiResponse } from '../ai/messages'
 import { collectPagePayload, imageTargetFor } from '../ai/page-excerpt'
+import { spokenText } from '../hover/affordance-speech'
+import { describeElement } from '../hover/describe'
 import type { HoverController } from '../hover/hover-controller'
 import type { Services } from './services'
 
@@ -10,6 +12,8 @@ export interface SessionAi {
   summarize(): void
   /** A one-line purpose for the briefing. Null when AI is off or has nothing to say; never rejects. */
   purpose(): Promise<string | null>
+  /** Answers a spoken question about the page. Only called while AI is on. */
+  answer(question: string): void
 }
 
 const OFF = 'AI features are off. Turn them on in settings.'
@@ -52,6 +56,14 @@ export function createAi(s: Services, hover: Pick<HoverController, 'current'>): 
     summarize() {
       if (!s.settings().aiAssist) return sayShort(OFF)
       void run({ type: 'ai-request', task: 'summary', page: collectPagePayload(document) })
+    },
+    answer(question) {
+      const pointedAt = hover.current ? spokenText(describeElement(hover.current)) : ''
+      void run({
+        type: 'ai-request',
+        task: 'question',
+        question: { ...collectPagePayload(document), question, pointedAt },
+      })
     },
     async purpose() {
       if (!s.settings().aiAssist) return null

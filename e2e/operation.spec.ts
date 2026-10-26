@@ -23,6 +23,9 @@ const MAIN = `<!doctype html>
     <label for="sub">Subscribe</label><input id="sub" type="checkbox">
     <button id="submit" type="submit">Submit</button>
   </form>
+  <form id="g" action="/done" target="_blank" aria-label="Feedback" style="position:absolute;left:400px;top:300px">
+    <button id="send" type="submit">Send</button>
+  </form>
   <div id="live" aria-live="polite"></div>
   <button id="save" onclick="document.getElementById('live').textContent='Saved'">Save</button>
   <button id="dlg" onclick="document.body.insertAdjacentHTML('beforeend','<div role=dialog aria-label=&quot;Sign in&quot;><p>Hi</p></div>')">Open</button>
@@ -124,6 +127,20 @@ test.describe.serial('operating a page', () => {
   test('speaks the browser validation message for an invalid field', async () => {
     await page.click('#submit') // the pointer arrives and clicks within a frame
     await harness.expectSpoken(/^Email: .+/)
+  })
+
+  test('does not claim a submission the page stopped in its own script', async () => {
+    await page.fill('#email', 'a@example.com')
+    await page.click('#submit') // valid now, but the form's onsubmit returns false
+    await page.waitForTimeout(500)
+    expect(await count(harness, /: submitted$/)).toBe(0)
+  })
+
+  test('says a form was submitted when the browser sends it', async () => {
+    const result = harness.context.waitForEvent('page')
+    await page.click('#send')
+    await harness.expectSpoken(/^Send: submitted$/)
+    await (await result).close()
   })
 
   test('announces live-region updates and dialogs that open', async () => {

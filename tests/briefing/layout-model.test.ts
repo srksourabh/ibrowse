@@ -32,6 +32,19 @@ beforeEach(() => {
   document.body.innerHTML = PAGE
 })
 
+describe('analyzePage panels', () => {
+  it('includes the page panels, without their elements, so the briefing can walk them', () => {
+    document.body.innerHTML = '<header id="nav"><a href="/">Home</a></header><main><p>Hi</p></main>'
+    const model = analyzePage(document, { rectOf, viewport: VIEWPORT })
+    expect(model.panels.map((p) => p.kind)).toEqual(['header', 'main'])
+    expect(model.panels[0]).not.toHaveProperty('element')
+  })
+
+  it('leaves panels out of a viewport briefing, which describes only what is on screen', () => {
+    expect(analyzePage(document, { rectOf, viewport: VIEWPORT, scope: 'viewport' }).panels).toEqual([])
+  })
+})
+
 describe('analyzePage', () => {
   it('reports the title and counts visible content', () => {
     const model = analyzePage(document, { rectOf, viewport: VIEWPORT })

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { launchHarness, ORIGIN, type Harness } from './helpers'
+import { ONBOARDING_STEPS } from '../src/onboarding/tour'
 
 const PAGE = `<!doctype html><title>Settings Test</title>
   <style>
@@ -31,15 +32,15 @@ test.describe.serial('the first-run tour', () => {
   test('opens by itself on a fresh install and speaks the first step', async () => {
     await harness.expectSpoken(/^Welcome to iBrowse\. It lets you explore a web page/)
     await expect(tour.getByRole('heading', { level: 1, name: 'Welcome to iBrowse' })).toBeVisible()
-    await expect(tour.locator('#progress')).toHaveText('Step 1 of 10')
+    await expect(tour.locator('#progress')).toHaveText(`Step 1 of ${ONBOARDING_STEPS.length}`)
   })
 
   test('moves on with Enter and back with Backspace, speaking each step', async () => {
     await tour.keyboard.press('Enter')
     await harness.expectSpoken(/^To start, open any web page and press Alt, Shift and E/)
-    await expect(tour.locator('#progress')).toHaveText('Step 2 of 10')
+    await expect(tour.locator('#progress')).toHaveText(`Step 2 of ${ONBOARDING_STEPS.length}`)
     await tour.keyboard.press('Backspace')
-    await expect(tour.locator('#progress')).toHaveText('Step 1 of 10')
+    await expect(tour.locator('#progress')).toHaveText(`Step 1 of ${ONBOARDING_STEPS.length}`)
   })
 
   test('repeats a step with R', async () => {
@@ -140,6 +141,18 @@ test.describe.serial('the settings page', () => {
     await expect(page.locator('#consent')).toBeHidden()
     await expect(page.locator('#setting-cloudVoice')).toHaveValue('off')
     expect((await harness.storedSettings()).cloudVoice).not.toBe('reading')
+  })
+
+  test('turns on voice commands only after the microphone warning and Allow, then says how to talk', async () => {
+    await page.selectOption('#setting-voiceInput', 'chrome')
+    await harness.expectSpoken(/Voice commands use the microphone/)
+    await expect(page.locator('#allow')).toBeFocused()
+    expect((await harness.storedSettings()).voiceInput).not.toBe('chrome')
+    await page.keyboard.press('Enter')
+    await harness.expectSpoken(
+      /^Voice commands: On, with Chrome's speech recognition\. Hold Alt, Shift and V and speak, or answer when iBrowse asks\.$/,
+    )
+    await expect.poll(async () => (await harness.storedSettings()).voiceInput).toBe('chrome')
   })
 
   test('warns about AI in terms of page text and images, and waits for Allow too', async () => {

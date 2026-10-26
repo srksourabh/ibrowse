@@ -16,6 +16,9 @@ export type SpeechResponse =
 /** Background to content script: the sound of speech request `id` has begun. */
 export type SpeechStartedNotice = { readonly type: 'speech-started'; readonly id: number }
 
+/** Top frame to background: Explore Mode changed, so the toolbar button can show it. */
+export type ExploreStateNotice = { readonly type: 'explore-state'; readonly enabled: boolean }
+
 /** Content script to background: the page is about to change, so turn Explore Mode back on after. */
 export type NavigationNotice = { readonly type: 'will-navigate' }
 
@@ -36,3 +39,5 @@ export type ExploreMessage =
   | { readonly type: 'next-page' }
   | { readonly type: 'prev-page' }
   | { readonly type: 'action'; readonly action: KeyAction }
+  /** What the user said, from the speech recogniser (ADR-0017). Untrusted text: matched, never run. */
+  | { readonly type: 'voice-transcript'; readonly text: string }

@@ -2,12 +2,19 @@ import { ExploreMode } from '../explore-mode'
 import { withHaptics } from '../haptics/earcon-bridge'
 import type { HapticNotice } from '../haptics/messages'
 import { startLatencyPublisher } from './latency'
-import type { ExploreMessage, SpeechStartedNotice } from '../shared/messages'
+import type { ExploreMessage, ExploreStateNotice, SpeechStartedNotice } from '../shared/messages'
 import { guardTouchScrolling } from '../touch/touch-guard'
+import { parseUtterance } from '../voice/commands'
 import { createHandlers } from './handlers'
 import { createHaptics, type SessionHaptics } from './haptics'
 import { createServices, type Services } from './services'
 import { createTools, type Tools } from './tools'
+
+/** Tells the worker, so the toolbar button shows On or Off for this tab (ADR-0016). */
+function reportState(s: Services, enabled: boolean): void {
+  const notice: ExploreStateNotice = { type: 'explore-state', enabled }
+  chrome.runtime.sendMessage(notice).catch(s.reportError)
+}
 
 /** Turns the pieces on and off together as Explore Mode changes. */
 function manageLifecycle(
@@ -20,6 +27,7 @@ function manageLifecycle(
   let restoreTouch: (() => void) | undefined
   let stopLatency: (() => void) | undefined
   mode.onChange((enabled) => {
+    if (t.isTopFrame) reportState(s, enabled)
     if (enabled) {
       s.resumeAudio()
       if (t.isTopFrame) stopLatency = startLatencyPublisher(s, t.meter)
@@ -35,6 +43,8 @@ function manageLifecycle(
       return
     }
     cancelPending()
+    t.ask.stop()
+    t.listening.cancel()
     t.hover.stop()
     t.briefer.stop()
     t.live.stop()
@@ -72,6 +82,10 @@ function listenForMessages(
       case 'haptic-disconnected':
         haptics.deviceLost()
         break
+      case 'voice-transcript':
+        // Nothing listens or acts while Explore Mode is off (ADR-0003); only the top frame acts.
+        if (t.isTopFrame && mode.isEnabled) t.voice.run(parseUtterance(message.text))
+        break
       case 'speech-started':
         s.handleSpeechStarted(message.id)
         break
@@ -90,6 +104,14 @@ export function startExploreSession(): void {
   const handlers = createHandlers(services, tools)
   const mode = new ExploreMode(document, handlers.specs)
 
+  if (isTopFrame) {
+    // A new document starts with Explore Mode off; the button may still show the previous page's state.
+    reportState(services, false)
+    // A page restored by Back or Forward keeps its state but does not start again, so say it once more.
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) reportState(services, mode.isEnabled)
+    })
+  }
   manageLifecycle(mode, services, tools, haptics, handlers.cancelPending)
   listenForMessages(mode, services, tools, haptics)
   services.watchSettings((settings) => {

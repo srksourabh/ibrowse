@@ -2,10 +2,11 @@ import { AudioCache } from '../cloud/audio-cache'
 import { CloudError, type CloudErrorKind, type GeminiClient, type GeminiPart } from '../cloud/gemini-client'
 import type { Settings } from '../shared/settings'
 import { ImageError } from './image-fetch'
-import { imagePrompt, purposePrompt, summaryPrompt } from './prompts'
+import { imagePrompt, purposePrompt, questionPrompt, summaryPrompt } from './prompts'
 
 const PURPOSE_TOKENS = 80
 const SUMMARY_TOKENS = 300
+const ANSWER_TOKENS = 200
 const IMAGE_TOKENS = 160
 const MAX_ANSWER_CHARS = 500
 const REMEMBERED_ANSWERS = 50
@@ -51,6 +52,12 @@ export interface PageInput {
   readonly title: string
   readonly headings: readonly string[]
   readonly excerpt: string
+}
+
+export interface QuestionInput extends PageInput {
+  readonly question: string
+  /** The spoken description of what the pointer is on, or ''. */
+  readonly pointedAt: string
 }
 
 export interface ImageInput {
@@ -100,6 +107,12 @@ export class AiAssistant {
     ])
   }
 
+  /** A spoken question about the page (PRD FR-11.5). */
+  answerQuestion(input: QuestionInput): Promise<AiResult> {
+    // Never remembered: the answer may depend on any part of a page that can change.
+    return this.#answer(null, ANSWER_TOKENS, async () => [{ type: 'text', text: questionPrompt(input) }])
+  }
+
   describeImage(image: ImageInput): Promise<AiResult> {
     return this.#answer(`image|${image.url}`, IMAGE_TOKENS, async () => {
       const data = await this.#deps.fetchImage(image.url)
@@ -110,22 +123,23 @@ export class AiAssistant {
     })
   }
 
+  /** `key` names the answer for reuse; null never reuses it. */
   async #answer(
-    key: string,
+    key: string | null,
     maxOutputTokens: number,
     buildParts: () => Promise<GeminiPart[]>,
   ): Promise<AiResult> {
     const settings = await this.#deps.getSettings()
     if (!settings.aiAssist) return off
-    const cacheKey = `${settings.aiModel}|${key}`
-    const remembered = this.#answers.get(cacheKey)
+    const cacheKey = key === null ? null : `${settings.aiModel}|${key}`
+    const remembered = cacheKey === null ? undefined : this.#answers.get(cacheKey)
     if (remembered !== undefined) return { ok: true, text: remembered }
     try {
       const parts = await buildParts()
       const raw = await this.#deps.client.generate({ model: settings.aiModel, parts, maxOutputTokens })
       const text = cleanAnswer(raw, MAX_ANSWER_CHARS)
       if (text === '') return failureFor(new CloudError('empty'))
-      this.#answers.set(cacheKey, text)
+      if (cacheKey !== null) this.#answers.set(cacheKey, text)
       return { ok: true, text }
     } catch (error) {
       return failureFor(error)

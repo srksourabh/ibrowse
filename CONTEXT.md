@@ -16,10 +16,15 @@ The shared vocabulary for code, tests, docs and spoken strings. Use these terms 
 
 ## Page understanding
 
-- **Page Briefing**: the short spoken summary given on entering Explore Mode: title, regions, counts. Ends with a **Read Prompt**.
+- **Page Briefing**: the short spoken summary given on entering Explore Mode: title, then each **Panel** and what it holds (or regions and counts, on a page with only main content). Ends with a **Read Prompt**.
 - **Read Prompt**: the question "Want me to read it?" and its Y/N answer window.
 - **Layout Model**: the analyzer's structured view of a page: regions, media, counts, positions.
 - **Region**: a meaningful area of the page (hero, navigation, sidebar, main content, footer).
+- **Panel**: one of the five parts the Page Briefing walks in order: header, left panel, main content, right panel, footer. Found from the page's landmarks, or from its layout when it has none.
+- **Voice Command**: something the user says that iBrowse understands on the device: click (optionally by name), scroll, read, next or previous page, back, forward, panel, find, stop, repeat, help, where am I, describe the page. Anything else is a **Question**, answered by AI when it is on.
+- **Push to Talk**: holding Alt+Shift+V to have iBrowse listen; letting go ends the request.
+- **Ask After Rest**: when the pointer rests on something a further second after its description, iBrowse asks "What would you like to do?" and listens briefly for the answer.
+- **Recogniser**: what turns speech into text: Chrome's own (on-device when the language is installed, otherwise Google's service) or Gemini (with the user's key). It runs only in the offscreen document.
 - **Block**: a readable unit of text (paragraph, list, quote, table, heading).
 - **Element Under Pointer**: the most meaningful element at the pointer position.
 - **Affordance**: whether an element is **Interactive** (can be activated) or **Static** (text only).

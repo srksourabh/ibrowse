@@ -6,7 +6,7 @@ import { analyzePage } from '../briefing/layout-model'
 import { TypingEcho } from '../forms/typing-echo'
 import { describeElement } from '../hover/describe'
 import { hitTest } from '../hover/hit-test'
-import { HoverController } from '../hover/hover-controller'
+import { HoverController, type HoverDeps } from '../hover/hover-controller'
 import { LiveAnnouncer } from '../live/live-announcer'
 import { JumpNavigator } from '../navigation/jump-navigator'
 import { describeTarget, headingTargets, landmarkTargets } from '../navigation/landmarks'
@@ -28,6 +28,7 @@ import { TouchActivator } from '../touch/touch-activator'
 import { VirtualPointer } from '../touch/virtual-pointer'
 import type { SessionAi } from './ai'
 import type { Services } from './services'
+import { createAsk, createListening, createVoice, talk } from './voice'
 
 type Analyze = (scope: 'page' | 'viewport') => ReturnType<typeof analyzePage>
 
@@ -75,8 +76,12 @@ function createJumps(s: Services): JumpNavigator {
   })
 }
 
-function createHover(s: Services, jumps: JumpNavigator, meter: LatencyMeter): HoverController {
+/** Hover hooks that are filled in once the pieces they call exist. */
+type HoverHooks = Pick<HoverDeps, 'onMove' | 'onDescribed'>
+
+function createHover(s: Services, jumps: JumpNavigator, meter: LatencyMeter, hooks: HoverHooks): HoverController {
   return new HoverController({
+    ...hooks,
     resolve: (x, y) => hitTest(x, y),
     describe: describeElement,
     speech: s.speech,
@@ -171,12 +176,30 @@ function createTouch(s: Services, hover: HoverController, reader: TextReader): T
 export function createTools(s: Services, isTopFrame: boolean) {
   const jumps = createJumps(s)
   const meter = new LatencyMeter()
-  const hover = createHover(s, jumps, meter)
+  // Ask-after-rest needs listening, which needs the voice runner, which needs hover: bound late.
+  let ask: ReturnType<typeof createAsk> | undefined
+  const hover = createHover(s, jumps, meter, {
+    onMove: (target) => ask?.moved(target),
+    onDescribed: (target, spoken) => ask?.described(target, spoken),
+  })
   const ai = createAi(s, hover)
   const briefer = createBriefer(s, hover, ai)
   const navigator = createPageNavigator(s)
   const reader = createReader(s, hover, navigator)
   const whereAmI = createWhereAmI(s)
+  const voice = createVoice(s, {
+    hover,
+    jumps,
+    briefer,
+    reader,
+    navigator,
+    whereAmI,
+    activate: activateElement,
+    ai,
+    // The listening controller is built from this runner, so it is reached late.
+    listenForAnswer: () => listening.listenForAnswer(),
+  })
+  const listening = createListening(s, voice)
 
   return {
     isTopFrame,
@@ -186,7 +209,18 @@ export function createTools(s: Services, isTopFrame: boolean) {
     navigator,
     reader,
     whereAmI,
-    runAction: createActionRunner({ briefer, reader, navigator, jumps, whereAmI, ai }),
+    runAction: createActionRunner({
+      briefer,
+      reader,
+      navigator,
+      jumps,
+      whereAmI,
+      ai,
+      talk: (start) => talk(s, listening, start),
+    }),
+    voice,
+    listening,
+    ask: (ask = createAsk(s, hover, listening)),
     meter,
     virtualPointer: new VirtualPointer(),
     typingEcho: new TypingEcho({

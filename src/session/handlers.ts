@@ -1,5 +1,7 @@
 import type { HandlerSpec } from '../explore-mode'
-import { changeText, invalidText } from '../forms/changes'
+import { changeText, invalidText, submitText } from '../forms/changes'
+import { endsTalk, isTalkKey } from '../voice/talk-key'
+import { talk } from './voice'
 import { ValidationGate } from '../forms/validation-gate'
 import { spokenText } from '../hover/affordance-speech'
 import { describeElement } from '../hover/describe'
@@ -120,10 +122,27 @@ function keyboardHandler(s: Services, t: Tools): Record<string, HandlerSpec> {
     const request: FrameActionRequest = { type: 'frame-action', action }
     chrome.runtime.sendMessage(request).catch(s.reportError)
   }
+  // Push to talk listens in the top frame, which owns speech; an iframe passes the key up.
+  let talking = false
+  const setTalking = (start: boolean): void => {
+    talking = start
+    if (t.isTopFrame) talk(s, t.listening, start)
+    else forward(start ? 'talk-start' : 'talk-end')
+  }
   return {
+    // Letting go of Alt, Shift or V ends a push-to-talk request; nothing else is done on key up.
+    keyup: (event) => {
+      if (event instanceof KeyboardEvent && talking && endsTalk(event)) setTalking(false)
+    },
     keydown: (event) => {
       if (!(event instanceof KeyboardEvent)) return
       s.resumeAudio()
+      if (isTalkKey(event)) {
+        event.preventDefault()
+        event.stopPropagation()
+        if (!event.repeat) setTalking(true)
+        return
+      }
       // Y and N answer the read prompt, but never while the user is typing.
       if (t.isTopFrame && !isEditable(document.activeElement) && t.briefer.handleKey(event.key)) {
         event.preventDefault()
@@ -171,6 +190,21 @@ function formHandlers(s: Services, t: Tools): Record<string, HandlerSpec> {
         gate.noteInvalid()
         s.earcons.play('error', 0)
         say(invalidText(event.target), false)
+      },
+    },
+    // Fired only after validation passes. Caught on the way down, then judged once the
+    // page's own handlers have run, so a submission the page stopped is not confirmed.
+    submit: {
+      capture: true,
+      listener: (event) => {
+        const form = event.target
+        if (!(form instanceof HTMLFormElement)) return
+        setTimeout(() => {
+          const text = submitText(form, (event as SubmitEvent).submitter, event.defaultPrevented)
+          if (!text) return
+          s.earcons.play('confirm', 0)
+          say(text, false)
+        }, 0)
       },
     },
   }

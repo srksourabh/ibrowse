@@ -10,6 +10,7 @@ const MODEL: LayoutModel = {
   media: [],
   counts: COUNTS,
   headings: [],
+  panels: [],
 }
 
 function setup(

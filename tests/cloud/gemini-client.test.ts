@@ -119,6 +119,23 @@ describe('GeminiClient.generate', () => {
     })
   })
 
+  it('sends recorded audio as an audio input item, the shape checked against the live API', async () => {
+    const { client, lastRequest } = setup(() => jsonResponse({ output_text: 'Scroll down, please' }))
+    await client.generate({
+      model: 'gemini-3.8-flash',
+      parts: [
+        { type: 'text', text: 'Transcribe.' },
+        { type: 'audio', data: 'UklGRg==', mimeType: 'audio/wav' },
+      ],
+      maxOutputTokens: 60,
+    })
+    expect((lastRequest().body as { input: unknown[] }).input[1]).toEqual({
+      type: 'audio',
+      data: 'UklGRg==',
+      mime_type: 'audio/wav',
+    })
+  })
+
   it('reads the answer from the steps when there is no output_text', async () => {
     const steps = {
       steps: [

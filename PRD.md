@@ -25,7 +25,7 @@ Any hardware with haptics can plug in later through an open driver interface. Au
 | Native C++/Rust daemon, Windows UIA, WASAPI | An extension cannot see outside the browser |
 | Taskbar and system-tray monitor (old §4.4) | Replaced by a browser status zone (§5.8) |
 | 12 ms hardware haptic target | Not measurable without hardware; moved to the native roadmap |
-| Enterprise installer | Distribution is the Chrome Web Store |
+| Enterprise installer | Distribution is the Chrome Web Store. Small Windows and Mac installers that add the store extension were added back by ADR-0016 |
 
 The existing browser simulator is kept as a hosted demo site and haptic visualizer (§12). It is no longer the product.
 
@@ -57,10 +57,10 @@ The existing browser simulator is kept as a hosted demo site and haptic visualiz
 - Haptic driver interface with Gamepad and WebHID drivers and a published SDK
 - Local speech by default, with optional cloud voices and AI enrichment (bring your own key)
 - Built-in latency meter
+- Voice conversation: iBrowse asks what to do and listens; spoken commands, and questions answered by AI (§5.11, ADR-0017)
 
 ### 3.2 Out of scope
 - Anything outside the browser (desktop apps, OS taskbar)
-- Voice input and speech recognition (decision: click, keys and gestures only)
 - Pages the extension cannot access, which it must announce clearly: `chrome://` pages, the Chrome Web Store, and the built-in PDF viewer
 - Canvas-only content with no DOM (announced as "unreadable graphic")
 - Web Serial and Web Bluetooth drivers (later, through the same interface)
@@ -82,7 +82,7 @@ The existing browser simulator is kept as a hosted demo site and haptic visualiz
 ## 5. Functional requirements
 
 ### 5.1 Explore mode and activation
-- **FR-1.1** A hotkey toggles explore mode (default Alt+Shift+E, remappable at `chrome://extensions/shortcuts`).
+- **FR-1.1** A hotkey toggles explore mode (default Alt+Shift+E, remappable at `chrome://extensions/shortcuts`). The toolbar button does the same, and its badge and title say whether explore mode is on in that tab (ADR-0016).
 - **FR-1.2** The setting "Always start in explore mode" enables it on every page load.
 - **FR-1.3** Entering explore mode speaks "Explore mode on", then the page briefing (§5.2). Leaving speaks "Explore mode off".
 - **FR-1.4** When explore mode is off, no wheel, touch or key events are intercepted.
@@ -121,7 +121,7 @@ Every element is classified as **interactive** or **static**, using role and nam
 
 - **FR-4.1** On hover over a readable block (paragraph, list, quote, table, article body), the extension says what it is and offers to read it: *"Paragraph: The quick brown fox jumps. Click to read."* v1 offers this for paragraphs; other text blocks are announced as "Text only" and can still be clicked or scrubbed.
 - **FR-4.2** **Click on a non-interactive block reads it.** Click on an interactive control activates it. Touch follows the same rule through the activation style in §5.7.
-- **FR-4.3** Reading a block speaks it as a unit, interruptible, with the word under speech highlighted visually for sighted helpers.
+- **FR-4.3** Reading a block speaks it as a unit, interruptible. (Highlighting the spoken word for sighted helpers was dropped on 2026-10-25: iBrowse is built for blind users, and the highlight served only an onlooker.)
 - **FR-4.4** The false-interactivity target is in §10.
 
 ### 5.5 Reading and next page
@@ -162,7 +162,7 @@ Heading jumps are on Alt+Shift+arrows, not the plain `Shift+H` first proposed, b
 - **FR-7.4** Reaching the edge of the screen with a finger plays an edge tone, panned to that side.
 
 ### 5.8 Forms and browser status
-- **FR-8.1 Form filling.** Entering a field focuses it and speaks its label, type, current value and whether it is required ("Email — Edit text, empty, required"). Typing is echoed by character or word, or not at all (setting `typingEcho`, default characters). Deletions are announced. Checkboxes, radios, selects and sliders announce their new state ("Subscribe: checked", "Day: Tuesday"). Validation errors are read as the browser reports them ("Email: Please enter an email address"), before the announcement of the field that gets focus.
+- **FR-8.1 Form filling.** Entering a field focuses it and speaks its label, type, current value and whether it is required ("Email — Edit text, empty, required"). Typing is echoed by character or word, or not at all (setting `typingEcho`, default characters). Deletions are announced. Checkboxes, radios, selects and sliders announce their new state ("Subscribe: checked", "Day: Tuesday"). Validation errors are read as the browser reports them ("Email: Please enter an email address"), before the announcement of the field that gets focus. A form that passes validation and is sent by the browser is confirmed with a sound and the name of the button that sent it, or of the form ("Sign in: submitted"). When the page stops the submission to handle it in its own script, nothing is claimed, because the page may have refused it; its live regions and dialogs report the outcome. Forms inside shadow roots are not confirmed.
 - **FR-8.1a Passwords.** What is typed into a password field is never spoken, in any mode. Each keystroke gives a tick. Hovering or focusing a password field says only whether it is empty or filled.
 - **FR-8.2 Browser status zone.** The top 6 pixels of the viewport, and the Alt+Shift+W command, read the page title, host, whether the connection is secure, whether it is still loading, and which tab this is ("Tab 2 of 5"). The zone is entered once per visit and left once the pointer is 24 pixels down.
 - **FR-8.2a Live changes.** While Explore Mode is on, text added to a live region (`aria-live`, `role="alert"`, `status` or `log`) is spoken, and dialogs that open are announced by name. Alerts and dialogs interrupt; other regions wait their turn. The same words are not spoken twice within 1.5 seconds, and very long text is cut at 300 characters.
@@ -180,6 +180,14 @@ Heading jumps are on Alt+Shift+arrows, not the plain `Shift+H` first proposed, b
 - **FR-10.3 Delay readout.** With "Measure delays" on, the settings page can read out how long sounds, speech start and stopping speech take, against their targets.
 
 ---
+
+### 5.11 Voice conversation (ADR-0017)
+- **FR-11.1 Panel briefing.** The briefing walks the page by panel, in order: header, left panel, main content, right panel, footer. For each, it says what the panel holds ("Header: logo, search box, 6 links").
+- **FR-11.2 Ask after hover.** Resting on an element names it, then asks "What would you like to do?". For a short time after the question ends, iBrowse listens.
+- **FR-11.3 Push to talk.** Holding a key listens at any time during Explore Mode. An earcon marks the start and end of listening. If nothing is made out, iBrowse says "I didn't catch that." A command said twice ("Scroll down. Scroll down.") is carried out once.
+- **FR-11.4 Commands.** These are understood on the device: click or press, scroll up and down, read this, read the page, next and previous page, go back, the panel commands, find, stop, repeat and help.
+- **FR-11.5 Questions.** Anything that is not a command is a question. With AI on, it is answered from the readable page text. Without AI, iBrowse says it did not understand and suggests commands.
+- **FR-11.6 Recogniser.** Chrome's own, preferring on-device recognition when available, or Gemini (a setting). Turning voice on says which recogniser is in use and where audio goes.
 
 ## 6. Audio and speech
 
@@ -251,7 +259,7 @@ The `sdk/` folder and the exports of `src/haptics/index.ts`: the TypeScript driv
 - **Optional, opt-in features** that send data: cloud voice and AI descriptions and summaries, both through Google Gemini. Each needs the user's own key, a spoken warning, a separate "Allow", and the browser's permission for `generativelanguage.googleapis.com`, which is an **optional** host permission: until granted, nothing can be sent. No project server is involved.
 - **What may be sent:** text spoken by the cloud voice; for AI, the page title, headings and the text of readable blocks, or one image fetched by the worker without cookies and sent as data. Never form values, passwords or hidden text. Page text goes inside delimiters as untrusted data, answers are cleaned of markdown and links, and they are spoken, never run.
 - **The key** is used only by the background worker. A test checks that no code that runs in a web page imports it, and no error or spoken sentence can contain it.
-- **Permissions:** `<all_urls>` host access, `activeTab`, `storage`, `tts`, `contextMenus`, `scripting`. The manifest test pins this exact set. WebHID and Gamepad need no manifest permission; the user grants each device through the browser's picker (details settled in Phase 4). Each permission is justified in the Web Store listing and a public privacy policy.
+- **Permissions:** `<all_urls>` host access, `activeTab`, `storage`, `tts`, `contextMenus`, `scripting`, `offscreen` (the speech recogniser runs in an offscreen document, ADR-0017). The manifest test pins this exact set. The microphone is granted once, to the extension, on the settings page, and only when the user turns voice commands on. WebHID and Gamepad need no manifest permission; the user grants each device through the browser's picker (details settled in Phase 4). Each permission is justified in the Web Store listing and a public privacy policy.
 - **Storage:** settings and keys in `chrome.storage.local`. Keys never go into page context and never appear in logs.
 - **Content safety:** page text is treated as untrusted. AI prompts must not follow instructions found in page text, and results are only spoken, never executed.
 - **No analytics or telemetry** in v1. Crash and latency data stay local unless the user exports them.
@@ -283,7 +291,7 @@ TypeScript (strict), WXT on Vite (Manifest V3), Vitest, Playwright with the exte
 - 80%+ unit test coverage on analyzer, classifier, speech queue and drivers
 - End-to-end tests on a fixed corpus of real sites in CI
 - No console errors in normal operation
-- Accessible name computation validated against the ARIA conformance tests
+- Accessible name computation validated against the ARIA conformance tests (`e2e/accname.spec.ts`, WPT accname in Chromium: 398 of 444 cases agree once whitespace is collapsed for speech; the 46 known differences are listed there with reasons, mostly CSS `::before`/`::after` text)
 
 ---
 
@@ -311,6 +319,7 @@ TypeScript (strict), WXT on Vite (Manifest V3), Vitest, Playwright with the exte
 | **3. Operation** | Forms, keyboard commands, iframes and shadow DOM, dynamic-change announcements, browser status zone, touch |
 | **4. Hardware** | `HapticDriver`, simulator, Gamepad and WebHID drivers, SDK, pairing flow |
 | **5. Onboarding and settings** | Spoken first run, options page, screen reader coexistence mode, optional cloud voice and AI adapter |
+| **5b. Conversation** | Panel briefing (header, left, main, right), spoken questions after hover, voice commands, questions answered by AI |
 | **6. Closed beta** | Blind testers recruited through an accessibility organization, fixes from findings, metric measurement |
 | **7. Public release** | Security review, privacy policy, Web Store submission, SDK publication, demo site |
 

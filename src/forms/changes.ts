@@ -26,3 +26,20 @@ export function invalidText(el: Element): string {
   const message = (el as HTMLInputElement).validationMessage
   return `${labelOf(el)}: ${message || 'Invalid value'}`
 }
+
+/**
+ * What to say when a form is sent: the button that sent it, or the form's own
+ * name. The browser fires this only once validation has passed. A page that
+ * stopped the submission handles it in its own script, and may have refused
+ * it, so nothing is claimed; its live regions and dialogs report the outcome.
+ */
+export function submitText(
+  form: HTMLFormElement,
+  submitter: Element | null,
+  stoppedByPage: boolean,
+): string | null {
+  if (stoppedByPage) return null
+  const name =
+    (submitter && describeElement(submitter).label) || describeElement(form).label || 'Form'
+  return `${name}: submitted`
+}

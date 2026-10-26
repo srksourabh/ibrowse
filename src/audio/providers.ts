@@ -42,7 +42,7 @@ export class ChromeTtsProvider implements SpeechProvider {
         ) {
           resolve()
         } else if (event.type === 'error') {
-          reject(new Error(event.errorMessage ?? 'Speech failed'))
+          reject(new Error(event.errorMessage || 'Speech failed'))
         }
       }
       // Only what was asked for is passed on, so the engine keeps its own defaults for the rest.

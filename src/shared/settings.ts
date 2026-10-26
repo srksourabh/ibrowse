@@ -24,6 +24,8 @@ export interface Settings {
   readonly aiModel: string
   /** Developer option: report speech and sound delays so they can be read out. */
   readonly latencyReadout: boolean
+  /** Spoken commands and questions (ADR-0017). Off until the user allows the microphone. */
+  readonly voiceInput: 'off' | 'chrome' | 'gemini'
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -45,6 +47,7 @@ export const DEFAULT_SETTINGS: Settings = {
   aiAssist: false,
   aiModel: 'gemini-3.8-flash',
   latencyReadout: false,
+  voiceInput: 'off',
 }
 
 const isBoolean = (v: unknown): v is boolean => typeof v === 'boolean'
@@ -76,6 +79,7 @@ const VALIDATORS: Record<keyof Settings, (value: unknown) => boolean> = {
   aiAssist: isBoolean,
   aiModel: (v) => typeof v === 'string' && /^[a-z0-9.-]{1,60}$/.test(v),
   latencyReadout: isBoolean,
+  voiceInput: oneOf('off', 'chrome', 'gemini'),
 }
 
 /** Builds Settings from untrusted stored data. Invalid fields fall back to defaults. */
@@ -105,6 +109,7 @@ export function parseSettings(raw: unknown): Settings {
     aiAssist: pick('aiAssist'),
     aiModel: pick('aiModel'),
     latencyReadout: pick('latencyReadout'),
+    voiceInput: pick('voiceInput'),
   }
 }
 

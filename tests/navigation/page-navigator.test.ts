@@ -108,3 +108,36 @@ describe('PageNavigator.scrollBy', () => {
     expect(speech.speak).toHaveBeenCalledWith({ text: 'Top of page', rate: 1 })
   })
 })
+
+describe('PageNavigator.scrollScreen', () => {
+  it('scrolls a screen down even when there is a next-page link, then briefs what is new', () => {
+    const { navigator, speech, scrollY, activate } = setup({ link: LINK, brief: '2 paragraphs.' })
+    expect(navigator.scrollScreen('down')).toBe('scrolled')
+    expect(scrollY()).toBe(720)
+    expect(activate).not.toHaveBeenCalled()
+    expect(speech.speak).toHaveBeenCalledWith({ text: 'Scrolled down. 2 paragraphs.', rate: 1 })
+  })
+
+  it('reports the top of the page instead of scrolling up past it', () => {
+    const { navigator, speech, earcons } = setup({ y: 0 })
+    expect(navigator.scrollScreen('up')).toBe('edge')
+    expect(earcons.play).toHaveBeenCalledWith('boundary', 0)
+    expect(speech.speak).toHaveBeenCalledWith({ text: 'Top of page', rate: 1 })
+  })
+})
+
+describe('PageNavigator.scrollToEdge', () => {
+  it('goes to the top and says so', () => {
+    const { navigator, speech, scrollY } = setup({ y: 900, brief: 'Header.' })
+    navigator.scrollToEdge('top')
+    expect(scrollY()).toBe(0)
+    expect(speech.speak).toHaveBeenCalledWith({ text: 'Top of page. Header.', rate: 1 })
+  })
+
+  it('goes to the bottom and says whether a next page is available', () => {
+    const { navigator, speech, scrollY } = setup({ y: 0, link: LINK })
+    navigator.scrollToEdge('bottom')
+    expect(scrollY()).toBe(2000)
+    expect(speech.speak).toHaveBeenCalledWith({ text: 'End of page. Next page is available.', rate: 1 })
+  })
+})

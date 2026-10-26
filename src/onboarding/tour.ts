@@ -19,7 +19,7 @@ export const ONBOARDING_STEPS: readonly TourStep[] = [
   {
     id: 'start',
     text:
-      'To start, open any web page and press Alt, Shift and E. iBrowse says Explore mode on, tells you what the page contains, and asks whether you want it read. ' +
+      'To start, open any web page and press Alt, Shift and E. iBrowse says Explore mode on, tells you what is in the header, the left panel, the main content and the right panel, and asks whether you want it read. ' +
       'Press Y to hear it, or N to decline. Press Alt, Shift and E again to turn Explore mode off.',
   },
   {
@@ -45,6 +45,12 @@ export const ONBOARDING_STEPS: readonly TourStep[] = [
     text:
       'Press Alt, Shift and W at any time to hear where you are: the page title, the website, whether the connection is secure, and which tab this is. ' +
       'Press Escape to stop speech whenever you like.',
+  },
+  {
+    id: 'voice',
+    text:
+      'iBrowse can also listen. Turn on voice commands in settings. Then hold Alt, Shift and V and say what you want: click, click and a name, scroll down, go back, what is on the left, or a question about the page. ' +
+      'When you rest the pointer on something, iBrowse asks what you would like to do, and listens for your answer.',
   },
   {
     id: 'forms',

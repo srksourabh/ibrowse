@@ -9,6 +9,7 @@ import type { HapticNotice, HapticRequest, HapticResponse } from '../haptics/mes
 import { loadProfiles } from '../haptics/profile'
 import type {
   ExploreMessage,
+  ExploreStateNotice,
   FrameActionRequest,
   NavigationNotice,
   SpeechRequest,
@@ -18,6 +19,10 @@ import type {
   TabInfoResponse,
 } from '../shared/messages'
 import { loadSettings } from '../shared/settings'
+import { toolbarState } from '../shared/toolbar'
+import type { ListenRequest, ListenResponse } from '../voice/messages'
+import type { VoiceRelay } from '../voice/voice-relay'
+import { createVoiceHost, handleListen } from './voice-host'
 
 const INACCESSIBLE_PAGE_MESSAGE =
   'iBrowse cannot run on this page. Chrome blocks extensions on its own pages, the Web Store and the built-in PDF viewer.'
@@ -35,16 +40,25 @@ const resumeKey = (tabId: number): string => `resume:${tabId}`
 type BackgroundMessage =
   | SpeechRequest
   | NavigationNotice
+  | ExploreStateNotice
   | FrameActionRequest
   | TabInfoRequest
   | HapticRequest
   | CloudMessage
-type AnyResponse = SpeechResponse | TabInfoResponse | HapticResponse | CloudSpeechResponse | AiResponse
+  | ListenRequest
+type AnyResponse =
+  | SpeechResponse
+  | TabInfoResponse
+  | HapticResponse
+  | CloudSpeechResponse
+  | AiResponse
+  | ListenResponse
 
 interface Background {
   readonly speech: ChromeTtsProvider
   readonly hidHost: HidHost
   readonly cloud: CloudHost
+  readonly voice: VoiceRelay
   reportError(context: string): (error: unknown) => void
   sendToTopFrame(tabId: number, message: ExploreMessage): Promise<unknown>
 }
@@ -120,6 +134,16 @@ function handleMessage(
         )
       }
       return false
+    case 'explore-state':
+      if (sender.tab?.id !== undefined) {
+        showToolbarState(sender.tab.id, message.enabled)
+        b.voice.noteExploreState(sender.tab.id, message.enabled)
+      }
+      return false
+    case 'listen-start':
+    case 'listen-stop':
+    case 'listen-cancel':
+      return handleListen(b.voice, message, sender, sendResponse)
     case 'will-navigate':
       if (sender.tab?.id !== undefined) {
         chrome.storage.session
@@ -186,8 +210,9 @@ function registerMenus(b: Background): void {
   })
 }
 
-async function toggleExploreMode(b: Background): Promise<void> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+/** Toggles Explore Mode in `clicked`, or in the active tab when a hotkey was pressed. */
+async function toggleExploreMode(b: Background, clicked?: chrome.tabs.Tab): Promise<void> {
+  const tab = clicked ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]
   if (tab?.id === undefined) return
   try {
     await chrome.tabs.sendMessage(tab.id, { type: 'toggle-explore' } satisfies ExploreMessage)
@@ -195,6 +220,20 @@ async function toggleExploreMode(b: Background): Promise<void> {
     // No content script answered: the page is one Chrome does not allow (FR-1.5).
     b.speech.speak({ text: INACCESSIBLE_PAGE_MESSAGE }).catch(b.reportError('inaccessible page notice'))
   }
+}
+
+function showToolbarState(tabId: number, enabled: boolean): void {
+  const { badge, title } = toolbarState(enabled)
+  // A rejection means the tab closed in the meantime; it has no button left to update.
+  chrome.action.setBadgeText({ tabId, text: badge }).catch(() => {})
+  chrome.action.setTitle({ tabId, title }).catch(() => {})
+}
+
+/** The toolbar button switches Explore Mode in the tab it was clicked in. */
+function registerToolbar(b: Background): void {
+  chrome.action.onClicked.addListener((tab) => void toggleExploreMode(b, tab))
+  // A closed tab never reports Explore Mode off.
+  chrome.tabs.onRemoved.addListener((tabId) => b.voice.noteExploreState(tabId, false))
 }
 
 function registerCommands(b: Background): void {
@@ -212,9 +251,14 @@ export function startBackground(): void {
   const reportError = (context: string) => (error: unknown) => {
     console.error(`iBrowse ${context}:`, error instanceof Error ? error.message : 'unknown')
   }
+  const cloud = new CloudHost()
   const b: Background = {
     speech: new ChromeTtsProvider(chrome.tts),
-    cloud: new CloudHost(),
+    cloud,
+    voice: createVoiceHost({
+      engine: () => loadSettings(chrome.storage.local).then((s) => s.voiceInput),
+      transcribe: (audio) => cloud.transcribe(audio),
+    }),
     hidHost: new HidHost({
       loadSettings: () => loadSettings(chrome.storage.local),
       loadProfiles: () => loadProfiles(chrome.storage.local),
@@ -231,6 +275,7 @@ export function startBackground(): void {
   registerResume(b)
   registerMenus(b)
   registerCommands(b)
+  registerToolbar(b)
   chrome.runtime.onInstalled.addListener(({ reason }) => {
     void openTourOnFirstInstall(b, reason).catch(reportError('opening the tour'))
   })
