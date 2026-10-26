@@ -34,3 +34,14 @@ export async function saveGeminiKey(store: KeyValueStore, raw: string): Promise<
 export function clearGeminiKey(store: SecretStore): Promise<void> {
   return store.remove(STORAGE_KEY)
 }
+
+/**
+ * Moves a key saved by an older version out of chrome.storage.local, which content
+ * scripts can read, into the vault. A key already in the vault is kept.
+ */
+export async function moveKeyOut(from: SecretStore, to: SecretStore): Promise<void> {
+  const old = await loadGeminiKey(from)
+  if (old === null) return
+  if ((await loadGeminiKey(to)) === null) await to.set({ [STORAGE_KEY]: old })
+  await from.remove(STORAGE_KEY)
+}

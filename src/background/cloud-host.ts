@@ -3,8 +3,8 @@ import { fetchImage } from '../ai/image-fetch'
 import type { AiRequest, AiResponse, LatencyReportMessage } from '../ai/messages'
 import { AudioCache } from '../cloud/audio-cache'
 import { GeminiClient } from '../cloud/gemini-client'
+import { loadVaultKey } from '../cloud/key-vault'
 import type { CloudCancelRequest, CloudSpeechRequest, CloudSpeechResponse } from '../cloud/messages'
-import { loadGeminiKey } from '../cloud/secrets'
 import { CloudVoiceService } from '../cloud/voice-service'
 import { loadSettings } from '../shared/settings'
 import type { ListenResponse } from '../voice/messages'
@@ -28,7 +28,7 @@ export class CloudHost {
   constructor() {
     const client = new GeminiClient({
       fetch: (input, init) => fetch(input, init),
-      getKey: () => loadGeminiKey(chrome.storage.local),
+      getKey: loadVaultKey,
     })
     this.#client = client
     this.#voice = new CloudVoiceService({

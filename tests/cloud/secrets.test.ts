@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { clearGeminiKey, hasGeminiKey, loadGeminiKey, saveGeminiKey } from '../../src/cloud/secrets'
+import { clearGeminiKey, hasGeminiKey, loadGeminiKey, moveKeyOut, saveGeminiKey } from '../../src/cloud/secrets'
 
 function memoryStore(initial: Record<string, unknown> = {}) {
   const data = { ...initial }
@@ -48,6 +48,31 @@ describe('the Gemini key store', () => {
 
   it('ignores a stored value that is not a string', async () => {
     expect(await loadGeminiKey(memoryStore({ geminiKey: 42 }))).toBeNull()
+  })})
+
+describe('moving the key out of storage web pages can read', () => {
+  it('moves a key from the old place to the vault, and leaves none behind', async () => {
+    const old = memoryStore({ geminiKey: GOOD, settings: { pitch: 1 } })
+    const vault = memoryStore()
+    await moveKeyOut(old, vault)
+    expect(vault.data.geminiKey).toBe(GOOD)
+    expect(old.data.geminiKey).toBeUndefined()
+    expect(old.data.settings).toEqual({ pitch: 1 })
+  })
+
+  it('keeps a key already in the vault, and still clears the old place', async () => {
+    const old = memoryStore({ geminiKey: 'AIzaOLDkey_0123456789abcdef' })
+    const vault = memoryStore({ geminiKey: GOOD })
+    await moveKeyOut(old, vault)
+    expect(vault.data.geminiKey).toBe(GOOD)
+    expect(old.data.geminiKey).toBeUndefined()
+  })
+
+  it('does nothing when there is nothing to move', async () => {
+    const old = memoryStore()
+    const vault = memoryStore()
+    await moveKeyOut(old, vault)
+    expect(vault.data).toEqual({})
   })
 })
 

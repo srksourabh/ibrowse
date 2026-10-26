@@ -13,7 +13,10 @@ export interface PendingChange {
 }
 
 export interface EditorDeps {
+  /** Settings. Content scripts read this too. */
   store: SecretStore
+  /** The Gemini key, kept apart from the settings, where no web page's content script can read it. */
+  secrets: SecretStore
   /** Says something aloud. The settings page is for people who cannot see it. */
   speak(text: string): void
   /** Asks the browser for permission to contact these sites. It needs a fresh user gesture. */
@@ -118,13 +121,13 @@ export class SettingsEditor {
   }
 
   hasKey(): Promise<boolean> {
-    return hasGeminiKey(this.#deps.store)
+    return hasGeminiKey(this.#deps.secrets)
   }
 
   /** Saves a key. Neither the reply nor any error repeats what was typed. */
   async saveKey(raw: string): Promise<boolean> {
     try {
-      await saveGeminiKey(this.#deps.store, raw)
+      await saveGeminiKey(this.#deps.secrets, raw)
     } catch (error) {
       this.#deps.speak(error instanceof Error ? error.message : 'That key could not be saved.')
       return false
@@ -145,7 +148,7 @@ export class SettingsEditor {
   }
 
   async removeKey(): Promise<void> {
-    await clearGeminiKey(this.#deps.store)
+    await clearGeminiKey(this.#deps.secrets)
     this.#deps.speak('Key removed.')
   }
 

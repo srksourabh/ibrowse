@@ -184,6 +184,8 @@ test.describe.serial('the settings page', () => {
     await expect(page.locator('#key-status')).toHaveText('A key is saved.')
     await expect(page.locator('#key')).toHaveValue('')
     expect((await harness.spoken()).join(' ')).not.toContain(GOOD_KEY)
+    // Content scripts can read chrome.storage.local, so the key must not be there.
+    expect(await harness.worker.evaluate(() => chrome.storage.local.get('geminiKey'))).toEqual({})
 
     await page.focus('#remove-key')
     await page.keyboard.press('Enter')
