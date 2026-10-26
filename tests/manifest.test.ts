@@ -4,7 +4,7 @@ import { manifest } from '../src/manifest'
 describe('manifest', () => {
   it('requests exactly the documented permissions', () => {
     expect([...manifest.permissions].sort()).toEqual(
-      ['activeTab', 'contextMenus', 'offscreen', 'scripting', 'storage', 'tts'].sort(),
+      ['contextMenus', 'offscreen', 'storage', 'tts'].sort(),
     )
   })
 

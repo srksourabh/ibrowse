@@ -1,6 +1,6 @@
 # Privacy policy
 
-*Applies to the iBrowse browser extension. Last updated 2026-10-09.*
+*Applies to the iBrowse browser extension. Last updated 2026-10-27.*
 
 **Short version: iBrowse runs on your device. It has no servers, no accounts and no analytics. It sends nothing anywhere unless you turn on a Google Gemini feature yourself.**
 
@@ -24,7 +24,9 @@ We cannot see any of it. Removing the extension deletes it.
 |---|---|---|---|
 | Local voice, exploring, reading, briefing | Nothing | Nowhere | Always |
 | Cloud voice | The text being read | Google Gemini | You turned it on, gave a key, and allowed the permission |
+| Page purpose, in the briefing | The page title, headings and the start of its readable text | Google Gemini | You turned AI on; then it happens for each page you explore |
 | Page summary | Readable page text | Google Gemini | You turned AI on and pressed Alt+Shift+M |
+| Spoken questions | Your question and the readable page text | Google Gemini | You turned AI on and asked a question by voice |
 | Image description | The one image under the pointer | Google Gemini | You turned AI on and pressed Alt+Shift+D |
 | Voice commands (Chrome) | What you say, while iBrowse is listening | Nowhere when Chrome can recognise speech on your computer; otherwise Google, to turn it into text | You turned voice commands on and allowed the microphone |
 | Voice commands (Gemini) | A recording of what you say, while iBrowse is listening; silence is never sent | Google Gemini, with your key, to turn it into text | You chose Gemini for voice commands, allowed the microphone and the permission, and gave a key |
