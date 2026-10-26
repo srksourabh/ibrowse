@@ -105,6 +105,9 @@ export async function launchHarness(
     ;(globalThis as unknown as { consoleErrors: string[] }).consoleErrors = errors
     const logError = console.error.bind(console)
     console.error = (...args: unknown[]) => {
+      // The install welcome starts on the real voice before this takes over; a machine with no
+      // voices (CI) can fail it, which says nothing about iBrowse.
+      if (String(args[0]).startsWith('iBrowse welcome')) return logError(...args)
       if (String(args[0]).startsWith('iBrowse')) errors.push(args.map(String).join(' '))
       logError(...args)
     }

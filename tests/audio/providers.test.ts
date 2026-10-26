@@ -46,6 +46,13 @@ describe('ChromeTtsProvider', () => {
     await expect(done).rejects.toThrow('no voice')
   })
 
+  it('rejects with a plain message when the engine gives an empty one', async () => {
+    const { api, emit } = fakeTts()
+    const done = new ChromeTtsProvider(api).speak({ text: 'Hi' })
+    emit({ type: 'error', errorMessage: '' })
+    await expect(done).rejects.toThrow('Speech failed')
+  })
+
   it('stops the engine on cancel', () => {
     const { api } = fakeTts()
     new ChromeTtsProvider(api).cancel()
