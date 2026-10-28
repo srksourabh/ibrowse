@@ -77,7 +77,8 @@ function listenForMessages(
         t.navigator.go('prev')
         break
       case 'action':
-        if (t.isTopFrame) t.runAction(message.action)
+        // Browser commands arrive here whether or not Explore Mode is on; they act only while it is (ADR-0003).
+        if (t.isTopFrame && mode.isEnabled) t.runAction(message.action)
         break
       case 'haptic-disconnected':
         haptics.deviceLost()
@@ -100,9 +101,10 @@ export function startExploreSession(): void {
   const haptics = createHaptics(base, isTopFrame)
   // From here on, every Earcon is also felt, whichever driver (if any) is in use.
   const services: Services = { ...base, earcons: withHaptics(base.earcons, haptics.manager) }
-  const tools = createTools(services, isTopFrame)
+  // The mode is built from the handlers, which are built from the tools: bound late.
+  const tools = createTools(services, isTopFrame, () => mode.disable())
   const handlers = createHandlers(services, tools)
-  const mode = new ExploreMode(document, handlers.specs)
+  const mode: ExploreMode = new ExploreMode(document, handlers.specs)
 
   if (isTopFrame) {
     // A new document starts with Explore Mode off; the button may still show the previous page's state.

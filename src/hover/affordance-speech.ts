@@ -1,3 +1,4 @@
+import { chordWords, type ShortcutKeys } from '../key-router'
 import type { ElementInfo, ElementState } from './describe'
 
 const ROLE_NAMES: Readonly<Record<string, string>> = {
@@ -64,7 +65,7 @@ function stateWords(state: ElementState): string[] {
  */
 export function spokenText(
   info: ElementInfo,
-  options: { shortMode?: boolean; aiHint?: boolean } = {},
+  options: { shortMode?: boolean; aiHint?: boolean; keys?: ShortcutKeys } = {},
 ): string {
   const short = options.shortMode ?? false
   const label = info.label || UNLABELED
@@ -72,7 +73,7 @@ export function spokenText(
   if (info.role === 'image') {
     if (info.label) return `${info.label} — Image`
     return options.aiHint
-      ? 'Image, no description. Press Alt+Shift+D to describe it.'
+      ? `Image, no description. Press ${chordWords(options.keys ?? 'ctrl-alt', 'D')} to describe it.`
       : 'Image, no description'
   }
   if (info.affordance === 'interactive' && info.certainty === 'maybe') {

@@ -1,13 +1,13 @@
-import { ONBOARDING_STEPS, OnboardingTour } from '../../src/onboarding/tour'
+import { OnboardingTour, onboardingSteps, type TourStep } from '../../src/onboarding/tour'
 import { byId, createPageSpeaker } from '../../src/pages/page-speaker'
 import { loadSettings } from '../../src/shared/settings'
 
 /** Long enough to hear the last words before the tab goes away. */
 const CLOSE_DELAY_MS = 3000
 
-function render(tour: OnboardingTour): void {
-  byId('progress').textContent = `Step ${tour.index + 1} of ${ONBOARDING_STEPS.length}`
-  byId('step').textContent = ONBOARDING_STEPS[tour.index]!.text
+function render(tour: OnboardingTour, steps: readonly TourStep[]): void {
+  byId('progress').textContent = `Step ${tour.index + 1} of ${steps.length}`
+  byId('step').textContent = steps[tour.index]!.text
 }
 
 /** Closes the tab once the tour is over, unless a screen reader is speaking through this page. */
@@ -24,13 +24,15 @@ function closeSoon(companion: boolean): void {
 }
 
 async function main(): Promise<void> {
-  const { screenReaderMode } = await loadSettings(chrome.storage.local)
+  const { screenReaderMode, shortcutKeys } = await loadSettings(chrome.storage.local)
+  const steps = onboardingSteps(shortcutKeys)
   const companion = screenReaderMode === 'companion'
   const say = createPageSpeaker(byId('status'), companion)
 
   const tour: OnboardingTour = new OnboardingTour({
+    steps,
     speak: (text) => {
-      render(tour)
+      render(tour, steps)
       say(text)
     },
     done: () => closeSoon(companion),

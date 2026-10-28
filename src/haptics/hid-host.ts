@@ -4,7 +4,7 @@ import { HidDriver, type HidApiLike } from './hid-driver'
 import type { HapticResponse } from './messages'
 import type { DeviceProfile } from './profile'
 
-const SETUP_HINT = 'Press Alt+Shift+P to open hardware setup.'
+const SETUP_HINT = 'Open hardware setup from iBrowse settings, with Alt and O.'
 
 export interface HidHostDeps {
   loadSettings(): Promise<Pick<Settings, 'hapticProfileId'>>

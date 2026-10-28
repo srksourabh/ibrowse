@@ -115,7 +115,7 @@ test.describe.serial('a haptic device is chosen but not paired', () => {
 
   test('says what is wrong, once, when Explore Mode turns on', async () => {
     await harness.toggleExplore(ORIGIN)
-    await harness.expectSpoken(/^No haptic device has been paired\. Press Alt\+Shift\+P to open hardware setup\.$/)
+    await harness.expectSpoken(/^No haptic device has been paired\. Open hardware setup from iBrowse settings, with Alt and O\.$/)
     await page.waitForTimeout(600)
     const spoken = await harness.spoken()
     expect(spoken.filter((t) => /No haptic device/.test(t))).toHaveLength(1)
@@ -138,7 +138,7 @@ test.describe('a profile is saved but no device has been granted', () => {
       const page = await harness.context.newPage()
       await page.goto(`${ORIGIN}/`)
       await harness.toggleExplore(ORIGIN)
-      await harness.expectSpoken(/^No paired Example Mouse found\. Press Alt\+Shift\+P to open hardware setup\.$/)
+      await harness.expectSpoken(/^No paired Example Mouse found\. Open hardware setup from iBrowse settings, with Alt and O\.$/)
     } finally {
       await harness.close()
     }

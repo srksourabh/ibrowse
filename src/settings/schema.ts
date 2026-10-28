@@ -62,7 +62,17 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
   },
   {
     key: 'alwaysExplore', kind: 'boolean', group: 'exploring', label: 'Start in Explore Mode on every page',
-    help: 'Switch Explore Mode on automatically. Off, it starts only when you press Alt+Shift+E.',
+    help: 'Switch Explore Mode on automatically. Off, it starts only when you press Alt and I, or remembers what you chose on each website.',
+  },
+  {
+    key: 'shortcutKeys', kind: 'choice', group: 'exploring', label: 'Shortcut keys',
+    options: [
+      { value: 'ctrl-alt', label: 'Control and Alt' },
+      { value: 'alt-shift', label: 'Alt and Shift' },
+    ],
+    help:
+      'The keys you hold for iBrowse shortcuts, such as the next heading. ' +
+      'Alt and Shift also switch the keyboard language on Windows, so Control and Alt is safer.',
   },
   {
     key: 'touchActivation', kind: 'choice', group: 'exploring', label: 'Touch activation',
@@ -101,7 +111,7 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
       { value: 'gamepad', label: 'Game controller' },
       { value: 'webhid', label: 'Paired haptic device' },
     ],
-    help: 'Pair a device on the hardware setup page, opened with Alt+Shift+P.',
+    help: 'Pair a device on the hardware setup page, opened from the button below.',
   },
   {
     key: 'voiceInput', kind: 'choice', group: 'voice', label: 'Voice commands',
@@ -110,7 +120,7 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
       { value: 'chrome', label: "On, with Chrome's speech recognition" },
       { value: 'gemini', label: 'On, with Google Gemini, using your key' },
     ],
-    help: 'Speak commands and questions. Hold Alt, Shift and V to talk, or answer when iBrowse asks what to do.',
+    help: 'Speak commands and questions. Hold your shortcut keys and V to talk, or answer when iBrowse asks what to do.',
   },
   {
     key: 'cloudVoice', kind: 'choice', group: 'cloud', label: 'Cloud voice',

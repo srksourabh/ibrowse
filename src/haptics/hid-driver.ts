@@ -61,7 +61,7 @@ export class HidDriver implements HapticDriver {
     if (!device) {
       return {
         ok: false,
-        reason: `No paired ${this.name} found. Press Alt+Shift+P to open hardware setup.`,
+        reason: `No paired ${this.name} found. Open hardware setup from iBrowse settings, with Alt and O.`,
       }
     }
     try {

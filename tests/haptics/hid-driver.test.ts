@@ -73,7 +73,7 @@ describe('HidDriver.connect', () => {
   it('says how to pair when no matching device has been granted', async () => {
     const result = await setup([]).driver.connect()
     expect(result.ok).toBe(false)
-    expect(!result.ok && result.reason).toMatch(/Alt\+Shift\+P/)
+    expect(!result.ok && result.reason).toMatch(/hardware setup from iBrowse settings, with Alt and O/)
   })
 
   it('explains when the device cannot be opened', async () => {

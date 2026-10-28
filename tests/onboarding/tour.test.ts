@@ -1,15 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  ONBOARDING_STEPS,
   OnboardingTour,
+  onboardingSteps,
   markOnboardingDone,
   shouldOpenOnboarding,
 } from '../../src/onboarding/tour'
 
+const ONBOARDING_STEPS = onboardingSteps('ctrl-alt')
+
 function setup() {
   const spoken: string[] = []
   const done = vi.fn()
-  const tour = new OnboardingTour({ speak: (text) => void spoken.push(text), done })
+  const tour = new OnboardingTour({ steps: ONBOARDING_STEPS, speak: (text) => void spoken.push(text), done })
   return { tour, spoken, done }
 }
 
@@ -36,11 +38,12 @@ describe('ONBOARDING_STEPS', () => {
   it('names the keys a user cannot do without, spelled so a voice says them clearly', () => {
     const all = ONBOARDING_STEPS.map((s) => s.text).join(' ')
     for (const phrase of [
-      'Alt, Shift and E', // Explore Mode
-      'Alt, Shift and S', // settings
-      'Alt, Shift and P', // hardware setup
-      'Alt, Shift and W', // where am I
-      'Alt, Shift and Down Arrow', // next heading
+      'Alt and I', // Explore Mode, from anywhere
+      'Alt and O', // settings, from anywhere
+      'Control, Alt and P', // hardware setup
+      'Control, Alt and W', // where am I
+      'Control, Alt and Down Arrow', // next heading
+      'Control, Alt and V', // push to talk
       'Escape', // stop speech
     ]) {
       expect(all, phrase).toContain(phrase)
@@ -48,7 +51,13 @@ describe('ONBOARDING_STEPS', () => {
   })
 
   it('never uses the "Alt+Shift+E" form, which a voice reads as "plus"', () => {
-    expect(ONBOARDING_STEPS.map((s) => s.text).join(' ')).not.toMatch(/Alt\+Shift/)
+    expect(ONBOARDING_STEPS.map((s) => s.text).join(' ')).not.toMatch(/\w\+\w/)
+  })
+
+  it('names the keys the user chose', () => {
+    const old = onboardingSteps('alt-shift').map((s) => s.text).join(' ')
+    expect(old).toContain('Alt, Shift and Down Arrow')
+    expect(old).not.toContain('Control, Alt')
   })
 
   it('mentions touch, forms and passwords, so no one is surprised', () => {

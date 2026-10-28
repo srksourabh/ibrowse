@@ -21,7 +21,7 @@ import {
   scrubBlockAt,
 } from '../reading/blocks'
 import { TextReader } from '../reading/text-reader'
-import type { NavigationNotice, TabInfoRequest, TabInfoResponse } from '../shared/messages'
+import type { NavigationNotice, OpenPageRequest, TabInfoRequest, TabInfoResponse } from '../shared/messages'
 import { statusText } from '../status/status'
 import { createAi } from './ai'
 import { TouchActivator } from '../touch/touch-activator'
@@ -172,8 +172,13 @@ function createTouch(s: Services, hover: HoverController, reader: TextReader): T
   })
 }
 
+function openPage(s: Services, page: OpenPageRequest['page']): void {
+  const request: OpenPageRequest = { type: 'open-page', page }
+  chrome.runtime.sendMessage(request).catch(s.reportError)
+}
+
 /** Everything an Explore Mode session works with, built from the shared services. */
-export function createTools(s: Services, isTopFrame: boolean) {
+export function createTools(s: Services, isTopFrame: boolean, exploreOff: () => void) {
   const jumps = createJumps(s)
   const meter = new LatencyMeter()
   // Ask-after-rest needs listening, which needs the voice runner, which needs hover: bound late.
@@ -217,6 +222,8 @@ export function createTools(s: Services, isTopFrame: boolean) {
       whereAmI,
       ai,
       talk: (start) => talk(s, listening, start),
+      exploreOff,
+      openPage: (page) => openPage(s, page),
     }),
     voice,
     listening,

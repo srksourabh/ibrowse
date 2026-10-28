@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_SETTINGS, loadSettings, parseSettings, saveSettings } from '../src/shared/settings'
+import {
+  DEFAULT_SETTINGS,
+  keepOldShortcutsOnUpdate,
+  loadSettings,
+  parseSettings,
+  saveSettings,
+} from '../src/shared/settings'
 
 function memoryStore(initial: Record<string, unknown> = {}) {
   const data = { ...initial }
@@ -115,5 +121,33 @@ describe('loadSettings and saveSettings', () => {
     const store = memoryStore()
     await expect(saveSettings(store, { speechRate: 99 })).rejects.toThrow(RangeError)
     expect(store.data).toEqual({})
+  })
+})
+
+describe('shortcut keys', () => {
+  it('default to Ctrl+Alt, since Alt+Shift switches the keyboard language on Windows', () => {
+    expect(DEFAULT_SETTINGS.shortcutKeys).toBe('ctrl-alt')
+    expect(parseSettings({ shortcutKeys: 'alt-shift' }).shortcutKeys).toBe('alt-shift')
+    expect(parseSettings({ shortcutKeys: 'ctrl-shift' }).shortcutKeys).toBe('ctrl-alt')
+  })
+
+  it('stay Alt+Shift for someone updating from a version that had no choice', async () => {
+    const store = memoryStore()
+    await store.set({ settings: { speechRate: 1.5 } })
+    await keepOldShortcutsOnUpdate(store)
+    const settings = await loadSettings(store)
+    expect(settings.shortcutKeys).toBe('alt-shift')
+    expect(settings.speechRate).toBe(1.5)
+  })
+
+  it('are left alone on update when already chosen, or when nothing was ever saved', async () => {
+    const chosen = memoryStore()
+    await chosen.set({ settings: { shortcutKeys: 'ctrl-alt' } })
+    await keepOldShortcutsOnUpdate(chosen)
+    expect((await loadSettings(chosen)).shortcutKeys).toBe('ctrl-alt')
+
+    const fresh = memoryStore()
+    await keepOldShortcutsOnUpdate(fresh)
+    expect(fresh.data).toEqual({})
   })
 })

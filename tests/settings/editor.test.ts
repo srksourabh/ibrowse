@@ -152,8 +152,8 @@ describe('SettingsEditor: settings that send data off the computer', () => {
     await editor.change('aiAssist', true)
     await editor.confirmPending()
     expect(last()).not.toMatch(/add your Google key/i)
-    expect(last()).toMatch(/Alt, Shift and D/)
-    expect(last()).toMatch(/Alt, Shift and M/)
+    expect(last()).toMatch(/Control, Alt and D/)
+    expect(last()).toMatch(/Control, Alt and M/)
   })
 
   it('a new request replaces an earlier one that was never answered', async () => {
@@ -235,7 +235,7 @@ describe('SettingsEditor: voice commands', () => {
     expect(requestPermission).not.toHaveBeenCalled()
     expect((await loadSettings(store)).voiceInput).toBe('chrome')
     expect(last()).toBe(
-      "Voice commands: On, with Chrome's speech recognition. Hold Alt, Shift and V and speak, or answer when iBrowse asks.",
+      "Voice commands: On, with Chrome's speech recognition. Hold Control, Alt and V and speak, or answer when iBrowse asks.",
     )
   })
 
@@ -270,7 +270,7 @@ describe('SettingsEditor: voice commands with Gemini', () => {
     expect(requestMicrophone).toHaveBeenCalledOnce()
     expect(requestPermission).toHaveBeenCalledWith([GEMINI_ORIGIN])
     expect((await loadSettings(store)).voiceInput).toBe('gemini')
-    expect(last()).toMatch(/^Voice commands: On, with Google Gemini, using your key\. Hold Alt, Shift and V/)
+    expect(last()).toMatch(/^Voice commands: On, with Google Gemini, using your key\. Hold Control, Alt and V/)
     expect(last()).toMatch(/Add your Google key to use it\.$/)
   })
 

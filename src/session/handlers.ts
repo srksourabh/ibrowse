@@ -7,7 +7,7 @@ import { spokenText } from '../hover/affordance-speech'
 import { describeElement } from '../hover/describe'
 import { createPointerThrottle } from '../hover/pointer-throttle'
 import { hitTest } from '../hover/hit-test'
-import { routeKey } from '../key-router'
+import { routeKey, type KeyLike } from '../key-router'
 import { blockText } from '../reading/blocks'
 import type { FrameActionRequest } from '../shared/messages'
 import { StatusZone } from '../status/status'
@@ -21,6 +21,15 @@ const MOUSE_FORWARD = 4
 
 const isEditable = (el: Element | null): boolean =>
   el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))
+
+const keyOf = (e: KeyboardEvent): KeyLike => ({
+  key: e.key,
+  code: e.code,
+  altKey: e.altKey,
+  shiftKey: e.shiftKey,
+  ctrlKey: e.ctrlKey,
+  metaKey: e.metaKey,
+})
 
 export interface Handlers {
   readonly specs: Record<string, HandlerSpec>
@@ -130,14 +139,16 @@ function keyboardHandler(s: Services, t: Tools): Record<string, HandlerSpec> {
     else forward(start ? 'talk-start' : 'talk-end')
   }
   return {
-    // Letting go of Alt, Shift or V ends a push-to-talk request; nothing else is done on key up.
+    // Letting go of a shortcut modifier or V ends a push-to-talk request; nothing else is done on key up.
     keyup: (event) => {
-      if (event instanceof KeyboardEvent && talking && endsTalk(event)) setTalking(false)
+      if (event instanceof KeyboardEvent && talking && endsTalk(event, s.settings().shortcutKeys)) setTalking(false)
     },
     keydown: (event) => {
       if (!(event instanceof KeyboardEvent)) return
       s.resumeAudio()
-      if (isTalkKey(event)) {
+      const keys = s.settings().shortcutKeys
+      const pressed = { ...keyOf(event), altGraph: event.getModifierState('AltGraph') }
+      if (isTalkKey(pressed, keys)) {
         event.preventDefault()
         event.stopPropagation()
         if (!event.repeat) setTalking(true)
@@ -149,7 +160,7 @@ function keyboardHandler(s: Services, t: Tools): Record<string, HandlerSpec> {
         event.stopPropagation()
         return
       }
-      const action = routeKey(event)
+      const action = routeKey(pressed, { keys, typing: isEditable(document.activeElement) })
       if (!action) return
       // Escape is not swallowed: the page may use it too.
       if (action !== 'stop-speech') {

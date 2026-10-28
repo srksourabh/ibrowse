@@ -69,12 +69,12 @@ describe('HidHost.connect', () => {
 
   it('says to run hardware setup when nothing has been paired', async () => {
     const result = await setup({ profileId: '' }).host.connect()
-    expect(!result.ok && result.reason).toMatch(/Alt\+Shift\+P/)
+    expect(!result.ok && result.reason).toMatch(/hardware setup from iBrowse settings, with Alt and O/)
   })
 
   it('says to run hardware setup when the saved profile has gone', async () => {
     const result = await setup({ profiles: [] }).host.connect()
-    expect(!result.ok && result.reason).toMatch(/Alt\+Shift\+P/)
+    expect(!result.ok && result.reason).toMatch(/hardware setup from iBrowse settings, with Alt and O/)
   })
 
   it('says so where the browser has no WebHID', async () => {
@@ -84,7 +84,7 @@ describe('HidHost.connect', () => {
 
   it('passes on the reason when the device has not been granted', async () => {
     const result = await setup({ devices: [] }).host.connect()
-    expect(!result.ok && result.reason).toMatch(/Alt\+Shift\+P/)
+    expect(!result.ok && result.reason).toMatch(/hardware setup from iBrowse settings, with Alt and O/)
   })
 
   it('does nothing more when already connected', async () => {

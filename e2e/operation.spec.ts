@@ -69,23 +69,30 @@ test.describe.serial('operating a page', () => {
     await harness.close()
   })
 
-  test('jumps between headings with Alt+Shift+Down and Up', async () => {
-    await page.keyboard.press('Alt+Shift+ArrowDown')
+  test('jumps between headings with Control+Alt+Down and Up', async () => {
+    await page.keyboard.press('Control+Alt+ArrowDown')
     await expect.poll(() => lastSpoken(harness)).toBe('Welcome — Heading level 1, Text only')
-    await page.keyboard.press('Alt+Shift+ArrowDown')
+    await page.keyboard.press('Control+Alt+ArrowDown')
     await expect.poll(() => lastSpoken(harness)).toBe('Section — Heading level 2, Text only')
-    await page.keyboard.press('Alt+Shift+ArrowUp')
+    await page.keyboard.press('Control+Alt+ArrowUp')
     await expect.poll(() => lastSpoken(harness)).toBe('Welcome — Heading level 1, Text only')
   })
 
-  test('jumps to landmarks with Alt+Shift+PageUp and PageDown', async () => {
-    await page.keyboard.press('Alt+Shift+PageUp') // from the first heading back to the navigation
+  test('ignores Alt+Shift by default, since it switches the keyboard language on Windows', async () => {
+    const before = (await harness.spoken()).length
+    await page.keyboard.press('Alt+Shift+ArrowDown')
+    await page.waitForTimeout(300)
+    expect((await harness.spoken()).length).toBe(before)
+  })
+
+  test('jumps to landmarks with Control+Alt+PageUp and PageDown', async () => {
+    await page.keyboard.press('Control+Alt+PageUp') // from the first heading back to the navigation
     await expect.poll(() => lastSpoken(harness)).toBe('Main menu — Navigation landmark')
   })
 
-  test('says where the user is with Alt+Shift+W', async () => {
+  test('says where the user is with Control+Alt+W', async () => {
     const before = await count(harness, WHERE_AM_I)
-    await page.keyboard.press('Alt+Shift+W')
+    await page.keyboard.press('Control+Alt+W')
     await expect.poll(() => count(harness, WHERE_AM_I)).toBe(before + 1)
   })
 
@@ -151,7 +158,7 @@ test.describe.serial('operating a page', () => {
   })
 
   test('mentions the iframe in the detailed briefing, and Explore Mode on is announced once', async () => {
-    await page.keyboard.press('Alt+Shift+B')
+    await page.keyboard.press('Control+Alt+B')
     await harness.expectSpoken(/1 embedded frame/)
     expect(await count(harness, /^Explore mode on$/)).toBe(1)
   })
@@ -164,7 +171,7 @@ test.describe.serial('operating a page', () => {
   test('carries out a shortcut pressed while focus is inside the iframe', async () => {
     const before = await count(harness, WHERE_AM_I)
     await page.frameLocator('iframe').locator('button').focus()
-    await page.keyboard.press('Alt+Shift+W')
+    await page.keyboard.press('Control+Alt+W')
     await expect.poll(() => count(harness, WHERE_AM_I)).toBe(before + 1)
   })
 })

@@ -129,7 +129,7 @@ describe('ChromeRecognizer', () => {
 describe('recognitionErrorText', () => {
   it('says how to allow the microphone when it is blocked', () => {
     expect(recognitionErrorText(new Error('not-allowed'))).toBe(
-      'The microphone is not allowed. Open settings with Alt+Shift+S and turn on voice to allow it.',
+      'The microphone is not allowed. Open settings with Alt and O and turn on voice to allow it.',
     )
     expect(recognitionErrorText(new Error('service-not-allowed'))).toContain('not allowed')
   })
@@ -175,7 +175,7 @@ describe('ChromeRecognizer: a start that fails', () => {
 describe('recognitionErrorText: voice turned off', () => {
   it('says voice commands are off and where to turn them on', () => {
     expect(recognitionErrorText(new Error('voice-off'))).toBe(
-      'Voice commands are off. Turn them on in settings, opened with Alt+Shift+S.',
+      'Voice commands are off. Turn them on in settings, opened with Alt and O.',
     )
   })
 })

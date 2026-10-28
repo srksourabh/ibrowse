@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
 import { launchHarness, ORIGIN, type Harness } from './helpers'
-import { ONBOARDING_STEPS } from '../src/onboarding/tour'
+import { onboardingSteps } from '../src/onboarding/tour'
+
+const ONBOARDING_STEPS = onboardingSteps('ctrl-alt')
 
 const PAGE = `<!doctype html><title>Settings Test</title>
   <style>
@@ -37,7 +39,7 @@ test.describe.serial('the first-run tour', () => {
 
   test('moves on with Enter and back with Backspace, speaking each step', async () => {
     await tour.keyboard.press('Enter')
-    await harness.expectSpoken(/^To start, open any web page and press Alt, Shift and E/)
+    await harness.expectSpoken(/^To start, open any web page and press Alt and I/)
     await expect(tour.locator('#progress')).toHaveText(`Step 2 of ${ONBOARDING_STEPS.length}`)
     await tour.keyboard.press('Backspace')
     await expect(tour.locator('#progress')).toHaveText(`Step 1 of ${ONBOARDING_STEPS.length}`)
@@ -150,7 +152,7 @@ test.describe.serial('the settings page', () => {
     expect((await harness.storedSettings()).voiceInput).not.toBe('chrome')
     await page.keyboard.press('Enter')
     await harness.expectSpoken(
-      /^Voice commands: On, with Chrome's speech recognition\. Hold Alt, Shift and V and speak, or answer when iBrowse asks\.$/,
+      /^Voice commands: On, with Chrome's speech recognition\. Hold Control, Alt and V and speak, or answer when iBrowse asks\.$/,
     )
     await expect.poll(async () => (await harness.storedSettings()).voiceInput).toBe('chrome')
   })
@@ -245,9 +247,9 @@ test.describe.serial('AI features', () => {
       await harness.toggleExplore(ORIGIN)
       await harness.expectSpoken(/Want me to read it\?/)
       await page.keyboard.press('Escape')
-      await page.keyboard.press('Alt+Shift+M')
+      await page.keyboard.press('Control+Alt+M')
       await harness.expectSpoken(/^AI features are off\. Turn them on in settings\.$/)
-      await page.keyboard.press('Alt+Shift+D')
+      await page.keyboard.press('Control+Alt+D')
       expect((await harness.spoken()).filter((t) => /off\. Turn them on/.test(t))).toHaveLength(2)
     } finally {
       await harness.close()
@@ -262,7 +264,7 @@ test.describe.serial('AI features', () => {
       await page.goto(`${ORIGIN}/`)
       await harness.toggleExplore(ORIGIN)
       await harness.expectSpoken(/Want me to read it\?/)
-      await page.keyboard.press('Alt+Shift+M')
+      await page.keyboard.press('Control+Alt+M')
       await harness.expectSpoken(/^One moment\.$/)
       await harness.expectSpoken(/^No Google key has been entered\. Add one in settings\.$/)
     } finally {
@@ -280,8 +282,8 @@ test.describe.serial('AI features', () => {
       await harness.expectSpoken(/Want me to read it\?/)
       await page.keyboard.press('Escape')
       await page.mouse.move(120, 420)
-      await harness.expectSpoken(/^Image, no description\. Press Alt\+Shift\+D to describe it\.$/)
-      await page.keyboard.press('Alt+Shift+D')
+      await harness.expectSpoken(/^Image, no description\. Press Control, Alt and D to describe it\.$/)
+      await page.keyboard.press('Control+Alt+D')
       await harness.expectSpoken(/^No Google key has been entered\. Add one in settings\.$/)
     } finally {
       await harness.close()

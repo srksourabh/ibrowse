@@ -64,8 +64,11 @@ describe('spokenText: full mode', () => {
   it('offers an AI description for an image that has none, only when AI is on', () => {
     const bare = info({ role: 'image', label: '' })
     expect(spokenText(bare)).toBe('Image, no description')
-    expect(spokenText(bare, { aiHint: true })).toBe(
-      'Image, no description. Press Alt+Shift+D to describe it.',
+    expect(spokenText(bare, { aiHint: true, keys: 'ctrl-alt' })).toBe(
+      'Image, no description. Press Control, Alt and D to describe it.',
+    )
+    expect(spokenText(bare, { aiHint: true, keys: 'alt-shift' })).toBe(
+      'Image, no description. Press Alt, Shift and D to describe it.',
     )
   })
 

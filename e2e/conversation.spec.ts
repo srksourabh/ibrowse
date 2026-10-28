@@ -141,13 +141,13 @@ test.describe.serial('voice commands', () => {
 })
 
 const holdTalkKey = async (page: Page, ms: number): Promise<void> => {
+  await page.keyboard.down('Control')
   await page.keyboard.down('Alt')
-  await page.keyboard.down('Shift')
   await page.keyboard.down('KeyV')
   await page.waitForTimeout(ms)
   await page.keyboard.up('KeyV')
-  await page.keyboard.up('Shift')
   await page.keyboard.up('Alt')
+  await page.keyboard.up('Control')
 }
 
 test.describe.serial('push to talk', () => {
@@ -170,7 +170,7 @@ test.describe.serial('push to talk', () => {
 
   test('says how to turn voice commands on while they are off, and opens no microphone', async () => {
     await holdTalkKey(page, 100)
-    await harness.expectSpoken(/^Voice commands are off\. Turn them on in settings, opened with Alt\+Shift\+S\.$/)
+    await harness.expectSpoken(/^Voice commands are off\. Turn them on in settings, opened with Alt and O\.$/)
     expect(await offscreenOpen()).toBe(false)
   })
 
@@ -276,7 +276,7 @@ test.describe.serial('push to talk inside an iframe', () => {
       await page.frameLocator('iframe').locator('button').focus()
       await harness.clearSpoken()
       await holdTalkKey(page, 100)
-      await harness.expectSpoken(/^Voice commands are off\. Turn them on in settings, opened with Alt\+Shift\+S\.$/)
+      await harness.expectSpoken(/^Voice commands are off\. Turn them on in settings, opened with Alt and O\.$/)
     } finally {
       await harness.close()
     }

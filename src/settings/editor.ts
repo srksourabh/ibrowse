@@ -1,3 +1,4 @@
+import { chordWords, type ShortcutKeys } from '../key-router'
 import { CloudError } from '../cloud/gemini-client'
 import { GEMINI_ORIGIN } from '../cloud/permissions'
 import { clearGeminiKey, hasGeminiKey, saveGeminiKey, type SecretStore } from '../cloud/secrets'
@@ -28,10 +29,10 @@ export interface EditorDeps {
 }
 
 const ADD_KEY = ' Add your Google key to use it.'
-const AI_KEYS =
-  ' Press Alt, Shift and D to describe what is under the pointer, and Alt, Shift and M to summarise the page.'
+const aiKeys = (keys: ShortcutKeys): string =>
+  ` Press ${chordWords(keys, 'D')} to describe what is under the pointer, and ${chordWords(keys, 'M')} to summarise the page.`
 
-const TALK_KEYS = ' Hold Alt, Shift and V and speak, or answer when iBrowse asks.'
+const talkKeys = (keys: ShortcutKeys): string => ` Hold ${chordWords(keys, 'V')} and speak, or answer when iBrowse asks.`
 
 /** True when nothing new would leave this computer, so the warning and permission are not needed again. */
 function alreadyOn(key: FieldSpec['key'], value: unknown, current: Settings): boolean {
@@ -153,16 +154,16 @@ export class SettingsEditor {
   }
 
   async #save(field: FieldSpec, value: unknown): Promise<void> {
-    await saveSettings(this.#deps.store, { [field.key]: value })
+    const { shortcutKeys } = await saveSettings(this.#deps.store, { [field.key]: value })
     let text = confirmationFor(field, value)
     const turnedOn =
       (field.key === 'cloudVoice' && value !== 'off') ||
       (field.key === 'aiAssist' && value === true) ||
       (field.key === 'voiceInput' && value === 'gemini')
-    if (field.key === 'voiceInput' && value !== 'off') text += TALK_KEYS
+    if (field.key === 'voiceInput' && value !== 'off') text += talkKeys(shortcutKeys)
     if (turnedOn) {
       const hasKey = await this.hasKey()
-      text += hasKey ? (field.key === 'aiAssist' ? AI_KEYS : '') : ADD_KEY
+      text += hasKey ? (field.key === 'aiAssist' ? aiKeys(shortcutKeys) : '') : ADD_KEY
     }
     this.#deps.speak(text)
   }
