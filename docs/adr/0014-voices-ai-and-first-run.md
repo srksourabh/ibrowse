@@ -29,7 +29,7 @@ It is sent only inside a fence, after stripping invisible characters and any fen
 The utterance can carry a start callback. The background worker reports the voice's start event back to the page, which closes a timer opened when iBrowse decided to speak. The old numbers covered only iBrowse's own processing. The target is 150 ms.
 
 ### 8. The tour opens once, on install
-A fresh install opens a ten-step spoken tour and says so aloud, since a new tab may not be announced. It is not reopened on an update. The settings page can replay it.
+A fresh install opens a ten-step spoken tour and says so aloud, since a new tab may not be announced. (Changed by ADR-0019: the install is silent and the tour page first asks about a screen reader.) It is not reopened on an update. The settings page can replay it.
 
 ### 9. The settings page speaks, because iBrowse is not running in it
 Content scripts do not run on the extension's own pages. A user with no screen reader would hear nothing, so the page announces each setting on focus and every change. With Companion mode it writes to a live region instead, so nothing is said twice.

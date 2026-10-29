@@ -299,7 +299,7 @@ export function startBackground(): void {
   registerCommands(b)
   registerToolbar(b)
   chrome.runtime.onInstalled.addListener(({ reason }) => {
-    void openTourOnFirstInstall(b, reason).catch(reportError('opening the tour'))
+    void openTourOnFirstInstall(reason).catch(reportError('opening the tour'))
     if (reason === 'update') void keepOldShortcutsOnUpdate(chrome.storage.local).catch(reportError('shortcut keys'))
   })
 }
@@ -312,11 +312,13 @@ function notifySpeechStarted(sender: chrome.runtime.MessageSender, id: number): 
   chrome.tabs.sendMessage(sender.tab.id, notice, { frameId: sender.frameId ?? 0 }).catch(() => {})
 }
 
-/** A fresh install opens the tour once, and says so aloud, since the new tab may not be announced. */
-async function openTourOnFirstInstall(b: Background, reason: string): Promise<void> {
+/**
+ * A fresh install opens the tour once. It says nothing itself: the tour page
+ * asks about a screen reader first, so the two voices never talk over each other (ADR-0019).
+ */
+async function openTourOnFirstInstall(reason: string): Promise<void> {
   const done = await hasDoneOnboarding(chrome.storage.local)
   if (!shouldOpenOnboarding(reason, done)) return
   await markOnboardingDone(chrome.storage.local)
-  b.speech.speak({ text: 'Welcome to iBrowse. A short tour is opening now.' }).catch(b.reportError('welcome'))
   await chrome.tabs.create({ url: chrome.runtime.getURL('onboarding.html') })
 }

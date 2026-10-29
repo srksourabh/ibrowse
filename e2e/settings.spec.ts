@@ -31,7 +31,19 @@ test.describe.serial('the first-run tour', () => {
     await harness.close()
   })
 
-  test('opens by itself on a fresh install and speaks the first step', async () => {
+  test('first asks, in its own voice, whether a screen reader is in use', async () => {
+    await harness.expectSpoken(/^Do you use a screen reader\? Press Y for yes, N for no\.$/)
+    await expect(tour.locator('#answer')).toHaveText(/^Do you use a screen reader\?/)
+    await expect(tour.locator('#next')).toBeHidden()
+  })
+
+  test('keeps its own voice on N, says so, and remembers the answer', async () => {
+    await tour.keyboard.press('n')
+    await harness.expectSpoken(/^Thank you\. iBrowse will speak in its own voice\./)
+    expect((await harness.storedSettings()).screenReaderMode).toBe('standalone')
+  })
+
+  test('then opens the tour and speaks the first step', async () => {
     await harness.expectSpoken(/^Welcome to iBrowse\. It lets you explore a web page/)
     await expect(tour.getByRole('heading', { level: 1, name: 'Welcome to iBrowse' })).toBeVisible()
     await expect(tour.locator('#progress')).toHaveText(`Step 1 of ${ONBOARDING_STEPS.length}`)
@@ -55,6 +67,24 @@ test.describe.serial('the first-run tour', () => {
     await tour.keyboard.press('Escape')
     await harness.expectSpoken(/^Tour skipped\. You can hear it again from settings\.$/)
     await tour.waitForEvent('close', { timeout: 10_000 })
+  })
+})
+
+test.describe.serial('the first question, answered yes', () => {
+  test('switches to Companion, writing the thank-you for the screen reader and not saying it', async () => {
+    const harness = await launchHarness({ '/': PAGE }, { keepTour: true })
+    try {
+      const tour = harness.tourPage!
+      await tour.bringToFront()
+      await expect(tour.locator('#answer')).toHaveText(/^Do you use a screen reader\?/)
+      await tour.keyboard.press('y')
+      await expect(tour.locator('#answer')).toHaveText(/^Thank you\. Your screen reader will speak for iBrowse/)
+      await expect.poll(async () => (await harness.storedSettings()).screenReaderMode).toBe('companion')
+      await expect(tour.locator('#progress')).toHaveText(`Step 1 of ${ONBOARDING_STEPS.length}`)
+      expect((await harness.spoken()).filter((text) => !/^Do you use a screen reader/.test(text))).toEqual([])
+    } finally {
+      await harness.close()
+    }
   })
 })
 

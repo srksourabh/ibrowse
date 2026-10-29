@@ -11,24 +11,30 @@
       #step { padding: 1rem; border: 2px solid currentColor; border-radius: 4px; min-height: 6rem; }
       .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
       button { font: inherit; padding: 0.5rem 1rem; }
+      [hidden] { display: none; }
       :focus-visible { outline: 3px solid Highlight; outline-offset: 2px; }
     </style>
   </head>
   <body>
     <main>
       <h1>Welcome to iBrowse</h1>
-      <p>
+      <div id="question" class="controls" hidden>
+        <button id="uses-screen-reader" type="button">Yes, I use a screen reader</button>
+        <button id="no-screen-reader" type="button">No</button>
+      </div>
+      <p id="tour-help" hidden>
         This tour is spoken. Press Enter for the next step, Backspace to go back, R to hear a step again,
         and Escape to skip it.
       </p>
       <p id="progress"></p>
       <p id="step"></p>
-      <div class="controls">
+      <div id="tour-controls" class="controls" hidden>
         <button id="previous" type="button">Previous</button>
         <button id="repeat" type="button">Hear again</button>
         <button id="next" type="button">Next</button>
         <button id="skip" type="button">Skip the tour</button>
       </div>
+      <p id="answer" role="status" aria-live="polite"></p>
       <p id="status" role="status"></p>
     </main>
     <script type="module" src="./main.ts"></script>

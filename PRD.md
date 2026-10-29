@@ -169,7 +169,7 @@ Heading jumps are on Alt+Shift+arrows, not the plain `Shift+H` first proposed, b
 - **FR-8.3** Unsupported or inaccessible content is named explicitly: "Embedded video, cannot be read", "Graphic with no text".
 
 ### 5.9 Screen reader coexistence
-- **FR-9.1** Setting: **Standalone** (default) or **Companion**.
+- **FR-9.1** Setting: **Standalone** (default) or **Companion**. On first run, before anything else, iBrowse asks "Do you use a screen reader?" and sets the mode from the answer (ADR-0019).
   - **Standalone:** the extension speaks through its own TTS. Onboarding tells the user to pause their screen reader's browse mode while exploring.
   - **Companion:** announcements are sent to a visually hidden ARIA live region so the screen reader speaks them with its own voice. Spatial panning and fast interruption are not available in this mode.
 - **FR-9.2** The setting is changeable by keyboard and speech, with no visual UI required.

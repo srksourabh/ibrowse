@@ -101,9 +101,8 @@ export async function launchHarness(
 
   const pageErrors: string[] = []
   context.on('console', (message) => {
-    // Worker messages arrive here too; the welcome's failure on a voiceless machine is skipped below as well.
     const text = message.text()
-    if (message.type() === 'error' && text.startsWith('iBrowse') && !text.startsWith('iBrowse welcome')) pageErrors.push(text)
+    if (message.type() === 'error' && text.startsWith('iBrowse')) pageErrors.push(text)
   })
 
   const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
@@ -112,9 +111,6 @@ export async function launchHarness(
     ;(globalThis as unknown as { consoleErrors: string[] }).consoleErrors = errors
     const logError = console.error.bind(console)
     console.error = (...args: unknown[]) => {
-      // The install welcome starts on the real voice before this takes over; a machine with no
-      // voices (CI) can fail it, which says nothing about iBrowse.
-      if (String(args[0]).startsWith('iBrowse welcome')) return logError(...args)
       if (String(args[0]).startsWith('iBrowse')) errors.push(args.map(String).join(' '))
       logError(...args)
     }
@@ -197,6 +193,8 @@ export async function launchHarness(
   if (options.keepTour) {
     harness.tourPage = tour
   } else {
+    // The first question on a fresh install; "No" keeps iBrowse's own voice (ADR-0019).
+    await tour.locator('#no-screen-reader').click()
     await harness.expectSpoken(TOUR_FIRST_STEP)
     await tour.close()
     await harness.clearSpoken()
