@@ -175,7 +175,7 @@ describe('HoverController', () => {
     hover(button)
     vi.advanceTimersByTime(DWELL_MS)
     expect(speech.speak).toHaveBeenCalledWith(
-      expect.objectContaining({ text: 'Image, no description. Press Alt+Shift+D to describe it.' }),
+      expect.objectContaining({ text: 'Image, no description. Press Control, Alt and D to describe it.' }),
       expect.anything(),
     )
   })

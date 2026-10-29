@@ -73,6 +73,6 @@ Certify all three: data is not sold to third parties; not used or transferred fo
 ## Upload steps
 
 1. `npm run build && npx wxt zip`
-2. Dashboard → **New item** → upload `.output/ibrowse-0.1.0-chrome.zip`.
+2. Dashboard → **New item** → upload `.output/ibrowse-0.2.0-chrome.zip`.
 3. Fill the three tabs above, then **Submit for review**. Broad host access means an in-depth review, which can take several days.
 4. When it is approved, record the extension ID: the desktop installers (ADR-0016) need it.

@@ -1,6 +1,6 @@
 # What iBrowse can do
 
-iBrowse is a Chrome extension (Manifest V3) that lets blind and low-vision people explore and use any website by mouse, touch, keyboard and voice, and hear what is there. This is the complete list of what the current version (0.1.0) does. Requirements and their reasons are in [PRD.md](../PRD.md); decisions are in [docs/adr](adr/).
+iBrowse is a Chrome extension (Manifest V3) that lets blind and low-vision people explore and use any website by mouse, touch, keyboard and voice, and hear what is there. This is the complete list of what the current version (0.2.0) does. Requirements and their reasons are in [PRD.md](../PRD.md); decisions are in [docs/adr](adr/).
 
 ## 1. Turning it on and off
 
@@ -138,7 +138,7 @@ All are off by default. Each one uses the user's **own Gemini key**. Turning one
 
 ## 13. First run and settings
 
-- On first install, a **spoken tour** opens once. Its 11 steps cover Explore Mode, exploring, reading, moving, where am I, forms, touch, voice, settings and hardware. Enter goes on, Backspace goes back, R repeats and Escape skips. It can be heard again from settings.
+- On first install, iBrowse first asks **"Do you use a screen reader?"**. Y chooses Companion, N chooses Standalone, and it is asked only once. Then a **spoken tour** opens. Its 11 steps cover Explore Mode, exploring, reading, moving, where am I, forms, touch, voice, settings and hardware. Enter goes on, Backspace goes back, R repeats and Escape skips. It can be heard again from settings.
 - **Settings: Alt+Shift+S.** The page is made of real headings and controls. Each setting is read out (name, value and what it does) when it gets focus, and every change is spoken.
 - Setting groups:
   - **Speech:** rate, pitch, volume, local voice, short announcements.

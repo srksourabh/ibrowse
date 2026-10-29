@@ -101,7 +101,7 @@ export class ChromeRecognizer implements SpeechRecognizer {
 export function recognitionErrorText(error: Error): string {
   switch (error.message) {
     case 'voice-off':
-      return 'Voice commands are off. Turn them on in settings, opened with Alt+Shift+S.'
+      return 'Voice commands are off. Turn them on in settings, opened with Alt and O.'
     case 'no-key':
     case 'bad-key':
     case 'bad-model':
@@ -110,7 +110,7 @@ export function recognitionErrorText(error: Error): string {
       return "Google's limit has been reached for now. Chrome's speech recognition can be chosen in settings instead."
     case 'not-allowed':
     case 'service-not-allowed':
-      return 'The microphone is not allowed. Open settings with Alt+Shift+S and turn on voice to allow it.'
+      return 'The microphone is not allowed. Open settings with Alt and O and turn on voice to allow it.'
     case 'audio-capture':
       return 'No microphone was found.'
     case 'network':

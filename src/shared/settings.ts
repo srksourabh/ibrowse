@@ -1,3 +1,5 @@
+import type { ShortcutKeys } from '../key-router'
+
 export interface Settings {
   readonly alwaysExplore: boolean
   readonly screenReaderMode: 'standalone' | 'companion'
@@ -26,6 +28,8 @@ export interface Settings {
   readonly latencyReadout: boolean
   /** Spoken commands and questions (ADR-0017). Off until the user allows the microphone. */
   readonly voiceInput: 'off' | 'chrome' | 'gemini'
+  /** The modifiers held for every in-page shortcut (ADR-0018). */
+  readonly shortcutKeys: ShortcutKeys
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -48,6 +52,7 @@ export const DEFAULT_SETTINGS: Settings = {
   aiModel: 'gemini-3.8-flash',
   latencyReadout: false,
   voiceInput: 'off',
+  shortcutKeys: 'ctrl-alt',
 }
 
 const isBoolean = (v: unknown): v is boolean => typeof v === 'boolean'
@@ -80,6 +85,7 @@ const VALIDATORS: Record<keyof Settings, (value: unknown) => boolean> = {
   aiModel: (v) => typeof v === 'string' && /^[a-z0-9.-]{1,60}$/.test(v),
   latencyReadout: isBoolean,
   voiceInput: oneOf('off', 'chrome', 'gemini'),
+  shortcutKeys: oneOf('ctrl-alt', 'alt-shift'),
 }
 
 /** Builds Settings from untrusted stored data. Invalid fields fall back to defaults. */
@@ -110,6 +116,7 @@ export function parseSettings(raw: unknown): Settings {
     aiModel: pick('aiModel'),
     latencyReadout: pick('latencyReadout'),
     voiceInput: pick('voiceInput'),
+    shortcutKeys: pick('shortcutKeys'),
   }
 }
 
@@ -141,4 +148,14 @@ export async function saveSettings(
   const merged: Settings = { ...(await loadSettings(store)), ...patch }
   await store.set({ [STORAGE_KEY]: merged })
   return merged
+}
+
+/**
+ * Versions before the choice existed used Alt+Shift. Someone updating keeps the
+ * keys they learned; only a fresh install starts with Ctrl+Alt.
+ */
+export async function keepOldShortcutsOnUpdate(store: KeyValueStore): Promise<void> {
+  const stored = (await store.get(STORAGE_KEY))[STORAGE_KEY]
+  if (typeof stored !== 'object' || stored === null || 'shortcutKeys' in stored) return
+  await saveSettings(store, { shortcutKeys: 'alt-shift' })
 }

@@ -25,6 +25,9 @@ export type NavigationNotice = { readonly type: 'will-navigate' }
 /** Content script in an iframe to background: pass a shortcut up to the top frame. */
 export type FrameActionRequest = { readonly type: 'frame-action'; readonly action: KeyAction }
 
+/** Content script to background: open one of iBrowse's own pages, from a shortcut pressed in the page. */
+export type OpenPageRequest = { readonly type: 'open-page'; readonly page: 'settings' | 'hardware' }
+
 /** Content script to background: which tab is this, among how many? */
 export type TabInfoRequest = { readonly type: 'tab-info' }
 

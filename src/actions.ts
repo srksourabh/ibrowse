@@ -13,6 +13,9 @@ export interface ActionDeps {
   ai: { describeThis(): void; summarize(): void }
   /** Push to talk: true when the key goes down, false when it is let go. */
   talk(start: boolean): void
+  exploreOff(): void
+  /** Opens one of iBrowse's own pages in a new tab. */
+  openPage(page: 'settings' | 'hardware'): void
 }
 
 /**
@@ -58,6 +61,15 @@ export function createActionRunner(deps: ActionDeps): (action: KeyAction) => voi
         break
       case 'stop-speech':
         briefer.stop()
+        break
+      case 'explore-off':
+        deps.exploreOff()
+        break
+      case 'open-settings':
+        deps.openPage('settings')
+        break
+      case 'open-hardware':
+        deps.openPage('hardware')
         break
       case 'talk-start':
       case 'talk-end':

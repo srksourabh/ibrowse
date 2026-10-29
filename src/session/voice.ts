@@ -19,7 +19,7 @@ import type { SessionAi } from './ai'
 import type { Services } from './services'
 
 const NOT_UNDERSTOOD = 'I did not understand. Say help to hear what you can say.'
-const VOICE_OFF = 'Voice commands are off. Turn them on in settings, opened with Alt+Shift+S.'
+const VOICE_OFF = 'Voice commands are off. Turn them on in settings, opened with Alt and O.'
 
 /** Push to talk in the top frame, whichever frame the key was pressed in. */
 export function talk(s: Services, listening: ListeningController, start: boolean): void {

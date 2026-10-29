@@ -71,7 +71,7 @@ test.describe.serial('page intelligence', () => {
   })
 
   test('follows the Next link, then briefs the new page without another hotkey', async () => {
-    await page.keyboard.press('Alt+Shift+ArrowRight')
+    await page.keyboard.press('Control+Alt+ArrowRight')
     await harness.expectSpoken(/^Going to next page$/)
     await page.waitForURL(`${ORIGIN}/2`)
     await harness.expectSpoken(/^Page two\. Web page\. 1 paragraph, 1 heading\. Want me to read it\?$/)
@@ -80,12 +80,12 @@ test.describe.serial('page intelligence', () => {
   })
 
   test('reports the end of a page that has no further page', async () => {
-    await page.keyboard.press('Alt+Shift+ArrowRight')
+    await page.keyboard.press('Control+Alt+ArrowRight')
     await harness.expectSpoken(/^End of page$/)
   })
 
-  test('leaves the browser history alone when Alt+Shift+Arrow is pressed', async () => {
-    await page.keyboard.press('Alt+Shift+ArrowLeft')
+  test('leaves the browser history alone when Control+Alt+Arrow is pressed', async () => {
+    await page.keyboard.press('Control+Alt+ArrowLeft')
     await page.waitForTimeout(300)
     expect(page.url()).toBe(`${ORIGIN}/2`)
   })

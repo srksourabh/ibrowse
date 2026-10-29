@@ -10,9 +10,26 @@ function setup(options: { readFromHere?: boolean; cursor?: Element | null } = {}
   const whereAmI = vi.fn()
   const ai = { describeThis: vi.fn(), summarize: vi.fn() }
   const talk = vi.fn()
-  const run = createActionRunner({ briefer, reader, navigator, jumps, whereAmI, ai, talk })
-  return { run, briefer, reader, navigator, jumps, whereAmI, ai, talk }
+  const exploreOff = vi.fn()
+  const openPage = vi.fn()
+  const run = createActionRunner({ briefer, reader, navigator, jumps, whereAmI, ai, talk, exploreOff, openPage })
+  return { run, briefer, reader, navigator, jumps, whereAmI, ai, talk, exploreOff, openPage }
 }
+
+describe('createActionRunner: shortcuts that leave exploring', () => {
+  it('turns Explore Mode off', () => {
+    const { run, exploreOff } = setup()
+    run('explore-off')
+    expect(exploreOff).toHaveBeenCalledOnce()
+  })
+
+  it('opens settings and hardware setup', () => {
+    const { run, openPage } = setup()
+    run('open-settings')
+    run('open-hardware')
+    expect(openPage.mock.calls).toEqual([['settings'], ['hardware']])
+  })
+})
 
 describe('createActionRunner: push to talk passed up from an iframe', () => {
   it('starts and ends talking in the top frame', () => {

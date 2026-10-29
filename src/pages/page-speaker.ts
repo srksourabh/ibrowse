@@ -10,13 +10,17 @@ export function createPageSpeaker(status: HTMLElement, companion: boolean): (tex
   status.setAttribute('aria-live', companion ? 'polite' : 'off')
   return (text) => {
     status.textContent = text
-    if (companion) return
-    chrome.runtime
-      .sendMessage({ type: 'speak', id: nextPageSpeechId++, utterance: { text } })
-      .catch((error: unknown) =>
-        console.error('iBrowse speech error:', error instanceof Error ? error.message : 'unknown'),
-      )
+    if (!companion) void sayInOwnVoice(text)
   }
+}
+
+/** Speaks in iBrowse's own voice only, leaving the page untouched. Settles when the speech ends. */
+export function sayInOwnVoice(text: string): Promise<void> {
+  return chrome.runtime
+    .sendMessage({ type: 'speak', id: nextPageSpeechId++, utterance: { text } })
+    .catch((error: unknown) =>
+      console.error('iBrowse speech error:', error instanceof Error ? error.message : 'unknown'),
+    )
 }
 
 export function byId<T extends HTMLElement>(id: string): T {

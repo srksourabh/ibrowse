@@ -18,7 +18,7 @@ export interface HoverDeps {
   meter: Pick<LatencyMeter, 'start'>
   /** Stereo pan for a horizontal position in this frame, measured against the whole window. */
   panAt(x: number): number
-  getSettings(): Pick<Settings, 'shortMode' | 'speechRate'> & Partial<Pick<Settings, 'aiAssist'>>
+  getSettings(): Pick<Settings, 'shortMode' | 'speechRate'> & Partial<Pick<Settings, 'aiAssist' | 'shortcutKeys'>>
   /** Called when the pointer arrives on a new element, so the navigation cursor can follow it. */
   onTarget?(el: Element): void
   /** Called on every change of target, empty space included. */
@@ -100,8 +100,12 @@ export class HoverController {
 
   #speak(target: Element): void {
     // Describe again: the element may have changed while the pointer rested on it.
-    const { shortMode, speechRate, aiAssist } = this.#deps.getSettings()
-    const text = spokenText(this.#deps.describe(target), { shortMode, aiHint: aiAssist ?? false })
+    const { shortMode, speechRate, aiAssist, shortcutKeys } = this.#deps.getSettings()
+    const text = spokenText(this.#deps.describe(target), {
+      shortMode,
+      aiHint: aiAssist ?? false,
+      ...(shortcutKeys ? { keys: shortcutKeys } : {}),
+    })
     const pan = this.#deps.panAt(this.#anchor?.x ?? 0)
     // Moving to a new element already cancelled the old speech, so anything speaking
     // now began after the pointer arrived (a validation message, a word). Wait for it.

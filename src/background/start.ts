@@ -4,6 +4,7 @@ import { CloudHost, type CloudMessage } from './cloud-host'
 import type { HidApiLike } from '../haptics/hid-driver'
 import { HidHost } from '../haptics/hid-host'
 import type { AiResponse } from '../ai/messages'
+import type { KeyAction } from '../key-router'
 import type { CloudSpeechResponse } from '../cloud/messages'
 import type { HapticNotice, HapticRequest, HapticResponse } from '../haptics/messages'
 import { loadProfiles } from '../haptics/profile'
@@ -12,13 +13,15 @@ import type {
   ExploreStateNotice,
   FrameActionRequest,
   NavigationNotice,
+  OpenPageRequest,
   SpeechRequest,
   SpeechResponse,
   SpeechStartedNotice,
   TabInfoRequest,
   TabInfoResponse,
 } from '../shared/messages'
-import { loadSettings } from '../shared/settings'
+import { commandAction } from '../manifest'
+import { keepOldShortcutsOnUpdate, loadSettings } from '../shared/settings'
 import { toolbarState } from '../shared/toolbar'
 import type { ListenRequest, ListenResponse } from '../voice/messages'
 import type { VoiceRelay } from '../voice/voice-relay'
@@ -46,6 +49,7 @@ type BackgroundMessage =
   | HapticRequest
   | CloudMessage
   | ListenRequest
+  | OpenPageRequest
 type AnyResponse =
   | SpeechResponse
   | TabInfoResponse
@@ -144,6 +148,9 @@ function handleMessage(
     case 'listen-stop':
     case 'listen-cancel':
       return handleListen(b.voice, message, sender, sendResponse)
+    case 'open-page':
+      openOwnPage(message.page)
+      return false
     case 'will-navigate':
       if (sender.tab?.id !== undefined) {
         chrome.storage.session
@@ -236,12 +243,27 @@ function registerToolbar(b: Background): void {
   chrome.tabs.onRemoved.addListener((tabId) => b.voice.noteExploreState(tabId, false))
 }
 
+function openOwnPage(page: OpenPageRequest['page']): void {
+  if (page === 'settings') void chrome.runtime.openOptionsPage()
+  else void chrome.tabs.create({ url: chrome.runtime.getURL('pair.html') })
+}
+
+/** A page shortcut given a key at chrome://extensions/shortcuts; the page ignores it while Explore Mode is off. */
+async function runPageCommand(b: Background, action: KeyAction): Promise<void> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  if (tab?.id === undefined) return
+  // No content script means a page Chrome does not allow; there is nothing to do there.
+  await b.sendToTopFrame(tab.id, { type: 'action', action }).catch(() => {})
+}
+
 function registerCommands(b: Background): void {
   chrome.commands.onCommand.addListener((command) => {
     if (command === 'toggle-explore') void toggleExploreMode(b)
-    if (command === 'open-settings') void chrome.runtime.openOptionsPage()
-    if (command === 'pair-hardware') {
-      void chrome.tabs.create({ url: chrome.runtime.getURL('pair.html') })
+    else if (command === 'open-settings') openOwnPage('settings')
+    else if (command === 'pair-hardware') openOwnPage('hardware')
+    else {
+      const action = commandAction(command)
+      if (action) void runPageCommand(b, action)
     }
   })
 }
@@ -277,7 +299,8 @@ export function startBackground(): void {
   registerCommands(b)
   registerToolbar(b)
   chrome.runtime.onInstalled.addListener(({ reason }) => {
-    void openTourOnFirstInstall(b, reason).catch(reportError('opening the tour'))
+    void openTourOnFirstInstall(reason).catch(reportError('opening the tour'))
+    if (reason === 'update') void keepOldShortcutsOnUpdate(chrome.storage.local).catch(reportError('shortcut keys'))
   })
 }
 
@@ -289,11 +312,13 @@ function notifySpeechStarted(sender: chrome.runtime.MessageSender, id: number): 
   chrome.tabs.sendMessage(sender.tab.id, notice, { frameId: sender.frameId ?? 0 }).catch(() => {})
 }
 
-/** A fresh install opens the tour once, and says so aloud, since the new tab may not be announced. */
-async function openTourOnFirstInstall(b: Background, reason: string): Promise<void> {
+/**
+ * A fresh install opens the tour once. It says nothing itself: the tour page
+ * asks about a screen reader first, so the two voices never talk over each other (ADR-0019).
+ */
+async function openTourOnFirstInstall(reason: string): Promise<void> {
   const done = await hasDoneOnboarding(chrome.storage.local)
   if (!shouldOpenOnboarding(reason, done)) return
   await markOnboardingDone(chrome.storage.local)
-  b.speech.speak({ text: 'Welcome to iBrowse. A short tour is opening now.' }).catch(b.reportError('welcome'))
   await chrome.tabs.create({ url: chrome.runtime.getURL('onboarding.html') })
 }
