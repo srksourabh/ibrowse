@@ -1,0 +1,73 @@
+{
+  "snapshot_id": "sha256:6f044af9c87c08010faf8687c630ad54abe63b91135c63fd8aed847a952ef6f0",
+  "enola_version": "0.3.13",
+  "extractor_version": "v193",
+  "generated_at": "2026-10-29T07:59:17Z",
+  "duration": "2.3761139s",
+  "repo_path": "C:\\Projects\\ibrowse",
+  "git": {
+    "ref": "main",
+    "commit": "30d6923a2a7d4fedb7c07bbb8297a707345277fd",
+    "dirty": false,
+    "remote": "github.com/srksourabh/ibrowse"
+  },
+  "extractors": [
+    "dotnet",
+    "typescript"
+  ],
+  "explainers": [
+    "cycles",
+    "layers",
+    "crossrepo",
+    "coverage",
+    "unused-routes",
+    "god-class",
+    "hotspots",
+    "dependency-depth",
+    "exported-surface",
+    "complexity-outliers",
+    "intent"
+  ],
+  "renderers": [
+    "llm_context"
+  ],
+  "config_hash": "sha256:3f69b5a0531b1ea2d5616a9c077686532e0780987d59dadc5709e70a8520a13c",
+  "ignore_glob_hash": "sha256:6c8ab920fae7ea8eb82f27f3fae7cf5529afa6ab70db3bf45295696891fc0c5e",
+  "output_hashes": {
+    "facts.jsonl": "sha256:58ef85215515a292686411229fe82618d605c6be3772834944ad9f075c7bd770",
+    "insights.json": "sha256:318cf43ade1b0e1dcf494fe13f503b9ec1a286fde4ad6015c7bcdc606e57392c",
+    "llm_context.md": "sha256:80e9c28f4d3099254b4d79bd6e5760151056f0210d64fffbd83d100e3ba6ba8f"
+  },
+  "fact_count": 1747,
+  "insight_count": 29,
+  "quality": {
+    "files_seen": 2232,
+    "files_parsed": 5,
+    "files_skipped": 96,
+    "dirs_skipped": 9,
+    "skipped_sample": [
+      ".git/ (glob: **/.git/**)",
+      "apps/windows/IBrowse.Core/bin/Debug/net10.0/ (glob: **/bin/Debug/**)",
+      "apps/windows/IBrowse.Core/obj/ (glob: **/obj/**)",
+      "apps/windows/IBrowse.Tests/HoverGateTests.cs (glob: **/*.Tests/**/*.cs)",
+      "apps/windows/IBrowse.Tests/PlacementTests.cs (glob: **/*.Tests/**/*.cs)",
+      "apps/windows/IBrowse.Tests/SpokenGrammarTests.cs (glob: **/*.Tests/**/*.cs)",
+      "apps/windows/IBrowse.Tests/bin/Debug/net10.0/ (glob: **/bin/Debug/**)",
+      "apps/windows/IBrowse.Tests/obj/ (glob: **/obj/**)",
+      "apps/windows/IBrowse.Windows/bin/Debug/net10.0-windows/ (glob: **/bin/Debug/**)",
+      "apps/windows/IBrowse.Windows/obj/ (glob: **/obj/**)",
+      "coverage/ (glob: coverage/**)",
+      "e2e/accname.spec.ts (glob: **/*.spec.ts)",
+      "e2e/conversation.spec.ts (glob: **/*.spec.ts)",
+      "e2e/extension.spec.ts (glob: **/*.spec.ts)",
+      "e2e/hardware.spec.ts (glob: **/*.spec.ts)",
+      "e2e/hover.spec.ts (glob: **/*.spec.ts)",
+      "e2e/intelligence.spec.ts (glob: **/*.spec.ts)",
+      "e2e/live/chrome-mic.spec.ts (glob: **/*.spec.ts)",
+      "e2e/live/nvda-live.spec.ts (glob: **/*.spec.ts)",
+      "e2e/live/person-voice.spec.ts (glob: **/*.spec.ts)"
+    ],
+    "parse_errors": 0,
+    "heuristic_insights": 29
+  }
+}

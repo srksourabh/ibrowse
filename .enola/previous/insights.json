@@ -1,0 +1,975 @@
+[
+  {
+    "title": "High fan-in symbol: src\\pages.byId (11 dependents)",
+    "source": "god-class",
+    "description": "\"src\\\\pages.byId\" is depended upon by 11 other symbols — well above the repo average. High fan-in concentrates change risk: edits here ripple across many call sites, and it often indicates a missing or overly broad abstraction.",
+    "confidence": 0.95,
+    "evidence": [
+      {
+        "file": "src\\pages\\page-speaker.ts",
+        "symbol": "src\\pages.byId",
+        "detail": "11 symbols depend on this"
+      },
+      {
+        "symbol": "entrypoints\\onboarding.askScreenReader",
+        "detail": "depends on src\\pages.byId"
+      },
+      {
+        "symbol": "entrypoints\\onboarding.main",
+        "detail": "depends on src\\pages.byId"
+      },
+      {
+        "symbol": "entrypoints\\onboarding.render",
+        "detail": "depends on src\\pages.byId"
+      },
+      {
+        "symbol": "entrypoints\\options.bindForm",
+        "detail": "depends on src\\pages.byId"
+      },
+      {
+        "symbol": "entrypoints\\options.bindTools",
+        "detail": "depends on src\\pages.byId"
+      },
+      {
+        "symbol": "entrypoints\\options.fillForm",
+        "detail": "depends on src\\pages.byId"
+      },
+      {
+        "symbol": "entrypoints\\options.main",
+        "detail": "depends on src\\pages.byId"
+      },
+      {
+        "symbol": "entrypoints\\options.refreshKeyStatus",
+        "detail": "depends on src\\pages.byId"
+      }
+    ],
+    "suggested_actions": [
+      "Split the symbol along distinct responsibilities its callers use",
+      "Introduce narrower interfaces so callers depend only on what they need",
+      "Stabilize its public contract to limit churn for dependents"
+    ]
+  },
+  {
+    "title": "High fan-in symbol: src\\hover.describeElement (10 dependents)",
+    "source": "god-class",
+    "description": "\"src\\\\hover.describeElement\" is depended upon by 10 other symbols — well above the repo average. High fan-in concentrates change risk: edits here ripple across many call sites, and it often indicates a missing or overly broad abstraction.",
+    "confidence": 0.95,
+    "evidence": [
+      {
+        "file": "src\\hover\\describe.ts",
+        "symbol": "src\\hover.describeElement",
+        "detail": "10 symbols depend on this"
+      },
+      {
+        "symbol": "src\\forms.labelOf",
+        "detail": "depends on src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\forms.submitText",
+        "detail": "depends on src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\navigation.describeTarget",
+        "detail": "depends on src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\session.activateElement",
+        "detail": "depends on src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\session.createAi",
+        "detail": "depends on src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\session.createTouch",
+        "detail": "depends on src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\session.createVoice",
+        "detail": "depends on src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\session.formHandlers",
+        "detail": "depends on src\\hover.describeElement"
+      }
+    ],
+    "suggested_actions": [
+      "Split the symbol along distinct responsibilities its callers use",
+      "Introduce narrower interfaces so callers depend only on what they need",
+      "Stabilize its public contract to limit churn for dependents"
+    ]
+  },
+  {
+    "title": "High fan-in symbol: src\\shared.loadSettings (10 dependents)",
+    "source": "god-class",
+    "description": "\"src\\\\shared.loadSettings\" is depended upon by 10 other symbols — well above the repo average. High fan-in concentrates change risk: edits here ripple across many call sites, and it often indicates a missing or overly broad abstraction.",
+    "confidence": 0.95,
+    "evidence": [
+      {
+        "file": "src\\shared\\settings.ts",
+        "symbol": "src\\shared.loadSettings",
+        "detail": "10 symbols depend on this"
+      },
+      {
+        "symbol": "entrypoints\\onboarding.main",
+        "detail": "depends on src\\shared.loadSettings"
+      },
+      {
+        "symbol": "entrypoints\\options.main",
+        "detail": "depends on src\\shared.loadSettings"
+      },
+      {
+        "symbol": "entrypoints\\pair.main",
+        "detail": "depends on src\\shared.loadSettings"
+      },
+      {
+        "symbol": "entrypoints\\pair.playThroughSelectedDriver",
+        "detail": "depends on src\\shared.loadSettings"
+      },
+      {
+        "symbol": "src\\background.CloudHost.transcribe",
+        "detail": "depends on src\\shared.loadSettings"
+      },
+      {
+        "symbol": "src\\background.startBackground",
+        "detail": "depends on src\\shared.loadSettings"
+      },
+      {
+        "symbol": "src\\haptics.PairingController.test",
+        "detail": "depends on src\\shared.loadSettings"
+      },
+      {
+        "symbol": "src\\session.createServices",
+        "detail": "depends on src\\shared.loadSettings"
+      }
+    ],
+    "suggested_actions": [
+      "Split the symbol along distinct responsibilities its callers use",
+      "Introduce narrower interfaces so callers depend only on what they need",
+      "Stabilize its public contract to limit churn for dependents"
+    ]
+  },
+  {
+    "title": "High fan-in symbol: src\\hover.isHidden (9 dependents)",
+    "source": "god-class",
+    "description": "\"src\\\\hover.isHidden\" is depended upon by 9 other symbols — well above the repo average. High fan-in concentrates change risk: edits here ripple across many call sites, and it often indicates a missing or overly broad abstraction.",
+    "confidence": 0.95,
+    "evidence": [
+      {
+        "file": "src\\hover\\hit-test.ts",
+        "symbol": "src\\hover.isHidden",
+        "detail": "9 symbols depend on this"
+      },
+      {
+        "symbol": "src\\ai.collectPagePayload",
+        "detail": "depends on src\\hover.isHidden"
+      },
+      {
+        "symbol": "src\\briefing.analyzePage",
+        "detail": "depends on src\\hover.isHidden"
+      },
+      {
+        "symbol": "src\\briefing.visible",
+        "detail": "depends on src\\hover.isHidden"
+      },
+      {
+        "symbol": "src\\hover.meaningfulTarget",
+        "detail": "depends on src\\hover.isHidden"
+      },
+      {
+        "symbol": "src\\navigation.findPaginationTarget",
+        "detail": "depends on src\\hover.isHidden"
+      },
+      {
+        "symbol": "src\\navigation.isVisible",
+        "detail": "depends on src\\hover.isHidden"
+      },
+      {
+        "symbol": "src\\reading.readableBlocks",
+        "detail": "depends on src\\hover.isHidden"
+      },
+      {
+        "symbol": "src\\reading.scrubBlockAt",
+        "detail": "depends on src\\hover.isHidden"
+      }
+    ],
+    "suggested_actions": [
+      "Split the symbol along distinct responsibilities its callers use",
+      "Introduce narrower interfaces so callers depend only on what they need",
+      "Stabilize its public contract to limit churn for dependents"
+    ]
+  },
+  {
+    "title": "Call-graph hotspot: src\\hover.describeElement (fan-in 10, fan-out 8)",
+    "source": "hotspots",
+    "description": "\"src\\\\hover.describeElement\" is a pinch point: 10 symbols call into it and it calls out to 8 others, so a large share of call chains pass through it (degree-centrality proxy for betweenness). Such chokepoints are high-risk to change and high-value to test.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\hover\\describe.ts",
+        "symbol": "src\\hover.describeElement",
+        "detail": "fan-in 10 × fan-out 8 = score 80"
+      },
+      {
+        "symbol": "src\\forms.labelOf",
+        "detail": "calls into src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\forms.submitText",
+        "detail": "calls into src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\navigation.describeTarget",
+        "detail": "calls into src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\session.activateElement",
+        "detail": "calls into src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\session.createAi",
+        "detail": "calls into src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\hover",
+        "detail": "called by src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\hover.headingLevelOf",
+        "detail": "called by src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\hover.isRequired",
+        "detail": "called by src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\hover.labelOf",
+        "detail": "called by src\\hover.describeElement"
+      },
+      {
+        "symbol": "src\\hover.looksClickable",
+        "detail": "called by src\\hover.describeElement"
+      }
+    ],
+    "suggested_actions": [
+      "Add focused tests around this chokepoint before refactoring",
+      "Consider decomposing it so call paths don't all funnel through one symbol",
+      "Verify it isn't doing orchestration that belongs in callers"
+    ]
+  },
+  {
+    "title": "Call-graph hotspot: demo.IBrowseSystem.playEarcon (fan-in 7, fan-out 4)",
+    "source": "hotspots",
+    "description": "\"demo.IBrowseSystem.playEarcon\" is a pinch point: 7 symbols call into it and it calls out to 4 others, so a large share of call chains pass through it (degree-centrality proxy for betweenness). Such chokepoints are high-risk to change and high-value to test.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "demo\\app.js",
+        "symbol": "demo.IBrowseSystem.playEarcon",
+        "detail": "fan-in 7 × fan-out 4 = score 28"
+      },
+      {
+        "symbol": "demo.IBrowseSystem",
+        "detail": "calls into demo.IBrowseSystem.playEarcon"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.handlePointerMove",
+        "detail": "calls into demo.IBrowseSystem.playEarcon"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.playBoundaryBumperEarcon",
+        "detail": "calls into demo.IBrowseSystem.playEarcon"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.playChimeSuccess",
+        "detail": "calls into demo.IBrowseSystem.playEarcon"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.playClickableEarcon",
+        "detail": "calls into demo.IBrowseSystem.playEarcon"
+      },
+      {
+        "symbol": "demo",
+        "detail": "called by demo.IBrowseSystem.playEarcon"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.audioCtx",
+        "detail": "called by demo.IBrowseSystem.playEarcon"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.isAudioReady",
+        "detail": "called by demo.IBrowseSystem.playEarcon"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.pannerNode",
+        "detail": "called by demo.IBrowseSystem.playEarcon"
+      }
+    ],
+    "suggested_actions": [
+      "Add focused tests around this chokepoint before refactoring",
+      "Consider decomposing it so call paths don't all funnel through one symbol",
+      "Verify it isn't doing orchestration that belongs in callers"
+    ]
+  },
+  {
+    "title": "Call-graph hotspot: demo.IBrowseSystem.speak (fan-in 4, fan-out 6)",
+    "source": "hotspots",
+    "description": "\"demo.IBrowseSystem.speak\" is a pinch point: 4 symbols call into it and it calls out to 6 others, so a large share of call chains pass through it (degree-centrality proxy for betweenness). Such chokepoints are high-risk to change and high-value to test.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "demo\\app.js",
+        "symbol": "demo.IBrowseSystem.speak",
+        "detail": "fan-in 4 × fan-out 6 = score 24"
+      },
+      {
+        "symbol": "demo.IBrowseSystem",
+        "detail": "calls into demo.IBrowseSystem.speak"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.handlePointerMove",
+        "detail": "calls into demo.IBrowseSystem.speak"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.handleWheelScrub",
+        "detail": "calls into demo.IBrowseSystem.speak"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.initAudioContext",
+        "detail": "calls into demo.IBrowseSystem.speak"
+      },
+      {
+        "symbol": "demo",
+        "detail": "called by demo.IBrowseSystem.speak"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.lastSpokenText",
+        "detail": "called by demo.IBrowseSystem.speak"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.speechPitch",
+        "detail": "called by demo.IBrowseSystem.speak"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.speechRate",
+        "detail": "called by demo.IBrowseSystem.speak"
+      },
+      {
+        "symbol": "demo.IBrowseSystem.speechSynth",
+        "detail": "called by demo.IBrowseSystem.speak"
+      }
+    ],
+    "suggested_actions": [
+      "Add focused tests around this chokepoint before refactoring",
+      "Consider decomposing it so call paths don't all funnel through one symbol",
+      "Verify it isn't doing orchestration that belongs in callers"
+    ]
+  },
+  {
+    "title": "Call-graph hotspot: src\\hover.spokenText (fan-in 4, fan-out 6)",
+    "source": "hotspots",
+    "description": "\"src\\\\hover.spokenText\" is a pinch point: 4 symbols call into it and it calls out to 6 others, so a large share of call chains pass through it (degree-centrality proxy for betweenness). Such chokepoints are high-risk to change and high-value to test.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\hover\\affordance-speech.ts",
+        "symbol": "src\\hover.spokenText",
+        "detail": "fan-in 4 × fan-out 6 = score 24"
+      },
+      {
+        "symbol": "src\\navigation.describeTarget",
+        "detail": "calls into src\\hover.spokenText"
+      },
+      {
+        "symbol": "src\\session.createAi",
+        "detail": "calls into src\\hover.spokenText"
+      },
+      {
+        "symbol": "src\\session.createVoice",
+        "detail": "calls into src\\hover.spokenText"
+      },
+      {
+        "symbol": "src\\session.formHandlers",
+        "detail": "calls into src\\hover.spokenText"
+      },
+      {
+        "symbol": "src.chordWords",
+        "detail": "called by src\\hover.spokenText"
+      },
+      {
+        "symbol": "src\\hover",
+        "detail": "called by src\\hover.spokenText"
+      },
+      {
+        "symbol": "src\\hover.leadingWords",
+        "detail": "called by src\\hover.spokenText"
+      },
+      {
+        "symbol": "src\\hover.roleName",
+        "detail": "called by src\\hover.spokenText"
+      },
+      {
+        "symbol": "src\\hover.stateWords",
+        "detail": "called by src\\hover.spokenText"
+      }
+    ],
+    "suggested_actions": [
+      "Add focused tests around this chokepoint before refactoring",
+      "Consider decomposing it so call paths don't all funnel through one symbol",
+      "Verify it isn't doing orchestration that belongs in callers"
+    ]
+  },
+  {
+    "title": "Call-graph hotspot: src\\haptics.validateDeviceProfile (fan-in 3, fan-out 6)",
+    "source": "hotspots",
+    "description": "\"src\\\\haptics.validateDeviceProfile\" is a pinch point: 3 symbols call into it and it calls out to 6 others, so a large share of call chains pass through it (degree-centrality proxy for betweenness). Such chokepoints are high-risk to change and high-value to test.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\haptics\\profile.ts",
+        "symbol": "src\\haptics.validateDeviceProfile",
+        "detail": "fan-in 3 × fan-out 6 = score 18"
+      },
+      {
+        "symbol": "src\\haptics.PairingController.importProfile",
+        "detail": "calls into src\\haptics.validateDeviceProfile"
+      },
+      {
+        "symbol": "src\\haptics.loadProfiles",
+        "detail": "calls into src\\haptics.validateDeviceProfile"
+      },
+      {
+        "symbol": "src\\haptics.saveProfile",
+        "detail": "calls into src\\haptics.validateDeviceProfile"
+      },
+      {
+        "symbol": "src\\haptics",
+        "detail": "called by src\\haptics.validateDeviceProfile"
+      },
+      {
+        "symbol": "src\\haptics.eventErrors",
+        "detail": "called by src\\haptics.validateDeviceProfile"
+      },
+      {
+        "symbol": "src\\haptics.intensityErrors",
+        "detail": "called by src\\haptics.validateDeviceProfile"
+      },
+      {
+        "symbol": "src\\haptics.isRecord",
+        "detail": "called by src\\haptics.validateDeviceProfile"
+      },
+      {
+        "symbol": "src\\haptics.isWhole",
+        "detail": "called by src\\haptics.validateDeviceProfile"
+      }
+    ],
+    "suggested_actions": [
+      "Add focused tests around this chokepoint before refactoring",
+      "Consider decomposing it so call paths don't all funnel through one symbol",
+      "Verify it isn't doing orchestration that belongs in callers"
+    ]
+  },
+  {
+    "title": "Call-graph hotspot: src\\briefing.visible (fan-in 5, fan-out 3)",
+    "source": "hotspots",
+    "description": "\"src\\\\briefing.visible\" is a pinch point: 5 symbols call into it and it calls out to 3 others, so a large share of call chains pass through it (degree-centrality proxy for betweenness). Such chokepoints are high-risk to change and high-value to test.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\briefing\\panels.ts",
+        "symbol": "src\\briefing.visible",
+        "detail": "fan-in 5 × fan-out 3 = score 15"
+      },
+      {
+        "symbol": "src\\briefing.columnsOf",
+        "detail": "calls into src\\briefing.visible"
+      },
+      {
+        "symbol": "src\\briefing.contentsOf",
+        "detail": "calls into src\\briefing.visible"
+      },
+      {
+        "symbol": "src\\briefing.fullWidthNeighbour",
+        "detail": "calls into src\\briefing.visible"
+      },
+      {
+        "symbol": "src\\briefing.landmarkSides",
+        "detail": "calls into src\\briefing.visible"
+      },
+      {
+        "symbol": "src\\briefing.pageLandmark",
+        "detail": "calls into src\\briefing.visible"
+      },
+      {
+        "symbol": "src\\briefing",
+        "detail": "called by src\\briefing.visible"
+      },
+      {
+        "symbol": "src\\hover.isHidden",
+        "detail": "called by src\\briefing.visible"
+      },
+      {
+        "symbol": "src\\hover.isRendered",
+        "detail": "called by src\\briefing.visible"
+      }
+    ],
+    "suggested_actions": [
+      "Add focused tests around this chokepoint before refactoring",
+      "Consider decomposing it so call paths don't all funnel through one symbol",
+      "Verify it isn't doing orchestration that belongs in callers"
+    ]
+  },
+  {
+    "title": "Call-graph hotspot: src\\hover.hitTest (fan-in 3, fan-out 4)",
+    "source": "hotspots",
+    "description": "\"src\\\\hover.hitTest\" is a pinch point: 3 symbols call into it and it calls out to 4 others, so a large share of call chains pass through it (degree-centrality proxy for betweenness). Such chokepoints are high-risk to change and high-value to test.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\hover\\hit-test.ts",
+        "symbol": "src\\hover.hitTest",
+        "detail": "fan-in 3 × fan-out 4 = score 12"
+      },
+      {
+        "symbol": "src\\session.createHover",
+        "detail": "calls into src\\hover.hitTest"
+      },
+      {
+        "symbol": "src\\session.createTouch",
+        "detail": "calls into src\\hover.hitTest"
+      },
+      {
+        "symbol": "src\\session.readingHandlers",
+        "detail": "calls into src\\hover.hitTest"
+      },
+      {
+        "symbol": "src\\hover",
+        "detail": "called by src\\hover.hitTest"
+      },
+      {
+        "symbol": "src\\hover.elementsAt",
+        "detail": "called by src\\hover.hitTest"
+      },
+      {
+        "symbol": "src\\hover.isEmptyLeaf",
+        "detail": "called by src\\hover.hitTest"
+      },
+      {
+        "symbol": "src\\hover.meaningfulTarget",
+        "detail": "called by src\\hover.hitTest"
+      }
+    ],
+    "suggested_actions": [
+      "Add focused tests around this chokepoint before refactoring",
+      "Consider decomposing it so call paths don't all funnel through one symbol",
+      "Verify it isn't doing orchestration that belongs in callers"
+    ]
+  },
+  {
+    "title": "Call-graph hotspot: src\\reading.readableBlocks (fan-in 4, fan-out 3)",
+    "source": "hotspots",
+    "description": "\"src\\\\reading.readableBlocks\" is a pinch point: 4 symbols call into it and it calls out to 3 others, so a large share of call chains pass through it (degree-centrality proxy for betweenness). Such chokepoints are high-risk to change and high-value to test.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\reading\\blocks.ts",
+        "symbol": "src\\reading.readableBlocks",
+        "detail": "fan-in 4 × fan-out 3 = score 12"
+      },
+      {
+        "symbol": "src\\ai.collectPagePayload",
+        "detail": "calls into src\\reading.readableBlocks"
+      },
+      {
+        "symbol": "src\\reading.adjacentBlock",
+        "detail": "calls into src\\reading.readableBlocks"
+      },
+      {
+        "symbol": "src\\session.createBriefer",
+        "detail": "calls into src\\reading.readableBlocks"
+      },
+      {
+        "symbol": "src\\voice.findByText",
+        "detail": "calls into src\\reading.readableBlocks"
+      },
+      {
+        "symbol": "src\\hover.isHidden",
+        "detail": "called by src\\reading.readableBlocks"
+      },
+      {
+        "symbol": "src\\reading",
+        "detail": "called by src\\reading.readableBlocks"
+      },
+      {
+        "symbol": "src\\reading.blockText",
+        "detail": "called by src\\reading.readableBlocks"
+      }
+    ],
+    "suggested_actions": [
+      "Add focused tests around this chokepoint before refactoring",
+      "Consider decomposing it so call paths don't all funnel through one symbol",
+      "Verify it isn't doing orchestration that belongs in callers"
+    ]
+  },
+  {
+    "title": "Call-graph hotspot: src\\shared.saveSettings (fan-in 4, fan-out 3)",
+    "source": "hotspots",
+    "description": "\"src\\\\shared.saveSettings\" is a pinch point: 4 symbols call into it and it calls out to 3 others, so a large share of call chains pass through it (degree-centrality proxy for betweenness). Such chokepoints are high-risk to change and high-value to test.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\shared\\settings.ts",
+        "symbol": "src\\shared.saveSettings",
+        "detail": "fan-in 4 × fan-out 3 = score 12"
+      },
+      {
+        "symbol": "entrypoints\\onboarding.askScreenReader",
+        "detail": "calls into src\\shared.saveSettings"
+      },
+      {
+        "symbol": "src\\haptics.PairingController.choose",
+        "detail": "calls into src\\shared.saveSettings"
+      },
+      {
+        "symbol": "src\\haptics.PairingController.pairDevice",
+        "detail": "calls into src\\shared.saveSettings"
+      },
+      {
+        "symbol": "src\\shared.keepOldShortcutsOnUpdate",
+        "detail": "calls into src\\shared.saveSettings"
+      },
+      {
+        "symbol": "src\\shared",
+        "detail": "called by src\\shared.saveSettings"
+      },
+      {
+        "symbol": "src\\shared.loadSettings",
+        "detail": "called by src\\shared.saveSettings"
+      },
+      {
+        "symbol": "src\\shared.validator",
+        "detail": "called by src\\shared.saveSettings"
+      }
+    ],
+    "suggested_actions": [
+      "Add focused tests around this chokepoint before refactoring",
+      "Consider decomposing it so call paths don't all funnel through one symbol",
+      "Verify it isn't doing orchestration that belongs in callers"
+    ]
+  },
+  {
+    "title": "Large public surface: apps/windows/IBrowse.Core exports 53 of 62 symbols (85%)",
+    "source": "exported-surface",
+    "description": "Module \"apps/windows/IBrowse.Core\" exports 53 of its 62 symbols (85%). A large, near-fully-exported module hides little of its implementation, so consumers can couple to internals and it is hard to change without breaking them. Worth a visibility review — though a deliberate library API may legitimately export most of its surface.",
+    "confidence": 0.6,
+    "evidence": [
+      {
+        "symbol": "apps/windows/IBrowse.Core.Affordance",
+        "detail": "exported"
+      },
+      {
+        "symbol": "apps/windows/IBrowse.Core.Affordance.Interactive",
+        "detail": "exported"
+      },
+      {
+        "symbol": "apps/windows/IBrowse.Core.Affordance.Static",
+        "detail": "exported"
+      },
+      {
+        "symbol": "apps/windows/IBrowse.Core.Certainty",
+        "detail": "exported"
+      },
+      {
+        "symbol": "apps/windows/IBrowse.Core.Certainty.Maybe",
+        "detail": "exported"
+      },
+      {
+        "symbol": "apps/windows/IBrowse.Core.Certainty.Sure",
+        "detail": "exported"
+      },
+      {
+        "symbol": "apps/windows/IBrowse.Core.ElementInfo",
+        "detail": "exported"
+      },
+      {
+        "symbol": "apps/windows/IBrowse.Core.ElementInfo.Affordance",
+        "detail": "exported"
+      }
+    ],
+    "suggested_actions": [
+      "Unexport symbols that are only used within the module",
+      "Define a small, intentional public API and hide the rest",
+      "Split the module if it has several independent public responsibilities"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: demo.IBrowseSystem.analyzeElement (40)",
+    "source": "complexity-outliers",
+    "description": "\"demo.IBrowseSystem.analyzeElement\" has a cyclomatic complexity of 40 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "demo\\app.js",
+        "symbol": "demo.IBrowseSystem.analyzeElement",
+        "detail": "cyclomatic complexity 40 at line 300"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: demo.IBrowseSystem.handlePointerMove (24)",
+    "source": "complexity-outliers",
+    "description": "\"demo.IBrowseSystem.handlePointerMove\" has a cyclomatic complexity of 24 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "demo\\app.js",
+        "symbol": "demo.IBrowseSystem.handlePointerMove",
+        "detail": "cyclomatic complexity 24 at line 380"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\hover.spokenText (22)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\hover.spokenText\" has a cyclomatic complexity of 22 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\hover\\affordance-speech.ts",
+        "symbol": "src\\hover.spokenText",
+        "detail": "cyclomatic complexity 22 at line 66"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: e2e.launchHarness (20)",
+    "source": "complexity-outliers",
+    "description": "\"e2e.launchHarness\" has a cyclomatic complexity of 20 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "e2e\\helpers.ts",
+        "symbol": "e2e.launchHarness",
+        "detail": "cyclomatic complexity 20 at line 72"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: apps/windows/IBrowse.Core.Placement.Phrase (19)",
+    "source": "complexity-outliers",
+    "description": "\"apps/windows/IBrowse.Core.Placement.Phrase\" has a cyclomatic complexity of 19 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "apps\\windows\\IBrowse.Core\\Placement.cs",
+        "symbol": "apps/windows/IBrowse.Core.Placement.Phrase",
+        "detail": "cyclomatic complexity 19 at line 20"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src.createActionRunner (19)",
+    "source": "complexity-outliers",
+    "description": "\"src.createActionRunner\" has a cyclomatic complexity of 19 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\actions.ts",
+        "symbol": "src.createActionRunner",
+        "detail": "cyclomatic complexity 19 at line 25"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\background.handleMessage (19)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\background.handleMessage\" has a cyclomatic complexity of 19 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\background\\start.ts",
+        "symbol": "src\\background.handleMessage",
+        "detail": "cyclomatic complexity 19 at line 110"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\hover.roleOf (19)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\hover.roleOf\" has a cyclomatic complexity of 19 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\hover\\roles.ts",
+        "symbol": "src\\hover.roleOf",
+        "detail": "cyclomatic complexity 19 at line 37"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\briefing.analyzePage (17)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\briefing.analyzePage\" has a cyclomatic complexity of 17 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\briefing\\layout-model.ts",
+        "symbol": "src\\briefing.analyzePage",
+        "detail": "cyclomatic complexity 17 at line 125"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\hover.valueOf (16)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\hover.valueOf\" has a cyclomatic complexity of 16 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\hover\\describe.ts",
+        "symbol": "src\\hover.valueOf",
+        "detail": "cyclomatic complexity 16 at line 72"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\session.keyboardHandler (15)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\session.keyboardHandler\" has a cyclomatic complexity of 15 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\session\\handlers.ts",
+        "symbol": "src\\session.keyboardHandler",
+        "detail": "cyclomatic complexity 15 at line 129"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\ai.fetchImage (14)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\ai.fetchImage\" has a cyclomatic complexity of 14 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\ai\\image-fetch.ts",
+        "symbol": "src\\ai.fetchImage",
+        "detail": "cyclomatic complexity 14 at line 49"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\briefing.contentsOf (14)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\briefing.contentsOf\" has a cyclomatic complexity of 14 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\briefing\\panels.ts",
+        "symbol": "src\\briefing.contentsOf",
+        "detail": "cyclomatic complexity 14 at line 181"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\cloud.audioFrom (14)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\cloud.audioFrom\" has a cyclomatic complexity of 14 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\cloud\\gemini-client.ts",
+        "symbol": "src\\cloud.audioFrom",
+        "detail": "cyclomatic complexity 14 at line 55"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  },
+  {
+    "title": "High cyclomatic complexity: src\\session.listenForMessages (14)",
+    "source": "complexity-outliers",
+    "description": "\"src\\\\session.listenForMessages\" has a cyclomatic complexity of 14 — well above the repo average. Highly branched functions are hard to test fully and are frequent defect sites.",
+    "confidence": 0.7,
+    "evidence": [
+      {
+        "file": "src\\session\\explore-session.ts",
+        "symbol": "src\\session.listenForMessages",
+        "detail": "cyclomatic complexity 14 at line 58"
+      }
+    ],
+    "suggested_actions": [
+      "Extract guard clauses and nested branches into helper functions",
+      "Replace deep conditionals with table/strategy dispatch where possible",
+      "Add tests covering the distinct branches before refactoring"
+    ]
+  }
+]
