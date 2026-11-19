@@ -4,6 +4,7 @@ import type { AiRequest, AiResponse, LatencyReportMessage } from '../ai/messages
 import { AudioCache } from '../cloud/audio-cache'
 import { ClaudeClient, withClaudeFallback } from '../cloud/claude-client'
 import { GeminiClient } from '../cloud/gemini-client'
+import { GeminiLiveClient, withLiveVoiceFallback } from '../cloud/gemini-live'
 import { loadAnthropicKey, loadVaultKey } from '../cloud/key-vault'
 import type { CloudCancelRequest, CloudSpeechRequest, CloudSpeechResponse } from '../cloud/messages'
 import { CloudVoiceService } from '../cloud/voice-service'
@@ -32,6 +33,7 @@ export class CloudHost {
       fetch: boundFetch,
       getKey: loadVaultKey,
     })
+    const liveVoice = new GeminiLiveClient({ getKey: loadVaultKey })
     const claude = new ClaudeClient({
       fetch: boundFetch,
       getKey: loadAnthropicKey,
@@ -39,7 +41,7 @@ export class CloudHost {
     const aiClient = withClaudeFallback(client, claude, async () => (await loadAnthropicKey()) !== null)
     this.#client = client
     this.#voice = new CloudVoiceService({
-      client,
+      client: withLiveVoiceFallback(liveVoice, client),
       getSettings: () => loadSettings(chrome.storage.local),
       cache: new AudioCache(REMEMBERED_PHRASES),
     })
