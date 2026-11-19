@@ -1,0 +1,10 @@
+{
+  "name": "iBrowse — Spatial Audio & Touch Browser",
+  "short_name": "iBrowse",
+  "description": "Hear any website. Explore by touch, mouse, keyboard, and voice — built for blind and low-vision users.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "any"
+}

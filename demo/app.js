@@ -658,6 +658,47 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnBlindToggle) btnBlindToggle.addEventListener('click', toggleBlind);
   if (btnExitBlind) btnExitBlind.addEventListener('click', toggleBlind);
 
+  // 5b. Mobile & Desktop Voice Command Button (Indian English)
+  const btnVoiceCmd = document.getElementById('btn-voice-cmd');
+  if (btnVoiceCmd) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    btnVoiceCmd.addEventListener('click', () => {
+      if (!ibrowse.isInitialized) startAudioEngine();
+      if (!SR) {
+        ibrowse.speak('Voice commands are not supported in this browser. Drag your finger to explore.', true);
+        return;
+      }
+      const rec = new SR();
+      rec.lang = 'en-IN';
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      btnVoiceCmd.textContent = '🎤 Listening...';
+      rec.onresult = (event) => {
+        const said = (event.results[0]?.[0]?.transcript || '').trim().toLowerCase();
+        if (!said) return;
+        if (/scroll down|go down|down/.test(said)) {
+          window.scrollBy({ top: 360, behavior: 'smooth' });
+          ibrowse.speak('Scrolled down.', true);
+        } else if (/scroll up|go up|up/.test(said)) {
+          window.scrollBy({ top: -360, behavior: 'smooth' });
+          ibrowse.speak('Scrolled up.', true);
+        } else if (/stop|quiet|cancel/.test(said)) {
+          ibrowse.speechSynth.cancel();
+        } else if (/help/.test(said)) {
+          ibrowse.speak('Say scroll down, scroll up, read, stop, or drag your finger anywhere to hear the page.', true);
+        } else if (/read/.test(said)) {
+          const text = document.querySelector('#window-browser p')?.textContent?.trim() || document.title;
+          ibrowse.speak(text, true);
+        } else {
+          ibrowse.speak(`Heard: ${said}`, true);
+        }
+      };
+      rec.onerror = () => ibrowse.speak('Could not hear you. Tap Speak and try again.', true);
+      rec.onend = () => { btnVoiceCmd.innerHTML = '<span class="icon">🎤</span> Speak'; };
+      rec.start();
+    });
+  }
+
   // 6. Settings Panel Drawer
   const btnSettings = document.getElementById('btn-toggle-settings');
   const btnCloseSettings = document.getElementById('btn-close-settings');

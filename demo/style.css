@@ -1121,3 +1121,41 @@ html, body {
   0%, 100% { transform: scale(1); opacity: 0.9; }
   50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 16px var(--accent-cyan); }
 }
+
+
+/* Responsive mobile & tablet layout (iOS Safari, Android Chrome) */
+@media (max-width: 768px) {
+  .system-hud {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .hud-left, .hud-center, .hud-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .hud-status-chip { display: none; }
+  .desktop-surface {
+    padding: 12px;
+    overflow-x: hidden;
+  }
+  .desktop-icons-container {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .desktop-window {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+  }
+  .hud-btn, button {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+}

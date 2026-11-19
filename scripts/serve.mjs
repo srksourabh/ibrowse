@@ -24,6 +24,7 @@ const MIME = {
   '.pdf': 'application/pdf',
   '.md': 'text/markdown; charset=utf-8',
   '.zip': 'application/zip',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
 }
 
 const HOME_HTML = `<!doctype html>
@@ -181,3 +182,9 @@ const server = createServer((req, res) => {
 server.listen(port, '0.0.0.0', () => {
   console.log(`iBrowse server listening on http://0.0.0.0:${port}`)
 })
+
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () => {
+    server.close(() => process.exit(0))
+  })
+}

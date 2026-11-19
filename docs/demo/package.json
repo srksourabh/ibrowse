@@ -1,0 +1,20 @@
+{
+  "name": "ibrowse",
+  "version": "1.0.0",
+  "description": "Tactile & Audio Multimodal Desktop Accessibility Simulator for Completely Blind Users",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve . -l 3000",
+    "dev": "npx serve . -l 3000"
+  },
+  "keywords": [
+    "accessibility",
+    "screen-reader",
+    "haptics",
+    "multimodal",
+    "assistive-technology",
+    "spatial-audio"
+  ],
+  "author": "iBrowse Team",
+  "license": "MIT"
+}
