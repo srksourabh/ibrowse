@@ -11,7 +11,7 @@ import { loadSettings } from '../shared/settings'
 import type { ListenResponse } from '../voice/messages'
 import { transcribe } from '../voice/transcriber'
 
-const REMEMBERED_PHRASES = 30
+const REMEMBERED_PHRASES = 100
 
 export type CloudMessage = CloudSpeechRequest | CloudCancelRequest | AiRequest | LatencyReportMessage
 type Respond = (response: CloudSpeechResponse | AiResponse) => void

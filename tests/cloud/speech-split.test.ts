@@ -39,6 +39,17 @@ describe('splitForSpeech', () => {
   it('treats runs of whitespace as one space', () => {
     expect(splitForSpeech('One.   Two.\n\nThree.', 100)).toEqual(['One. Two. Three.'])
   })
+
+  it('uses a smaller first chunk by default so cloud speech starts quickly', () => {
+    const paragraph =
+      'This is the opening sentence of a long article paragraph. ' +
+      'Here is a second sentence that adds plenty of context for the reader to hear next. ' +
+      'And a third sentence continues the story with even more detail so the paragraph exceeds the first-chunk limit.'
+    const chunks = splitForSpeech(paragraph)
+    expect(chunks.length).toBeGreaterThanOrEqual(2)
+    expect(chunks[0]!.length).toBeLessThanOrEqual(140)
+    expect(chunks.join(' ')).toBe(paragraph)
+  })
 })
 
 describe('AudioCache', () => {

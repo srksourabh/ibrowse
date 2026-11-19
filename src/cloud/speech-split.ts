@@ -1,5 +1,7 @@
-/** Short enough that the first sound arrives quickly, long enough to keep the number of requests down. */
-const DEFAULT_MAX_CHARS = 1200
+/** First chunk is tiny (one short sentence) so Gemini starts speaking almost immediately. */
+const DEFAULT_FIRST_MAX_CHARS = 140
+/** Subsequent chunks are prefetched while the previous one plays, keeping gaps at 0 ms. */
+const DEFAULT_MAX_CHARS = 360
 
 /** Splits one over-long piece at spaces, and a single over-long word wherever it must. */
 function splitLongPiece(piece: string, max: number): string[] {
@@ -27,21 +29,27 @@ function splitLongPiece(piece: string, max: number): string[] {
 /**
  * Cuts text into pieces no longer than `max`, at sentence ends where it can,
  * so each can be spoken on its own and the next fetched while it plays.
+ * When `max` is omitted, the first chunk uses a smaller cap (140 chars) for fast first-word latency.
  */
-export function splitForSpeech(text: string, max: number = DEFAULT_MAX_CHARS): string[] {
+export function splitForSpeech(
+  text: string,
+  max: number = DEFAULT_MAX_CHARS,
+  firstMax: number = max === DEFAULT_MAX_CHARS ? DEFAULT_FIRST_MAX_CHARS : max,
+): string[] {
   const flat = text.replace(/\s+/g, ' ').trim()
   if (flat === '') return []
   const chunks: string[] = []
   let current = ''
+  const limit = (): number => (chunks.length === 0 ? firstMax : max)
   for (const sentence of flat.split(/(?<=[.!?])\s+/)) {
-    if (sentence.length > max) {
+    if (sentence.length > limit()) {
       if (current) chunks.push(current)
       current = ''
-      chunks.push(...splitLongPiece(sentence, max))
+      chunks.push(...splitLongPiece(sentence, limit()))
       continue
     }
     const joined = current ? `${current} ${sentence}` : sentence
-    if (joined.length <= max) {
+    if (joined.length <= limit()) {
       current = joined
     } else {
       chunks.push(current)
