@@ -9,11 +9,12 @@
 ![License: MIT](https://img.shields.io/badge/license-MIT-a855f7)
 ![Chrome Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)
 ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-1125%20unit%20%C2%B7%20103%20e2e-22c55e)
+![Tests](https://img.shields.io/badge/tests-1138%20unit%20%C2%B7%20103%20e2e-22c55e)
 ![Voice: Indian English](https://img.shields.io/badge/voice-en--IN-f97316)
+![Gemini Live + Claude](https://img.shields.io/badge/AI-Gemini%20Live%20%2B%20Claude-6366f1)
 ![Works with NVDA](https://img.shields.io/badge/works%20with-NVDA-f97316)
 
-**[⬇ Download v0.2.0 (.zip)](https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip)** · **[📱 Mobile & Web App](https://srksourabh.github.io/ibrowse/demo/)** · **[📖 User Guide](docs/USER_GUIDE.md)** · **[See the presentation](https://srksourabh.github.io/ibrowse/presentation/)** ([PDF](docs/presentation/iBrowse-presentation.pdf)) · **[Every feature](docs/FEATURES.md)**
+**[⬇ Download v0.2.0 (.zip)](https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip)** · **[📱 Mobile & Web App](https://srksourabh.github.io/ibrowse/demo/)** · **[📖 User Guide](docs/USER_GUIDE.md)** · **[📚 Research & Recognition Pack](https://files.instinct.com/0si87vjp5vav-ibrowse-research-and-recognition-pack)** · **[See the presentation](https://srksourabh.github.io/ibrowse/presentation/)** ([PDF](docs/presentation/iBrowse-presentation.pdf)) · **[Every feature](docs/FEATURES.md)**
 
 </div>
 
@@ -191,9 +192,18 @@ Every page of iBrowse works by keyboard and is spoken aloud. These are the pages
 
 Everything runs on your device. Nothing is sent anywhere unless you turn on a Google Gemini feature, enter your own key, and allow the browser permission. Form values and passwords are never collected, and your key is kept where web pages cannot reach it. Full details: [PRIVACY.md](PRIVACY.md).
 
-<sup><b>🟠 UNDER THE HOOD</b></sup>
+<sup><b>🟠 METHOD & ARCHITECTURE</b></sup>
 
-## How it is built
+## Method: how iBrowse turns any webpage into spatial sound
+
+1. **Spatial layout mapping (local, < 1 s):** On entering Explore Mode, the content script inspects DOM structure, ARIA landmarks, and bounding-box geometry across all frames to build a 5-panel mental map (*header, left panel, main content, right panel, footer*).
+2. **Low-latency pointer & touch exploration:** Every pointer move resolves the topmost meaningful target (`elementsFromPoint`, piercing open shadow roots and iframes), computes its W3C accessible name (`dom-accessibility-api`), cancels prior speech immediately, plays a stereo-panned Web Audio earcon, and fires a matching haptic event.
+3. **3-tier Indian English (`en-IN`) voice pipeline:**
+   - **Real-time cloud voice:** Persistent **Gemini Live API** WebSocket (`models/gemini-3.8-live`, 24 kHz PCM audio) with 140-character first-sentence fast-start and parallel chunk prefetching.
+   - **Automatic REST fallback:** Falls back seamlessly to Gemini REST TTS (`gemini-3.8-flash-lite-tts`) with a 100-phrase LRU audio cache.
+   - **Zero-latency local fallback:** OS voices via `chrome.tts` (`en-IN`), or Companion ARIA live regions for NVDA/JAWS/VoiceOver.
+4. **Resilient AI Q&A & vision:** Optional page summaries, image descriptions, and spoken questions run through **Google Gemini** with automatic fallback to **Anthropic Claude** (`claude-haiku-4-5-20251001`). Page text is always fenced as untrusted data, and API keys live strictly in the background worker (never in page scripts).
+5. **Fast `en-IN` voice conversation:** On-device command grammar with silence auto-stop (700 ms VAD) and mandatory spoken confirmation before irreversible actions (*buy, pay, delete, submit*).
 
 ```mermaid
 flowchart LR
@@ -202,13 +212,14 @@ flowchart LR
     H --- F[Forms and live changes]
     F --- V[Voice commands]
   end
-  subgraph Worker["Background worker"]
-    T[Computer's voices] --- S[Settings, toolbar, keys]
-    S --- K[(Gemini key vault)]
-    K --- D[Haptic devices]
+  subgraph Worker["Background worker (keys isolated here)"]
+    T["OS voices (en-IN)"] --- S[Settings, toolbar, cache]
+    S --- L["Gemini Live WS → REST TTS"]
+    L --- A["AI: Gemini → Claude fallback"]
+    A --- D[Haptic devices]
   end
-  O["Speech recognition<br/>(hidden page, only while listening)"]
-  G["Google Gemini<br/>(optional, your own key)"]
+  O["Speech recognition (en-IN)<br/>(offscreen doc, only while listening)"]
+  G["Google Gemini Live / REST<br/>+ Anthropic Claude fallback"]
   Page <--> Worker
   Worker <--> O
   Worker -.-> G
@@ -252,28 +263,36 @@ npm run icons         # render public/icon from scripts/icon.svg
 
 The demo video and the presentation images are made from the real extension: see `e2e/media/demo-video.spec.ts`, `scripts/media/make-demo.mjs` and `scripts/media/export-deck.mjs`.
 
-## Status
+<sup><b>🧭 PROJECT HISTORY & MILESTONES</b></sup>
 
-| Phase | Scope | State |
+## History & status
+
+iBrowse began as a native Windows accessibility simulator (`demo/`), pivoted to a cross-platform Chrome Manifest V3 extension ([ADR-0001](docs/adr/0001-chrome-extension-not-native.md)) to reach any website with zero setup, and evolved through seven test-driven phases into the v0.2.0 MVP:
+
+| Milestone | Scope & Key Outcomes | State |
 |---|---|---|
-| 0 | Foundations | Done |
-| 1 | Core exploration | Done |
-| 2 | Intelligence | Done |
-| 3 | Operation | Done |
-| 4 | Hardware | Done |
-| 5 | Onboarding, settings, voices, AI | Done |
-| 5b | Conversation: panel briefing, voice commands, questions | Done, checked with a real microphone, real speech and NVDA |
-| 6 | Closed beta | Next |
-| 7 | Public release on the Chrome Web Store | After the beta |
+| **Phase 0 — Foundations** | PRD, domain glossary (`CONTEXT.md`), ADRs, WXT/TypeScript strict stack, CI, earcons, latency meter | Done |
+| **Phase 1 — Core Exploration** | Explore Mode toggle, spatial hit testing, W3C accessible names, stereo-panned earcons, instant speech cancel | Done |
+| **Phase 2 — Intelligence** | Local layout analyzer, page briefing + Read Prompt, click-to-read, word-by-word wheel scrubbing, smart next/prev page | Done |
+| **Phase 3 — Operation** | Heading & landmark jumps, forms & typing echo (passwords never spoken), live regions/dialogs, cross-origin iframes, touch lift-to-activate | Done |
+| **Phase 4 — Hardware & SDK** | `HapticDriver` contract, sound simulator, Gamepad & WebHID drivers, JSON Device Profiles, pairing page, open `sdk/` | Done |
+| **Phase 5 — Onboarding, Settings & AI** | Spoken first-run tour, keyboard-only spoken Settings, Companion mode (NVDA), Gemini cloud voice & AI vision/summaries | Done |
+| **Phase 5b — Voice Conversation** | 5-panel briefing, Ask After Rest, Push-to-Talk, on-device command grammar with risky-action confirmation, real-mic & NVDA verification | Done |
+| **v0.2.0 — Production & Real-Time MVP** | `Alt+I`/`Alt+O`/`Ctrl+Alt` shortcuts ([ADR-0018](docs/adr/0018-shortcuts-away-from-alt-shift.md)), first-run screen reader prompt ([ADR-0019](docs/adr/0019-first-question-is-the-screen-reader.md)), Indian English (`en-IN`) voices, **Gemini Live API** WebSocket streaming, **Anthropic Claude** AI fallback, Mobile PWA (`docs/demo/`), Docker/Node server | **Released (`v0.2.0`)** |
+| **Phase 6 — Closed Beta** | Blind tester study (accents, noisy rooms, real haptic hardware, VoiceOver, real touchscreens) | Next |
+| **Phase 7 — Public Store Launch** | Chrome Web Store public listing, Windows/Mac installers ([ADR-0016](docs/adr/0016-desktop-installers-add-the-extension.md)), npm SDK release | Planned |
 
-Still to try with blind testers: accents, a noisy room, real haptic devices, VoiceOver and a real touchscreen. Details are in [docs/phases](docs/phases).
+Full phase plans and architectural decisions live in [docs/phases](docs/phases) and [docs/adr](docs/adr).
 
-## Documents
+## Documents & Research
 
-| File | What it holds |
+| File / Link | What it holds |
 |---|---|
+| **[Research & Recognition Pack](https://files.instinct.com/0si87vjp5vav-ibrowse-research-and-recognition-pack)** | Background research, accessibility study, and recognition materials |
+| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | Step-by-step installation & user guide (Windows, macOS, Mobile, Lab, Server) |
 | [docs/FEATURES.md](docs/FEATURES.md) | Everything iBrowse can do, in one list |
 | [Presentation](https://srksourabh.github.io/ibrowse/presentation/) ([PDF](docs/presentation/iBrowse-presentation.pdf)) | How iBrowse works, in 13 slides |
+| [Mobile & Web App (PWA)](https://srksourabh.github.io/ibrowse/demo/) | Try iBrowse directly on iPhone, Android, or desktop browsers |
 | [PRD.md](PRD.md) | Requirements, scope, milestones |
 | [CONTEXT.md](CONTEXT.md) | Shared vocabulary used in code, tests and speech |
 | [CLAUDE.md](CLAUDE.md) | Working rules for AI agents and contributors |
@@ -284,7 +303,7 @@ Still to try with blind testers: accents, a noisy room, real haptic devices, Voi
 | [USAGE_POLICY.md](USAGE_POLICY.md) | Acceptable use and honest limits |
 | [ACCESSIBILITY.md](ACCESSIBILITY.md) | Our accessibility commitments |
 | [SUPPORT.md](SUPPORT.md) | Where to get help |
-| [CHANGELOG.md](CHANGELOG.md) | What changed |
+| [CHANGELOG.md](CHANGELOG.md) | Full release history |
 
 ## Roadmap
 

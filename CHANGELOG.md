@@ -11,6 +11,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - **First-run screen reader question (ADR-0019).** Before the tour starts, iBrowse asks *"Do you use a screen reader?"* (Y for Companion mode, N for Standalone) so screen reader users never hear two voices on install.
 
 ### Added
+- **Gemini Live API (WebSocket) streaming voice.** Persistent `BidiGenerateContent` WebSocket (`models/gemini-3.8-live`, 24 kHz PCM) with 140-character first-sentence fast-start, 100-phrase LRU cache, and automatic fallback (`Gemini Live WS → Gemini REST TTS → local en-IN OS voice`).
+- **Anthropic Claude AI fallback.** Automatic fallback to `claude-haiku-4-5-20251001` for page purpose, summaries, image descriptions, and spoken questions whenever Gemini is unavailable.
+- **Indian English (`en-IN`) across all voices & recognition.** Enforced across `chrome.tts`, Gemini TTS/Live, Chrome speech recognition, mobile PWA, and the Windows preview, with faster silence auto-stop (700 ms VAD) and expanded natural command synonyms.
+- **Mobile PWA, multi-platform user guide, & server deployment.** Touch + voice PWA published on GitHub Pages (`docs/demo/`), `Dockerfile` + `scripts/serve.mjs` server portal, and `docs/USER_GUIDE.md`.
 - **Phase 5b, conversation (ADR-0017).** Panel-by-panel page briefing (header, left panel, main content, right panel, footer), Ask After Rest (*"What would you like to do?"*), push-to-talk (`Ctrl+Alt+V`), on-device voice commands with spoken confirmation for risky actions, AI page questions, and Chrome + Gemini speech recognisers.
 - **Presentation, demo video, and Chrome Web Store assets.** Complete listing copy, screenshots, promo tile, 13-slide deck, and recorded demo (`docs/media/`).
 - **Windows desktop explorer (early preview).** .NET core library (spoken grammar, placement, dwell) with 38 tests, plus a UI Automation app with a Win+Alt+E hotkey and tray icon. Not yet tested with screen readers.
