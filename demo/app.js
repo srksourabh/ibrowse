@@ -280,12 +280,18 @@ class IBrowseSystem {
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-IN';
     utterance.rate = this.speechRate;
     utterance.pitch = this.speechPitch;
 
-    // Pick best available English voice
+    // Prefer an Indian English voice; fall back to any natural English voice
     const voices = this.speechSynth.getVoices();
-    const naturalVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
+    const indianVoice =
+      voices.find(v => /^en[-_]IN$/i.test(v.lang)) ||
+      voices.find(v => /India|Heera|Ravi|Neerja|Rishi|Veena/i.test(v.name));
+    const naturalVoice =
+      indianVoice ||
+      voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
     if (naturalVoice) {
       utterance.voice = naturalVoice;
     }

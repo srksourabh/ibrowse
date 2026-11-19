@@ -6,7 +6,10 @@ interface TtsEvent {
   readonly errorMessage?: string
 }
 
+export const DEFAULT_VOICE_LANG = 'en-IN'
+
 interface TtsOptions {
+  lang?: string
   rate?: number
   pitch?: number
   volume?: number
@@ -45,9 +48,10 @@ export class ChromeTtsProvider implements SpeechProvider {
           reject(new Error(event.errorMessage || 'Speech failed'))
         }
       }
-      // Only what was asked for is passed on, so the engine keeps its own defaults for the rest.
+      // Always request Indian English (en-IN); leave out other unset options so the engine keeps its defaults.
       this.#tts.speak(utterance.text, {
         onEvent,
+        lang: DEFAULT_VOICE_LANG,
         ...(utterance.rate === undefined ? {} : { rate: utterance.rate }),
         ...(utterance.pitch === undefined ? {} : { pitch: utterance.pitch }),
         ...(utterance.volume === undefined ? {} : { volume: utterance.volume }),

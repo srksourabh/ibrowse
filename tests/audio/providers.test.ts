@@ -3,6 +3,7 @@ import { ChromeTtsProvider, MessageSpeechProvider } from '../../src/audio/provid
 
 type TtsEvent = { type: string; errorMessage?: string }
 type TtsOptions = {
+  lang?: string
   rate?: number
   pitch?: number
   volume?: number
@@ -68,11 +69,12 @@ describe('ChromeTtsProvider', () => {
     )
   })
 
-  it('leaves out settings that were not given, so the engine keeps its defaults', () => {
+  it('always requests Indian English (en-IN) and leaves out unset optional settings', () => {
     const { api } = fakeTts()
     void new ChromeTtsProvider(api).speak({ text: 'Hi' })
     const options = api.speak.mock.calls[0]![1]
-    expect(Object.keys(options)).toEqual(['onEvent'])
+    expect(Object.keys(options).sort()).toEqual(['lang', 'onEvent'])
+    expect(options.lang).toBe('en-IN')
   })
 
   it('tells the utterance when speech actually begins, once, without ending it', async () => {

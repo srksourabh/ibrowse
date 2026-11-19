@@ -40,7 +40,18 @@ describe('GeminiClient.synthesize', () => {
     expect(init.method).toBe('POST')
     expect(body).toEqual({
       model: 'gemini-3.8-flash-lite-tts',
-      input: [{ type: 'user_input', content: [{ type: 'text', text: 'Hello' }] }],
+      input: [
+        {
+          type: 'user_input',
+          content: [
+            {
+              type: 'text',
+              text: 'Hello',
+              annotations: [{ type: 'speech_metadata', style: 'clear, natural Indian English accent' }],
+            },
+          ],
+        },
+      ],
       response_format: { type: 'audio', mime_type: 'audio/wav' },
       generation_config: { speech_config: [{ voice: 'Kore' }] },
     })

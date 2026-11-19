@@ -4,6 +4,7 @@ export { CloudError, type CloudErrorKind } from './cloud-error'
 
 const BASE_URL = 'https://generativelanguage.googleapis.com'
 const DEFAULT_AUDIO_TYPE = 'audio/wav'
+const DEFAULT_VOICE_STYLE = 'clear, natural Indian English accent'
 
 export interface GeminiClientDeps {
   fetch: typeof fetch
@@ -109,7 +110,18 @@ export class GeminiClient {
       signal: request.signal,
       body: {
         model: request.model,
-        input: [{ type: 'user_input', content: [{ type: 'text', text: request.text }] }],
+        input: [
+          {
+            type: 'user_input',
+            content: [
+              {
+                type: 'text',
+                text: request.text,
+                annotations: [{ type: 'speech_metadata', style: DEFAULT_VOICE_STYLE }],
+              },
+            ],
+          },
+        ],
         response_format: { type: 'audio', mime_type: DEFAULT_AUDIO_TYPE },
         generation_config: { speech_config: [{ voice: request.voice }] },
       },
