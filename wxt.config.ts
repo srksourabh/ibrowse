@@ -11,7 +11,7 @@ function readEmbeddedKey(name: string): string {
   if (process.env.EMBED_GEMINI_KEY !== '1') return ''
   const fromEnv = process.env[name]?.trim()
   if (fromEnv) return fromEnv
-  const pattern = new RegExp(`^${name}\\s*=\\s*(.+)$`, 'm')
+  const pattern = new RegExp(`^${name}\\s*=\\s*(.+)$`, 'mi')
   for (const file of ['.env.local', '.env']) {
     const full = path.resolve(file)
     if (!existsSync(full)) continue
