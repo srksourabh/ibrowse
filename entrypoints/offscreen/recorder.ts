@@ -1,6 +1,10 @@
 /** 16 kHz mono is plenty for speech and keeps each request small. */
 export const SAMPLE_RATE = 16000
 const BUFFER_SIZE = 4096
+/** Auto-stop after this much silence once speech is heard (used for hands-free answer windows). */
+const SILENCE_STOP_MS = 700
+const SPEECH_RMS_THRESHOLD = 0.015
+const ANSWER_WINDOW_MAX_MS = 6000
 
 export interface Recording {
   /** What was recorded; empty when cancelled. Rejects with a recogniser-style error code. */
@@ -48,12 +52,12 @@ export function recordMicrophone(maxMs: number): Recording {
 
   const samples = (async () => {
     const stream = await navigator.mediaDevices
-      .getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } })
+      .getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
       .catch((error: unknown) => {
         throw new Error(codeFor(error))
       })
     try {
-      return await capture(stream, until)
+      return await capture(stream, until, maxMs <= ANSWER_WINDOW_MAX_MS ? () => end(false) : undefined)
     } finally {
       // Whatever happened, the microphone is let go of.
       stream.getTracks().forEach((track) => track.stop())
@@ -63,14 +67,38 @@ export function recordMicrophone(maxMs: number): Recording {
   return { samples, stop: () => end(false), cancel: () => end(true) }
 }
 
+function chunkRms(data: Float32Array): number {
+  let sum = 0
+  for (let i = 0; i < data.length; i++) sum += data[i]! * data[i]!
+  return Math.sqrt(sum / Math.max(1, data.length))
+}
+
 /** Collects samples from the stream until `until` settles: true means cancelled. */
-async function capture(stream: MediaStream, until: () => Promise<boolean>): Promise<Float32Array> {
+async function capture(
+  stream: MediaStream,
+  until: () => Promise<boolean>,
+  onSilenceAfterSpeech?: () => void,
+): Promise<Float32Array> {
   const context = new AudioContext({ sampleRate: SAMPLE_RATE })
   try {
     const source = context.createMediaStreamSource(stream)
     const processor = context.createScriptProcessor(BUFFER_SIZE, 1, 1)
     const chunks: Float32Array[] = []
-    processor.onaudioprocess = (event) => chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)))
+    let heardSpeech = false
+    let silentMs = 0
+    const chunkMs = (BUFFER_SIZE / SAMPLE_RATE) * 1000
+    processor.onaudioprocess = (event) => {
+      const data = new Float32Array(event.inputBuffer.getChannelData(0))
+      chunks.push(data)
+      if (!onSilenceAfterSpeech) return
+      if (chunkRms(data) >= SPEECH_RMS_THRESHOLD) {
+        heardSpeech = true
+        silentMs = 0
+      } else if (heardSpeech) {
+        silentMs += chunkMs
+        if (silentMs >= SILENCE_STOP_MS) onSilenceAfterSpeech()
+      }
+    }
     source.connect(processor)
     processor.connect(context.destination)
     const cancelled = await until()

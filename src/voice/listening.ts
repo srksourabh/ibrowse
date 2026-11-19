@@ -4,7 +4,7 @@ import type { SpeechService } from '../audio/speech-service'
 /** How long iBrowse waits for an answer after asking a question (ADR-0017 #3). */
 export const ANSWER_WINDOW_MS = 5000
 /** Said when the talk key was held but nothing was made out. */
-export const NOTHING_HEARD = "I didn't catch that. Hold Alt+Shift+V and try again."
+export const NOTHING_HEARD = "I didn't catch that. Hold Control, Alt and V and try again."
 /** The longest a held key keeps the microphone open. */
 export const HOLD_MAX_MS = 15000
 

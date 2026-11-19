@@ -32,7 +32,8 @@ function listenWithChrome(id: number, maxMs: number, respond: (r: ListenResponse
     respond({ ok: false, error: 'unsupported' })
     return
   }
-  const lang = navigator.language
+  // Prefer Indian English for English locales so Indian accents are recognised accurately.
+  const lang = /^en\b/i.test(navigator.language) ? 'en-IN' : navigator.language
   recognizer ??= chooseMode(Recognition, lang).then((mode) => ({
     mode,
     chrome: new ChromeRecognizer(Recognition, lang, mode),

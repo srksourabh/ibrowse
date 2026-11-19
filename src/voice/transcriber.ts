@@ -2,9 +2,11 @@ import { CloudError, type GeminiClient } from '../cloud/gemini-client'
 import type { ListenResponse } from './messages'
 
 const PROMPT =
-  'Transcribe exactly what the person in this audio says, in the language they speak. ' +
+  'Transcribe exactly what the user says in English (often an Indian English accent). ' +
+  'Common browser commands: click, press, open, scroll down, scroll up, read this, read the page, ' +
+  'next page, previous page, go back, find, stop, repeat, help, yes, no. ' +
   'Reply with only those words. If nobody speaks, reply with nothing.'
-const MAX_WORDS_TOKENS = 100
+const MAX_WORDS_TOKENS = 48
 /** A request that has not answered by then is given up, so listening can never hang. */
 const TRANSCRIBE_TIMEOUT_MS = 15_000
 

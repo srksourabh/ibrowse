@@ -32,7 +32,7 @@ const LEADING_FILLER =
 const TRAILING_FILLER = /(?:\s+(?:please|for me|now|thanks|thank you))+$/
 const ONLY_FILLER = /^(?:(?:hey|ok|okay|ibrowse|please|um|uh|er|so|now)\s*)*$/
 const POINTED = /^(?:on|it|this|that|here|there|on it|on this|on that|this one|that one)$/
-const ROLE_WORDS = /\s+(?:button|link|tab|checkbox|box|menu|option)$/
+const ROLE_WORDS = /\s+(?:button|link|tab|checkbox|box|menu|option|field|input|icon|item|card|heading|text)$/
 
 const PANEL_WORDS: ReadonlyArray<readonly [RegExp, PanelKind]> = [
   [/^(?:left(?: panel| side| column)?)$/, 'left'],
@@ -65,33 +65,33 @@ function panelOf(words: string): PanelKind | null {
 type Rule = readonly [RegExp, (match: RegExpMatchArray) => VoiceCommand | null]
 
 const RULES: readonly Rule[] = [
-  [/^(?:yes|yeah|yep|yes please|go ahead|do it|confirm)$/, () => ({ kind: 'yes' })],
+  [/^(?:yes|yeah|yep|yup|sure|proceed|haan|yes please|go ahead|do it|confirm)$/, () => ({ kind: 'yes' })],
   // "not now" arrives as "not": "now" is a filler word.
-  [/^(?:no|nope|no thanks|no thank you|don't|do not|not|not now)$/, () => ({ kind: 'no' })],
+  [/^(?:no|nope|nah|nahi|no thanks|no thank you|don't|do not|not|not now|never mind|nevermind|skip|forget it)$/, () => ({ kind: 'no' })],
   [/^(?:stop|quiet|be quiet|cancel|shut up|pause|silence)$/, () => ({ kind: 'stop' })],
   [/^(?:repeat(?: that)?|say that again|again|what did you say)$/, () => ({ kind: 'repeat' })],
   [/^(?:help|what can i say|what can you do|commands)$/, () => ({ kind: 'help' })],
-  [/^where am i$/, () => ({ kind: 'where' })],
-  [/^(?:describe (?:the |this )?page|what is on (?:this|the) page|overview)$/, () => ({ kind: 'brief' })],
+  [/^(?:where am i|which page|what page is this|current page)$/, () => ({ kind: 'where' })],
+  [/^(?:describe(?: (?:the |this )?page)?|what is (?:on (?:this|the) (?:page|screen)|here)|overview|briefing|page briefing|summari[sz]e(?: (?:the |this )?page)?|summary|tell me about (?:this|the) page)$/, () => ({ kind: 'brief' })],
   [/^(?:(?:scroll|go) )?to the (top|bottom|end)(?: of the page)?$|^(top|bottom) of the page$/, (m) => ({
     kind: 'scroll-to',
     edge: (m[1] ?? m[2]) === 'top' ? 'top' : 'bottom',
   })],
-  [/^(?:scroll |go |move |page )?(up|down)(?: a bit| a little| more)?$/, (m) => ({
+  [/^(?:(?:scroll|go|move|page|crawl|stroll) )?(up|down)(?: a bit| a little| more| further)?$|^scroll (?:more|further)$/, (m) => ({
     kind: 'scroll',
     direction: m[1] === 'up' ? 'up' : 'down',
   })],
-  [/^(?:go to )?(?:the )?(next|previous) page$/, (m) => ({
+  [/^(?:go to )?(?:the )?(next|previous|prev)(?: page| one)?$/, (m) => ({
     kind: 'page',
     direction: m[1] === 'next' ? 'next' : 'previous',
   })],
   [/^(?:go |take me )?back$/, () => ({ kind: 'back' })],
   [/^(?:go )?forward$/, () => ({ kind: 'forward' })],
-  [/^read(?: (it|this|that)(?: to me)?)?$/, () => ({ kind: 'read', what: 'this' })],
-  [/^read (?:the (?:whole )?page|everything|all|the whole thing)$/, () => ({ kind: 'read', what: 'page' })],
+  [/^read(?: (?:it|this|that|aloud|out|from here)(?: to me)?)?$|^start reading$/, () => ({ kind: 'read', what: 'this' })],
+  [/^read (?:(?:the (?:whole )?)?page|everything|all|the whole thing)$/, () => ({ kind: 'read', what: 'page' })],
   [/^what is (?:on|in|at) (.+)$/, (m) => panelCommand(m[1]!, 'describe')],
-  [/^(?:go|take me|jump|move|skip) to (.+)$/, (m) => panelCommand(m[1]!, 'go')],
-  [/^(?:find|where is) (.+)$/, (m) => ({ kind: 'find', target: withoutArticle(m[1]!) })],
+  [/^(?:go|take me|jump|move|skip) to (.+)$/, (m) => panelCommand(m[1]!, 'go') ?? { kind: 'find', target: withoutArticle(m[1]!) }],
+  [/^(?:find|where is|search for|look for|locate|show me) (.+)$/, (m) => ({ kind: 'find', target: withoutArticle(m[1]!) })],
   [/^(?:click|press|tap|select|open|activate|choose|push)(?: (.+))?$/, (m) => clickCommand(m[1])],
 ]
 

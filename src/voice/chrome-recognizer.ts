@@ -64,15 +64,23 @@ export class ChromeRecognizer implements SpeechRecognizer {
     let heard: string | null = null
     let failure: string | null = null
     let dropped = false
+    let settleTimer: ReturnType<typeof setTimeout> | null = null
     const result = new Promise<string | null>((resolve, reject) => {
       recognition.onresult = (event) => {
         heard = Array.from(event.results, (r) => r[0]?.transcript ?? '').join(' ').trim() || null
+        // Stop shortly after a transcript arrives instead of waiting for Chrome's long silence tail.
+        if (heard && !settleTimer) {
+          settleTimer = setTimeout(() => {
+            if (!dropped) recognition.stop()
+          }, 150)
+        }
       }
       recognition.onerror = (event) => {
         if (!SILENT_ERRORS.has(event.error)) failure = event.error
       }
       recognition.onend = () => {
         clearTimeout(timer)
+        if (settleTimer) clearTimeout(settleTimer)
         if (failure && !dropped) reject(new Error(failure))
         else resolve(dropped ? null : heard)
       }
