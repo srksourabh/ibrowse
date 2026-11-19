@@ -1,6 +1,7 @@
 import { loadGeminiKey, moveKeyOut, type SecretStore } from './secrets'
 
 declare const __EMBEDDED_GEMINI_KEY__: string | undefined
+declare const __EMBEDDED_ANTHROPIC_KEY__: string | undefined
 
 const DATABASE = 'ibrowse-secrets'
 const TABLE = 'secrets'
@@ -8,6 +9,13 @@ const TABLE = 'secrets'
 function embeddedGeminiKey(): string | null {
   if (typeof __EMBEDDED_GEMINI_KEY__ !== 'string') return null
   const key = __EMBEDDED_GEMINI_KEY__.trim()
+  return key === '' ? null : key
+}
+
+/** Optional Anthropic key embedded at build time for Claude AI fallback. */
+export async function loadAnthropicKey(): Promise<string | null> {
+  if (typeof __EMBEDDED_ANTHROPIC_KEY__ !== 'string') return null
+  const key = __EMBEDDED_ANTHROPIC_KEY__.trim()
   return key === '' ? null : key
 }
 

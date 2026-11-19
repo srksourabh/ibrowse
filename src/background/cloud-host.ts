@@ -2,8 +2,9 @@ import { AiAssistant } from '../ai/ai-assistant'
 import { fetchImage } from '../ai/image-fetch'
 import type { AiRequest, AiResponse, LatencyReportMessage } from '../ai/messages'
 import { AudioCache } from '../cloud/audio-cache'
+import { ClaudeClient, withClaudeFallback } from '../cloud/claude-client'
 import { GeminiClient } from '../cloud/gemini-client'
-import { loadVaultKey } from '../cloud/key-vault'
+import { loadAnthropicKey, loadVaultKey } from '../cloud/key-vault'
 import type { CloudCancelRequest, CloudSpeechRequest, CloudSpeechResponse } from '../cloud/messages'
 import { CloudVoiceService } from '../cloud/voice-service'
 import { loadSettings } from '../shared/settings'
@@ -26,10 +27,16 @@ export class CloudHost {
   readonly #client: GeminiClient
 
   constructor() {
+    const boundFetch = (input: RequestInfo | URL, init?: RequestInit) => fetch(input, init)
     const client = new GeminiClient({
-      fetch: (input, init) => fetch(input, init),
+      fetch: boundFetch,
       getKey: loadVaultKey,
     })
+    const claude = new ClaudeClient({
+      fetch: boundFetch,
+      getKey: loadAnthropicKey,
+    })
+    const aiClient = withClaudeFallback(client, claude, async () => (await loadAnthropicKey()) !== null)
     this.#client = client
     this.#voice = new CloudVoiceService({
       client,
@@ -37,9 +44,9 @@ export class CloudHost {
       cache: new AudioCache(REMEMBERED_PHRASES),
     })
     this.#ai = new AiAssistant({
-      client,
+      client: aiClient,
       getSettings: () => loadSettings(chrome.storage.local),
-      fetchImage: (url) => fetchImage(url, (input, init) => fetch(input, init)),
+      fetchImage: (url) => fetchImage(url, boundFetch),
     })
   }
 
