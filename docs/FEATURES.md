@@ -4,7 +4,7 @@ iBrowse is a Chrome extension (Manifest V3) that lets blind and low-vision peopl
 
 ## 1. Turning it on and off
 
-- **Explore Mode** is turned on and off with **Alt+Shift+E** or the **toolbar button**. The button shows **ON** and its title says the state for that tab.
+- **Explore Mode** is turned on and off with **Alt+I** or the **toolbar button** (**Ctrl+Alt+E** also turns it off while active). The button shows **ON** and its title says the state for that tab.
 - Turning it on says "Explore mode on" and gives the page briefing. Turning it off says "Explore mode off".
 - **Nothing is intercepted while Explore Mode is off**: wheel, touch and keys behave as normal.
 - Optional setting: **start in Explore Mode on every page**.
@@ -17,7 +17,7 @@ iBrowse is a Chrome extension (Manifest V3) that lets blind and low-vision peopl
 - Panels are found from **landmarks** (header, nav, main, aside, footer) when the page has them. Otherwise they come from the **layout**, the columns on screen, without being fooled by menu bars, and it stays quick on big pages.
 - Pages without panels get a short summary: title, page type, notable media and counts of paragraphs, headings, links, forms and fields.
 - Then it asks **"Want me to read it?"**. Y or Enter reads the main content; N, Escape or moving the mouse dismisses it.
-- **Alt+Shift+B** gives a detailed briefing: every region in layout order, with its position.
+- **Ctrl+Alt+B** gives a detailed briefing: every region in layout order, with its position.
 - With AI on (section 10), the briefing adds a **one-line purpose** ("This looks like a recipe for…").
 
 ## 3. Exploring by pointer (mouse)
@@ -41,15 +41,15 @@ iBrowse is a Chrome extension (Manifest V3) that lets blind and low-vision peopl
 - **Wheel scrubbing:** over text, the mouse wheel moves **word by word** (down for the next word, up for the previous one) and says each word.
 - **Boundaries:** at the end of a block the wheel stops, with a bounce sound. Pushing again goes into the next block.
 - **Spelling:** pausing on a word for a moment, or **Shift + wheel**, spells it letter by letter.
-- **Read from here:** **Alt+Shift+R** reads from the current word, or the last place visited, to the end. Pointer movement does not cut the reading off; Escape stops it.
+- **Read from here:** **Ctrl+Alt+R** reads from the current word, or the last place visited, to the end. Pointer movement does not cut the reading off; Escape stops it.
 - **Alt + wheel** scrolls the page. Ctrl + wheel is left as the browser's zoom.
 - Speech settings: **rate, pitch, volume and choice of voice**. By default iBrowse uses the computer's own voices, on the device.
 
 ## 6. Moving around the page and between pages
 
-- **Next / previous heading:** Alt+Shift+Down / Up.
-- **Next / previous landmark:** Alt+Shift+PageDown / PageUp.
-- **Smart next / previous page:** Alt+Shift+Right / Left, the side mouse buttons, or the right-click menu. It follows the page's "Next" link when there is one; otherwise it scrolls a screen, and says which it did.
+- **Next / previous heading:** Ctrl+Alt+Down / Up.
+- **Next / previous landmark:** Ctrl+Alt+PageDown / PageUp.
+- **Smart next / previous page:** Ctrl+Alt+Right / Left, the side mouse buttons, or the right-click menu. It follows the page's "Next" link when there is one; otherwise it scrolls a screen, and says which it did.
 - Scrolling says "**End of page**" on arrival, and "Next page is available" when there is one.
 - On **infinite-scroll** pages: "Loaded 12 more items".
 - Each jump continues from where the user is: the last place jumped to, hovered, focused or read.
@@ -62,13 +62,13 @@ iBrowse is a Chrome extension (Manifest V3) that lets blind and low-vision peopl
 - Checkboxes, radio buttons, menus and sliders say their new state when changed. Field errors are read out.
 - **Sending a form** is confirmed ("Sign in: submitted"), and is not claimed when the page stops it.
 - **Live changes:** new messages, alerts and status text (live regions) are spoken. Opening dialogs are announced by name ("Dialog opened: Sign in"). Alerts interrupt; the same words are not repeated within 1.5 seconds.
-- **Where am I:** **Alt+Shift+W**, or moving the pointer to the very top edge of the page, says the page title, the site, whether the connection is secure, whether it is still loading, and the tab ("Tab 2 of 5").
+- **Where am I:** **Ctrl+Alt+W**, or moving the pointer to the very top edge of the page, says the page title, the site, whether the connection is secure, whether it is still loading, and the tab ("Tab 2 of 5").
 
 ## 8. Voice: talking to iBrowse
 
 Turned on in settings, with the microphone allowed once.
 
-- **Push to talk:** hold **Alt+Shift+V**, speak, let go. A sound marks the start and end of listening.
+- **Push to talk:** hold **Ctrl+Alt+V**, speak, let go. A sound marks the start and end of listening.
 - **Answer the question:** after "What would you like to do?", just answer. iBrowse listens for five seconds.
 - iBrowse **never listens while it is speaking**, and only while Explore Mode is on.
 - **Commands**, understood on the computer:
@@ -87,7 +87,7 @@ Turned on in settings, with the microphone allowed once.
 
 - **Asks before a press that may not be taken back:** buying, paying, sending, deleting, agreeing, signing out, or sending a form that posts to the site or takes card details. iBrowse says "…Say yes to press it, or no." It judges by the button's visible text and form as well as its label, so a page cannot disguise "Pay now" as "Continue".
 - **Never guesses** what to press: a name has to match whole words.
-- If nothing is heard after a held key: "**I didn't catch that.** Hold Alt+Shift+V and try again." A command said twice ("Scroll down. Scroll down.") is carried out once.
+- If nothing is heard after a held key: "**I didn't catch that.** Hold Control, Alt and V and try again." (Follows the chosen shortcut modifier.) A command said twice ("Scroll down. Scroll down.") is carried out once.
 - **Questions:** anything that is not a command is a question about the page. With AI on, it is answered from the page's text. Without AI, iBrowse suggests commands.
 - **Two recognisers to choose from:**
   - **Chrome's own.** It recognises speech on the computer when Chrome has that installed, and otherwise uses Google's online service.
@@ -110,8 +110,8 @@ All are off by default. Each one uses the user's **own Gemini key**. Turning one
 
 - **Natural cloud voice**, for reading only or for everything, with a choice of voice and model. Phrases heard often are remembered, so they are paid for once.
 - **AI page purpose** in the briefing.
-- **Page summary:** Alt+Shift+M.
-- **Image description:** Alt+Shift+D describes the image under the pointer. Images without a description are offered for it. Images on the user's own network are never fetched or sent.
+- **Page summary:** Ctrl+Alt+M.
+- **Image description:** Ctrl+Alt+D describes the image under the pointer. Images without a description are offered for it. Images on the user's own network are never fetched or sent.
 - **Spoken questions** answered from the page.
 - **Gemini speech recognition** for voice commands.
 - Page text is always treated as **data, never instructions** to the AI.
@@ -126,7 +126,7 @@ All are off by default. Each one uses the user's **own Gemini key**. Turning one
 
 ## 12. Haptics and hardware
 
-- **Alt+Shift+P** opens hardware setup. It is fully usable by keyboard and speaks every step.
+- **Ctrl+Alt+P** (or from Settings) opens hardware setup. It is fully usable by keyboard and speaks every step.
 - Devices:
   - **sound only** (the default);
   - a **sound simulator** (hear what hardware would feel, through headphones or a subwoofer);
@@ -139,7 +139,7 @@ All are off by default. Each one uses the user's **own Gemini key**. Turning one
 ## 13. First run and settings
 
 - On first install, iBrowse first asks **"Do you use a screen reader?"**. Y chooses Companion, N chooses Standalone, and it is asked only once. Then a **spoken tour** opens. Its 11 steps cover Explore Mode, exploring, reading, moving, where am I, forms, touch, voice, settings and hardware. Enter goes on, Backspace goes back, R repeats and Escape skips. It can be heard again from settings.
-- **Settings: Alt+Shift+S.** The page is made of real headings and controls. Each setting is read out (name, value and what it does) when it gets focus, and every change is spoken.
+- **Settings: Alt+O** (or **Ctrl+Alt+S** while Explore Mode is on). The page is made of real headings and controls. Each setting is read out (name, value and what it does) when it gets focus, and every change is spoken.
 - Setting groups:
   - **Speech:** rate, pitch, volume, local voice, short announcements.
   - **Exploring:** always start in Explore Mode, touch activation, typing echo.
@@ -149,7 +149,7 @@ All are off by default. Each one uses the user's **own Gemini key**. Turning one
   - **Cloud voice and AI:** cloud voice, voice name and model, AI on or off, AI model, and the Gemini key.
   - **Developer:** measure delays.
 - **Measure delays** reads out how long sounds, speech start and stopping speech take, against their targets.
-- Browser-level shortcuts can be changed at `chrome://extensions/shortcuts`.
+- In-page shortcuts default to **Ctrl+Alt** (switchable to **Alt+Shift** in settings), and every command can be remapped at `chrome://extensions/shortcuts`.
 
 ## 14. Privacy
 

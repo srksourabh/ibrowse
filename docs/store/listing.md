@@ -16,11 +16,11 @@ folder, made by `npm run build && npm run store-assets`. The package is made by 
 
 > iBrowse lets blind and low-vision people explore and use any website by moving a mouse or a finger over it and hearing what is there.
 >
-> Turn on Explore Mode (Alt+Shift+E, or the toolbar button) and iBrowse tells you what the page holds, panel by panel: the header, the left panel, the main content, the right panel and the footer.
+> Turn on Explore Mode (Alt+I, or the toolbar button) and iBrowse tells you what the page holds, panel by panel: the header, the left panel, the main content, the right panel and the footer.
 >
 > Move the pointer and iBrowse says what is under it: a heading, a link, a button, an image, a form field. Rest on something and it asks what you would like to do.
 >
-> Talk to it. Hold Alt+Shift+V, or answer when it asks, and say what you want: "click", "click add to basket", "scroll down", "scroll up", "what is on the left?", "read this", "go back". Anything that is not a command is a question, answered from the page if you turn on AI.
+> Talk to it. Hold Ctrl+Alt+V, or answer when it asks, and say what you want: "click", "click add to basket", "scroll down", "scroll up", "what is on the left?", "read this", "go back". Anything that is not a command is a question, answered from the page if you turn on AI.
 >
 > Also:
 > - Reads text word by word, follows pages and live updates, and says when forms change or are sent.

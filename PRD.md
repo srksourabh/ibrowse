@@ -82,7 +82,7 @@ The existing browser simulator is kept as a hosted demo site and haptic visualiz
 ## 5. Functional requirements
 
 ### 5.1 Explore mode and activation
-- **FR-1.1** A hotkey toggles explore mode (default Alt+Shift+E, remappable at `chrome://extensions/shortcuts`). The toolbar button does the same, and its badge and title say whether explore mode is on in that tab (ADR-0016).
+- **FR-1.1** A hotkey toggles explore mode (default Alt+I, remappable at `chrome://extensions/shortcuts`; Ctrl+Alt+E also turns it off while active, ADR-0018). The toolbar button does the same, and its badge and title say whether explore mode is on in that tab (ADR-0016).
 - **FR-1.2** The setting "Always start in explore mode" enables it on every page load.
 - **FR-1.3** Entering explore mode speaks "Explore mode on", then the page briefing (§5.2). Leaving speaks "Explore mode off".
 - **FR-1.4** When explore mode is off, no wheel, touch or key events are intercepted.
@@ -94,7 +94,7 @@ The existing browser simulator is kept as a hosted demo site and haptic visualiz
   - Example: *"Article page. Picture on the left, hero section at the top, 34 paragraphs, 12 links, search box top right. Want me to read it?"*
 - **FR-2.3** Analysis combines DOM structure, ARIA landmarks and roles, element geometry (position and size), and heuristics for hero sections (large top block with heading and image), navigation, sidebars and footers.
 - **FR-2.4** Answering the prompt: **Y or Enter** reads from the main content; **N or Esc** or any mouse move dismisses it. An unanswered prompt times out silently after 6 seconds.
-- **FR-2.5** A hotkey (default Alt+Shift+B) repeats the briefing in detail: every region in layout order with position.
+- **FR-2.5** A hotkey (default Ctrl+Alt+B) repeats the briefing in detail: every region in layout order with position.
 - **FR-2.6** The briefing must start speaking within 1 second on pages up to 5,000 DOM nodes. Analysis runs off the main thread where possible and must not freeze the page.
 - **FR-2.7** **Optional AI enrichment** (§8): when the user has set up a cloud provider key, the briefing adds a one-line purpose ("This looks like a news article about…"), captions for images without useful alt text, and on-demand summaries. Without a key, the extension uses alt text and nearby captions, and says "image, no description" otherwise.
 - **FR-2.8** On dynamic changes (new content, route changes, dialogs, live regions), the extension announces them briefly, for example "Dialog opened: Sign in" or "12 new results".
@@ -128,32 +128,32 @@ Every element is classified as **interactive** or **static**, using role and nam
 - **FR-5.1 Wheel scrubbing.** Over a text block in explore mode, the wheel moves word by word (down = next, up = previous). Each word is spoken on each notch.
 - **FR-5.2 Boundaries.** At the end of a block the wheel stops and gives the boundary cue (bounce earcon and haptic). A second push continues into the next block. **Alt + wheel** scrolls the page. Ctrl + wheel is the browser's zoom and is left alone (ADR-0011).
 - **FR-5.3 Spelling mode.** Pausing on a word for 800 ms or Shift + wheel spells it letter by letter.
-- **FR-5.4 Continuous read** reads from the current word to the end of the container (default Alt+Shift+R).
+- **FR-5.4 Continuous read** reads from the current word to the end of the container (default Ctrl+Alt+R).
 - **FR-5.5 Smart next page.** The "next page" command does one of two things and says which:
   1. If the page has pagination (a link with `rel="next"`, a "Next" or "›" control, or numbered pages), it follows it and gives a new briefing.
   2. Otherwise it scrolls one screen down and briefs only the newly visible content.
-- **FR-5.6** "Next page" is available through: the context menu (right-click, "Next page"), a mouse side button, and Alt+Shift+Right. Scrolling with Alt + wheel announces "End of page" on arrival, and adds "Next page is available" when the page has a pagination link.
+- **FR-5.6** "Next page" is available through: the context menu (right-click, "Next page"), a mouse side button, and Ctrl+Alt+Right. Scrolling with Alt + wheel announces "End of page" on arrival, and adds "Next page is available" when the page has a pagination link.
 - **FR-5.6a** After a followed pagination link loads, Explore Mode turns itself back on and briefs the new page.
-- **FR-5.6b** While the whole page is being read (the Read Prompt answered Y, or Alt+Shift+R with no word selected), pointer movement is ignored so the reading is not cut off. Esc stops it.
+- **FR-5.6b** While the whole page is being read (the Read Prompt answered Y, or Ctrl+Alt+R with no word selected), pointer movement is ignored so the reading is not cut off. Esc stops it.
 - **FR-5.7** A matching "Previous page" command exists.
 - **FR-5.8** On infinite-scroll pages, scroll-based next page announces "Loaded N more items" once content appears.
 
 ### 5.6 Keyboard commands
-Browsers allow only four suggested shortcuts per extension (ADR-0009), so **only the Explore Mode toggle is a browser-level command** (remappable at `chrome://extensions/shortcuts`). The rest are handled by the extension while Explore Mode is on, and are remappable in settings. Defaults:
+Browsers allow only four suggested shortcuts per extension (ADR-0009), and reject Ctrl+Alt in the commands API, so **Alt+I** (Explore Mode) and **Alt+O** (Settings) are the browser-level commands with default keys (ADR-0018). In-page shortcuts default to **Ctrl+Alt** (switchable to **Alt+Shift** in settings), and every page shortcut is also registered as a browser command so it can be remapped at `chrome://extensions/shortcuts`. Defaults:
 
 | Action | Keys |
 |---|---|
-| Toggle explore mode | Alt+Shift+E |
-| Repeat / detailed briefing | Alt+Shift+B |
-| Where am I (title, host, security, load state, tab) | Alt+Shift+W |
-| Read from here (the current word, else the navigation cursor, else the top) | Alt+Shift+R |
-| Next / previous heading | Alt+Shift+Down / Up |
-| Next / previous landmark | Alt+Shift+PageDown / PageUp |
-| Next / previous page | Alt+Shift+Right / Left |
+| Toggle explore mode | Alt+I (or Ctrl+Alt+E to turn off) |
+| Repeat / detailed briefing | Ctrl+Alt+B |
+| Where am I (title, host, security, load state, tab) | Ctrl+Alt+W |
+| Read from here (the current word, else the navigation cursor, else the top) | Ctrl+Alt+R |
+| Next / previous heading | Ctrl+Alt+Down / Up |
+| Next / previous landmark | Ctrl+Alt+PageDown / PageUp |
+| Next / previous page | Ctrl+Alt+Right / Left |
 | Stop speech | Esc |
-| Open settings (Phase 5) | Alt+Shift+S |
+| Open settings | Alt+O (or Ctrl+Alt+S) |
 
-Heading jumps are on Alt+Shift+arrows, not the plain `Shift+H` first proposed, because a plain letter key would fire while typing in a form or using a site's own shortcuts (ADR-0012). The **navigation cursor** is the element last jumped to, hovered, focused or read, so a jump always continues from where the user is.
+Heading jumps are on Ctrl+Alt+arrows (or Alt+Shift+arrows), not the plain `Shift+H` first proposed, because a plain letter key would fire while typing in a form or using a site's own shortcuts (ADR-0012, ADR-0018). The **navigation cursor** is the element last jumped to, hovered, focused or read, so a jump always continues from where the user is.
 
 ### 5.7 Touch and dual input
 - **FR-7.1** Touch exploration is supported through pointer events, with `touch-action: none` on the page while Explore Mode is on so a dragging finger does not scroll it. The page's own setting is restored when Explore Mode turns off. Touch scrolling is therefore off in Explore Mode; use Next Page or Alt + wheel.
@@ -164,7 +164,7 @@ Heading jumps are on Alt+Shift+arrows, not the plain `Shift+H` first proposed, b
 ### 5.8 Forms and browser status
 - **FR-8.1 Form filling.** Entering a field focuses it and speaks its label, type, current value and whether it is required ("Email — Edit text, empty, required"). Typing is echoed by character or word, or not at all (setting `typingEcho`, default characters). Deletions are announced. Checkboxes, radios, selects and sliders announce their new state ("Subscribe: checked", "Day: Tuesday"). Validation errors are read as the browser reports them ("Email: Please enter an email address"), before the announcement of the field that gets focus. A form that passes validation and is sent by the browser is confirmed with a sound and the name of the button that sent it, or of the form ("Sign in: submitted"). When the page stops the submission to handle it in its own script, nothing is claimed, because the page may have refused it; its live regions and dialogs report the outcome. Forms inside shadow roots are not confirmed.
 - **FR-8.1a Passwords.** What is typed into a password field is never spoken, in any mode. Each keystroke gives a tick. Hovering or focusing a password field says only whether it is empty or filled.
-- **FR-8.2 Browser status zone.** The top 6 pixels of the viewport, and the Alt+Shift+W command, read the page title, host, whether the connection is secure, whether it is still loading, and which tab this is ("Tab 2 of 5"). The zone is entered once per visit and left once the pointer is 24 pixels down.
+- **FR-8.2 Browser status zone.** The top 6 pixels of the viewport, and the Ctrl+Alt+W command, read the page title, host, whether the connection is secure, whether it is still loading, and which tab this is ("Tab 2 of 5"). The zone is entered once per visit and left once the pointer is 24 pixels down.
 - **FR-8.2a Live changes.** While Explore Mode is on, text added to a live region (`aria-live`, `role="alert"`, `status` or `log`) is spoken, and dialogs that open are announced by name. Alerts and dialogs interrupt; other regions wait their turn. The same words are not spoken twice within 1.5 seconds, and very long text is cut at 300 characters.
 - **FR-8.3** Unsupported or inaccessible content is named explicitly: "Embedded video, cannot be read", "Graphic with no text".
 
@@ -176,7 +176,7 @@ Heading jumps are on Alt+Shift+arrows, not the plain `Shift+H` first proposed, b
 
 ### 5.10 First run and settings
 - **FR-10.1** On a fresh install a spoken tour opens by itself, once: ten short steps covering Explore Mode, exploring, reading, moving, where am I, forms, touch, settings and hardware. Enter goes on, Backspace goes back, R repeats, Escape skips. It can be heard again from settings.
-- **FR-10.2** Settings open with **Alt+Shift+S**, on a page built from real headings, labels and controls. Every setting is described once, in a table that also drives the validators and the spoken text. Each setting is read out (name, value, what it does) when it gets focus, and every change is spoken, so the page works with iBrowse's own voice alone. Hotkeys are changed in the browser's shortcut page, which the settings page opens.
+- **FR-10.2** Settings open with **Alt+O** (or **Ctrl+Alt+S** while Explore Mode is on), on a page built from real headings, labels and controls. Every setting is described once, in a table that also drives the validators and the spoken text. Each setting is read out (name, value, what it does) when it gets focus, and every change is spoken, so the page works with iBrowse's own voice alone. Hotkeys are changed in the browser's shortcut page, which the settings page opens.
 - **FR-10.3 Delay readout.** With "Measure delays" on, the settings page can read out how long sounds, speech start and stopping speech take, against their targets.
 
 ---
@@ -246,7 +246,7 @@ Which driver is used is the setting `hapticDriver`.
 - **Sound simulator (`simulator`):** plays each effect as low sound, so what hardware would feel can be heard through headphones or a subwoofer, and lets anything observe the waveform. It is opt-in, because the Earcons already make sound and a simulator on top would double every effect.
 - **Game controller (`gamepad`):** the Gamepad API's dual-rumble, for any vibrating controller. Low thuds go to the heavy motor and sharp ticks to the light one. It runs in the page, because browsers expose controllers only to a focused page, only on secure (https) pages, and only after a button has been pressed.
 - **Paired haptic device (`webhid`):** a USB HID device described by a JSON Device Profile. It runs in the background worker, because WebHID permission is per origin and a content script would need a separate grant for every website. The worker may be restarted by Chrome at any time, so it reconnects as needed.
-- **Pairing** is done on a hardware setup page opened with **Alt+Shift+P**. It is built from real headings and buttons, is fully usable by keyboard, and speaks every result. Everything it offers: choose a driver, import a Device Profile as pasted JSON, pair a device (the browser's own chooser appears, which the page announces beforehand), and play a test pattern that names each effect aloud. With a screen reader (Companion mode) it writes to a live region instead of speaking, so nothing is said twice.
+- **Pairing** is done on a hardware setup page opened with **Ctrl+Alt+P** (or from Settings). It is built from real headings and buttons, is fully usable by keyboard, and speaks every result. Everything it offers: choose a driver, import a Device Profile as pasted JSON, pair a device (the browser's own chooser appears, which the page announces beforehand), and play a test pattern that names each effect aloud. With a screen reader (Companion mode) it writes to a live region instead of speaking, so nothing is said twice.
 
 ### 7.5 SDK
 The `sdk/` folder and the exports of `src/haptics/index.ts`: the TypeScript driver contract, the event vocabulary and reference waveforms, the Device Profile JSON schema and validator, a conformance harness (`runConformance`) that a driver is checked with, an example profile, and an example driver that passes the harness with no hardware. Two routes: describe a device as JSON (a user can add it themselves, with no change to iBrowse), or write a driver (which Manifest V3 cannot load at run time, so it is contributed to the open-source extension). Publishing to npm happens with the public release.

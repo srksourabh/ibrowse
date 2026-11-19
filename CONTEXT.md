@@ -22,7 +22,7 @@ The shared vocabulary for code, tests, docs and spoken strings. Use these terms 
 - **Region**: a meaningful area of the page (hero, navigation, sidebar, main content, footer).
 - **Panel**: one of the five parts the Page Briefing walks in order: header, left panel, main content, right panel, footer. Found from the page's landmarks, or from its layout when it has none.
 - **Voice Command**: something the user says that iBrowse understands on the device: click (optionally by name), scroll, read, next or previous page, back, forward, panel, find, stop, repeat, help, where am I, describe the page. Anything else is a **Question**, answered by AI when it is on.
-- **Push to Talk**: holding Alt+Shift+V to have iBrowse listen; letting go ends the request.
+- **Push to Talk**: holding Ctrl+Alt+V (or Alt+Shift+V if switched in settings) to have iBrowse listen; letting go ends the request.
 - **Ask After Rest**: when the pointer rests on something a further second after its description, iBrowse asks "What would you like to do?" and listens briefly for the answer.
 - **Recogniser**: what turns speech into text: Chrome's own (on-device when the language is installed, otherwise Google's service) or Gemini (with the user's key). It runs only in the offscreen document.
 - **Block**: a readable unit of text (paragraph, list, quote, table, heading).
@@ -94,7 +94,7 @@ The shared vocabulary for code, tests, docs and spoken strings. Use these terms 
 - **Cool-down**: the least time between two plays of the same Haptic Event.
 - **Relay Driver**: the stand-in inside a page for a device that lives in the background worker.
 - **HID Host**: the background worker's owner of the paired device. It reconnects on demand, because Chrome may restart the worker at any time.
-- **Pairing**: choosing a driver and granting a device on the hardware setup page (Alt+Shift+P).
+- **Pairing**: choosing a driver and granting a device on the hardware setup page (Ctrl+Alt+P, or from settings).
 - **Conformance**: whether a driver follows the driver contract, checked by `runConformance`.
 - **SDK**: the `sdk/` folder and the exports of `src/haptics/index.ts`, for hardware makers.
 - **Sound only**: no haptic driver. The default.

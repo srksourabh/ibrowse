@@ -22,7 +22,7 @@
 
 ## A map of any website, spoken
 
-iBrowse is a Chrome extension for blind and low-vision people. Turn on **Explore Mode** and it tells you what the page holds, panel by panel: the header, the left panel, the main content, the right panel and the footer. Move a mouse or a finger and hear what is under it. Rest on something and it asks **"What would you like to do?"**. Answer out loud, or hold **Alt+Shift+V** and say "click add to basket", "scroll down" or "what is on the left?".
+iBrowse is a Chrome extension for blind and low-vision people. Turn on **Explore Mode** and it tells you what the page holds, panel by panel: the header, the left panel, the main content, the right panel and the footer. Move a mouse or a finger and hear what is under it. Rest on something and it asks **"What would you like to do?"**. Answer out loud, or hold **Ctrl+Alt+V** and say "click add to basket", "scroll down" or "what is on the left?".
 
 It works on the websites you already use, with no changes to them, and it runs on your computer.
 
@@ -42,7 +42,7 @@ It works on the websites you already use, with no changes to them, and it runs o
 
 ## Turn it on, listen, explore, talk, act
 
-<img src="docs/media/slides/slide-03.png" alt="Five steps: press Alt+Shift+E to turn on, hear the briefing panel by panel, explore by hover, touch and wheel, talk by holding Alt+Shift+V, and iBrowse acts: click, scroll, read." width="100%">
+<img src="docs/media/slides/slide-03.png" alt="Five steps: press Alt+I to turn on, hear the briefing panel by panel, explore by hover, touch and wheel, talk by holding Ctrl+Alt+V, and iBrowse acts: click, scroll, read." width="100%">
 
 | | |
 |---|---|
@@ -57,7 +57,7 @@ It works on the websites you already use, with no changes to them, and it runs o
 |---|---|
 | 🗺️ **Page briefing** | Header, left panel, main content, right panel and footer, then "Want me to read it?" |
 | 🖱️ **Explore by pointer** | "Add to basket — Button, Clickable." Speech stops the moment you move on. Earcons are panned left or right to where things are. |
-| 🎤 **Talk to it** | Hold Alt+Shift+V, or answer when it asks. "Click", "click sign in", "scroll down", "what is on the left?", "find the search box", "go back". |
+| 🎤 **Talk to it** | Hold Ctrl+Alt+V, or answer when it asks. "Click", "click sign in", "scroll down", "what is on the left?", "find the search box", "go back". |
 | 🛡️ **Safe by voice** | Paying, sending, deleting or agreeing waits for a spoken yes. It never guesses what to press. |
 | 📖 **Reading** | Click a paragraph to hear it. The wheel steps word by word, and Shift + wheel spells a word. |
 | 🧭 **Moving around** | Jump by heading or landmark. A smart next page follows "Next" links or scrolls. |
@@ -102,43 +102,43 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
 
 ## Quick start
 
-1. Press **Alt+Shift+E** on a page, or click the iBrowse toolbar button, to turn on Explore Mode.
+1. Press **Alt+I** on a page, or click the iBrowse toolbar button, to turn on Explore Mode.
 2. Listen to the briefing: the header, left panel, main content, right panel and footer, and what each holds. Press **Y** to have it read, or **N** to skip.
 3. Move the mouse, or drag a finger, to hear what is under it. Click a paragraph to read it.
-4. Press **Alt+Shift+S** for settings and **Alt+Shift+P** for hardware.
-5. Optional: turn on **Voice commands** in settings. Then hold **Alt+Shift+V** and speak, or answer when iBrowse asks "What would you like to do?" after you rest the pointer on something.
+4. Press **Alt+O** (or **Ctrl+Alt+S** in Explore Mode) for settings and **Ctrl+Alt+P** for hardware.
+5. Optional: turn on **Voice commands** in settings. Then hold **Ctrl+Alt+V** and speak, or answer when iBrowse asks "What would you like to do?" after you rest the pointer on something.
 
 <details>
 <summary><b>Keyboard and mouse</b></summary>
 
 | Do this | Keys |
 |---|---|
-| Turn Explore Mode on or off | Alt+Shift+E, or the toolbar button (it shows ON while active) |
+| Turn Explore Mode on or off | Alt+I, or the toolbar button (it shows ON while active); Ctrl+Alt+E turns it off |
 | Answer the read question | Y or Enter / N or Esc |
 | Read the clicked paragraph | Click it |
 | Step through words | Scroll wheel over text (Shift+wheel spells the word) |
 | Scroll the page | Alt+wheel |
-| Next / previous page | Alt+Shift+Right / Left, side mouse buttons, or right-click menu |
-| Next / previous heading | Alt+Shift+Down / Up |
-| Next / previous landmark | Alt+Shift+PageDown / PageUp |
-| Where am I (title, site, security, tab) | Alt+Shift+W, or move the pointer to the very top edge |
-| Detailed briefing / read from here | Alt+Shift+B / Alt+Shift+R |
-| Describe the image under the pointer | Alt+Shift+D (needs Gemini) |
-| Summarise the page | Alt+Shift+M (needs Gemini) |
-| Settings | Alt+Shift+S |
-| Hardware setup | Alt+Shift+P |
+| Next / previous page | Ctrl+Alt+Right / Left, side mouse buttons, or right-click menu |
+| Next / previous heading | Ctrl+Alt+Down / Up |
+| Next / previous landmark | Ctrl+Alt+PageDown / PageUp |
+| Where am I (title, site, security, tab) | Ctrl+Alt+W, or move the pointer to the very top edge |
+| Detailed briefing / read from here | Ctrl+Alt+B / Ctrl+Alt+R |
+| Describe the image under the pointer | Ctrl+Alt+D (needs Gemini) |
+| Summarise the page | Ctrl+Alt+M (needs Gemini) |
+| Settings | Alt+O (or Ctrl+Alt+S while Explore Mode is on) |
+| Hardware setup | Ctrl+Alt+P (or from Settings) |
 | Stop speaking | Esc |
 | Touch: explore / activate | Drag or tap / double-tap anywhere |
-| Talk (voice commands on) | Hold Alt+Shift+V, speak, let go |
+| Talk (voice commands on) | Hold Ctrl+Alt+V, speak, let go |
 
-Change the browser-level shortcuts at `chrome://extensions/shortcuts`.
+In-page shortcuts can be switched to `Alt+Shift` in settings, and every command can be remapped at `chrome://extensions/shortcuts`.
 
 </details>
 
 <details>
 <summary><b>Voice commands</b></summary>
 
-With voice commands on, say any of these while holding Alt+Shift+V, or as the answer when iBrowse asks what to do:
+With voice commands on, say any of these while holding Ctrl+Alt+V, or as the answer when iBrowse asks what to do:
 
 | Say | It does |
 |---|---|
