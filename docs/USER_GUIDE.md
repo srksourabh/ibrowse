@@ -1,6 +1,12 @@
 # iBrowse — Installation & User Guide (v0.2.0)
 
-iBrowse is a Chrome (Manifest V3) extension that lets blind and low-vision people explore and operate any website by mouse, touch, keyboard, and voice.
+iBrowse is a Chrome (Manifest V3) extension and mobile-ready PWA that lets blind and low-vision people explore and operate websites by mouse, touch, keyboard, and voice (Indian English `en-IN` by default).
+
+- **Latest Version:** `v0.2.0`
+- **Direct Extension Download:** https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip
+- **GitHub Release:** https://github.com/srksourabh/ibrowse/releases/tag/v0.2.0
+- **Live Mobile & Web App (PWA):** https://srksourabh.github.io/ibrowse/demo/
+- **Live Presentation:** https://srksourabh.github.io/ibrowse/presentation/
 
 ---
 
@@ -53,10 +59,27 @@ iBrowse is a Chrome (Manifest V3) extension that lets blind and low-vision peopl
 - **Zero-install evaluation demo:** Run `npm run demo` on a host machine to serve the browser simulator at `http://localhost:3000`.
 - **Privacy:** Runs 100% locally by default—no accounts, servers, or telemetry. Nothing leaves the machine unless a user explicitly enables a Google Gemini feature with their own API key.
 
-### Mobile (iOS & Android)
-- **iPhone / iPad (iOS):** Not yet supported. Mobile Safari and Chrome on iOS do not run Chrome MV3 extensions, and the native iOS app is currently plan-only ([apps/ios/README.md](../apps/ios/README.md)).
-- **Android:** Standard Chrome for Android does not support Chrome extensions. For experimental testing only, Chromium browsers that support unpacked MV3 extensions (e.g., Kiwi or Mises Browser) can load `ibrowse-0.2.0-chrome.zip`, though mobile Android is not officially tested in v1.
-- **Touchscreen Laptops / Tablets (Windows Surface, 2-in-1s, Chromebooks):** Fully supported in desktop Chrome/Edge. Drag a finger to explore and double-tap anywhere to activate.
+### Mobile (iPhone, iPad & Android)
+- **Live Mobile Web App (PWA — works on iOS Safari & Android Chrome):**
+  1. Open **https://srksourabh.github.io/ibrowse/demo/** on your phone or tablet.
+  2. Tap **Share → Add to Home Screen** (iOS) or **Menu → Add to Home Screen** (Android) to install it full-screen.
+  3. Tap **Initialize Audio & Haptics**, drag your finger to hear elements in Indian English (`en-IN`) with vibration feedback (Android), or tap **🎤 Speak** to use voice commands.
+- **Native iOS App:** Planned as a standalone `WKWebView` + Core Haptics app ([apps/ios/README.md](../apps/ios/README.md)).
+- **Touchscreen Laptops / Tablets (Windows Surface, 2-in-1s, Chromebooks):** Full desktop Chrome/Edge extension works natively with touch — drag a finger to explore and double-tap anywhere to activate.
+
+### Server Deployment (Docker / Node.js / Cloud)
+- **Docker:**
+  ```bash
+  docker build -t ibrowse .
+  docker run -p 3000:3000 ibrowse
+  ```
+- **Node.js (Linux / macOS / Windows, Node 20+):**
+  ```bash
+  npm ci
+  npm run build && npx wxt zip
+  PORT=3000 npm start
+  ```
+- Exposes `/` (download portal), `/demo/` (mobile & web PWA), `/presentation/`, `/download/ibrowse-0.2.0-chrome.zip`, and `/health`.
 
 ---
 

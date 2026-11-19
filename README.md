@@ -5,14 +5,15 @@
 <h3>Hear any website. Explore it by mouse, touch, keyboard and voice.</h3>
 
 [![CI](https://github.com/srksourabh/ibrowse/actions/workflows/ci.yml/badge.svg)](https://github.com/srksourabh/ibrowse/actions/workflows/ci.yml)
+![Version: v0.2.0](https://img.shields.io/badge/version-v0.2.0-0ea5e9)
 ![License: MIT](https://img.shields.io/badge/license-MIT-a855f7)
 ![Chrome Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)
 ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-1094%20unit%20%C2%B7%2099%20e2e-22c55e)
+![Tests](https://img.shields.io/badge/tests-1125%20unit%20%C2%B7%20103%20e2e-22c55e)
+![Voice: Indian English](https://img.shields.io/badge/voice-en--IN-f97316)
 ![Works with NVDA](https://img.shields.io/badge/works%20with-NVDA-f97316)
-![Status](https://img.shields.io/badge/status-closed%20beta%20next-db2777)
 
-**[▶ Watch the demo](docs/media/ibrowse-demo.mp4)** · **[See the presentation](https://srksourabh.github.io/ibrowse/presentation/)** ([PDF](docs/presentation/iBrowse-presentation.pdf)) · **[Every feature](docs/FEATURES.md)** · **[Install](#install)**
+**[⬇ Download v0.2.0 (.zip)](https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip)** · **[📱 Mobile & Web App](https://srksourabh.github.io/ibrowse/demo/)** · **[📖 User Guide](docs/USER_GUIDE.md)** · **[See the presentation](https://srksourabh.github.io/ibrowse/presentation/)** ([PDF](docs/presentation/iBrowse-presentation.pdf)) · **[Every feature](docs/FEATURES.md)**
 
 </div>
 
@@ -87,18 +88,35 @@ It is **not** a replacement for a full screen reader, and is not a medical or sa
 
 <sup><b>🟣 GET STARTED</b></sup>
 
-## Install
+## Install (v0.2.0)
 
-iBrowse is heading to the Chrome Web Store. Until then:
+### 1. Desktop Extension — Windows & macOS (Chrome, Edge, Brave)
+1. **Download the latest release:** **[ibrowse-0.2.0-chrome.zip](https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip)** ([Release notes](https://github.com/srksourabh/ibrowse/releases/tag/v0.2.0)).
+2. **Unzip** it to a permanent folder (e.g. `C:\iBrowse` on Windows or `~/iBrowse` on macOS).
+3. Open `chrome://extensions` (or `edge://extensions` / `brave://extensions`).
+4. Turn on **Developer mode** (top right), click **Load unpacked**, and select the unzipped folder.
+5. On first run, iBrowse asks **"Do you use a screen reader?"** — press **`Y`** for Companion mode (NVDA / JAWS / VoiceOver) or **`N`** for Standalone Indian English (`en-IN`) voice.
 
+*(Or build from source with Node 20+: `git clone https://github.com/srksourabh/ibrowse.git && cd ibrowse && npm install && npm run build`, then load `.output/chrome-mv3`.)*
+
+### 2. Mobile — iPhone, iPad & Android (PWA Web App)
+1. Open **[https://srksourabh.github.io/ibrowse/demo/](https://srksourabh.github.io/ibrowse/demo/)** in Safari (iOS) or Chrome (Android).
+2. Tap **Share → Add to Home Screen** (iOS) or **Menu → Add to Home Screen** (Android) to install it as a full-screen app.
+3. Tap **Initialize Audio & Haptics**, drag your finger to explore by sound/vibration, or tap **🎤 Speak** for voice commands.
+
+### 3. Self-Hosted Server (Docker or Node.js)
+```bash
+# Docker
+docker build -t ibrowse .
+docker run -p 3000:3000 ibrowse
+
+# Or Node.js 20+
+npm ci && npm run build && npx wxt zip
+PORT=3000 npm start
 ```
-git clone https://github.com/srksourabh/ibrowse.git
-cd ibrowse
-npm install
-npm run build
-```
+Serves the download portal (`/`), mobile PWA (`/demo/`), presentation (`/presentation/`), zip download (`/download/ibrowse-0.2.0-chrome.zip`), and `/health`.
 
-Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**, and select `.output/chrome-mv3`. A spoken tour opens on install.
+Full multi-platform & lab setup instructions: **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**.
 
 ## Quick start
 
