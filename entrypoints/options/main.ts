@@ -131,30 +131,33 @@ function bindForm(
   form: HTMLElement,
   editor: SettingsEditor,
   speak: (text: string) => void,
-  announceFocus: boolean,
+  shouldAnnounceFocus: () => boolean,
   refresh: () => Promise<void>,
 ): void {
+  form.addEventListener('submit', (event) => event.preventDefault())
   form.addEventListener('change', (event) => {
     const control = event.target as Control
     const key = control.dataset.key as FieldSpec['key'] | undefined
     if (!key) return
-    void editor.change(key, readValue(fieldFor(key), control)).then(async (outcome) => {
+    const nextValue = readValue(fieldFor(key), control)
+    void editor.change(key, nextValue).then(async (outcome) => {
       if (outcome === 'pending') {
-        byId('consent-text').textContent = String(warningFor(key, readValue(fieldFor(key), control)))
-        byId('consent').hidden = false
+        byId('consent-text').textContent = String(warningFor(key, nextValue))
+        const consent = byId('consent')
+        consent.hidden = false
+        consent.scrollIntoView?.({ block: 'nearest' })
         byId('allow').focus()
       }
       await refresh()
     })
   })
   // With iBrowse's own voice and no screen reader, nothing else would say what a setting is.
-  if (announceFocus) {
-    form.addEventListener('focusin', (event) => {
-      const control = event.target as Control
-      const key = control.dataset.key as FieldSpec['key'] | undefined
-      if (key) speak(focusDescription(fieldFor(key), readValue(fieldFor(key), control)))
-    })
-  }
+  form.addEventListener('focusin', (event) => {
+    if (!shouldAnnounceFocus()) return
+    const control = event.target as Control
+    const key = control.dataset.key as FieldSpec['key'] | undefined
+    if (key) speak(focusDescription(fieldFor(key), readValue(fieldFor(key), control)))
+  })
 }
 
 /**
@@ -176,15 +179,19 @@ async function main(): Promise<void> {
   const store = chrome.storage.local
   await moveKeyOut(store, keyVault)
   const initial = await loadSettings(store)
-  const companion = initial.screenReaderMode === 'companion'
-  const speak = createPageSpeaker(byId('status'), companion)
+  let companion = initial.screenReaderMode === 'companion'
+  let pageSpeak = createPageSpeaker(byId('status'), companion)
+  const speak = (text: string): void => pageSpeak(text)
 
   const client = new GeminiClient({ fetch: (input, init) => fetch(input, init), getKey: loadVaultKey })
   const editor = new SettingsEditor({
     store,
     secrets: keyVault,
     speak,
-    requestPermission: (origins) => chrome.permissions.request({ origins }),
+    requestPermission: async (origins) => {
+      if (await chrome.permissions.contains({ origins })) return true
+      return chrome.permissions.request({ origins })
+    },
     requestMicrophone,
     checkKey: () => client.checkKey(),
   })
@@ -192,10 +199,16 @@ async function main(): Promise<void> {
   const form = byId('settings')
   buildForm(form)
   const refresh = async (): Promise<void> => {
-    fillForm(await editor.load())
+    const current = await editor.load()
+    const nextCompanion = current.screenReaderMode === 'companion'
+    if (nextCompanion !== companion) {
+      companion = nextCompanion
+      pageSpeak = createPageSpeaker(byId('status'), companion)
+    }
+    fillForm(current)
     await refreshKeyStatus(editor)
   }
-  bindForm(form, editor, speak, !companion, refresh)
+  bindForm(form, editor, speak, () => !companion, refresh)
   bindTools(editor, speak, refresh)
   await refresh()
   speak(INTRO)

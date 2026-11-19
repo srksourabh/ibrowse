@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "wxt",
     "build": "wxt build",
+    "build:prod": "node scripts/build-with-key.mjs",
     "start": "node scripts/serve.mjs",
     "postinstall": "wxt prepare",
     "typecheck": "tsc --noEmit",

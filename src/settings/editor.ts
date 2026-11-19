@@ -111,9 +111,12 @@ export class SettingsEditor {
       const granted = await this.#deps.requestPermission([GEMINI_ORIGIN])
       return granted ? null : `Permission was not granted, so ${pending.label.toLowerCase()} stays off.`
     }
+    // Ask for the optional host permission first while the click user gesture is still fresh.
+    if (pending.value === 'gemini' && !(await this.#deps.requestPermission([GEMINI_ORIGIN]))) {
+      return 'Permission to contact Google was not granted, so voice commands stay off.'
+    }
     if (!(await this.#deps.requestMicrophone())) return 'The microphone was not allowed, so voice commands stay off.'
-    if (pending.value !== 'gemini' || (await this.#deps.requestPermission([GEMINI_ORIGIN]))) return null
-    return 'Permission to contact Google was not granted, so voice commands stay off.'
+    return null
   }
 
   cancelPending(): void {

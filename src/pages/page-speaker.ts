@@ -16,11 +16,18 @@ export function createPageSpeaker(status: HTMLElement, companion: boolean): (tex
 
 /** Speaks in iBrowse's own voice only, leaving the page untouched. Settles when the speech ends. */
 export function sayInOwnVoice(text: string): Promise<void> {
-  return chrome.runtime
+  void chrome.runtime.sendMessage({ type: 'cancel' }).catch(() => {})
+  const maxWaitMs = Math.max(4000, text.length * 90)
+  const speak = chrome.runtime
     .sendMessage({ type: 'speak', id: nextPageSpeechId++, utterance: { text } })
     .catch((error: unknown) =>
       console.error('iBrowse speech error:', error instanceof Error ? error.message : 'unknown'),
     )
+  // Never block the page forever if the browser's TTS engine stalls or drops its end event.
+  return Promise.race([
+    speak.then(() => undefined),
+    new Promise<void>((resolve) => setTimeout(resolve, maxWaitMs)),
+  ])
 }
 
 export function byId<T extends HTMLElement>(id: string): T {

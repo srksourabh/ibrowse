@@ -1,7 +1,15 @@
 import { loadGeminiKey, moveKeyOut, type SecretStore } from './secrets'
 
+declare const __EMBEDDED_GEMINI_KEY__: string | undefined
+
 const DATABASE = 'ibrowse-secrets'
 const TABLE = 'secrets'
+
+function embeddedGeminiKey(): string | null {
+  if (typeof __EMBEDDED_GEMINI_KEY__ !== 'string') return null
+  const key = __EMBEDDED_GEMINI_KEY__.trim()
+  return key === '' ? null : key
+}
 
 function openVault(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -35,7 +43,9 @@ async function inVault<T>(mode: IDBTransactionMode, act: (table: IDBObjectStore)
 export const keyVault: SecretStore = {
   async get(key) {
     const value: unknown = await inVault('readonly', (table) => table.get(key))
-    return value === undefined ? {} : { [key]: value }
+    if (value !== undefined) return { [key]: value }
+    const fallback = key === 'geminiKey' ? embeddedGeminiKey() : null
+    return fallback ? { [key]: fallback } : {}
   },
   async set(items) {
     for (const [key, value] of Object.entries(items)) await inVault('readwrite', (table) => table.put(value, key))

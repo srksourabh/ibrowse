@@ -82,7 +82,9 @@ function pointerHandlers(s: Services, t: Tools) {
       if (event instanceof PointerEvent && isTouch(event)) t.touch.up(event.clientX, event.clientY)
     },
     // Without this the browser would also "click" what the finger lifted from.
-    touchend: (event) => event.preventDefault(),
+    touchend: (event) => {
+      if (event.cancelable) event.preventDefault()
+    },
   }
   return { specs, cancelPending: () => pointer.cancel() }
 }
