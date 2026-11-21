@@ -2,11 +2,83 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>iBrowse</title>
-<meta http-equiv="refresh" content="0; url=presentation/">
-<link rel="canonical" href="presentation/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iBrowse — Hear &amp; Explore Any Website</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: #0f172a; color: #f8fafc; line-height: 1.6; }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 20px 64px; }
+  h1 { font-size: 2.35rem; margin: 0 0 8px; line-height: 1.2; }
+  .lead { color: #cbd5e1; font-size: 1.1rem; margin: 0 0 28px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 32px; }
+  a.btn { display: inline-block; padding: 13px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; }
+  a.primary { background: #38bdf8; color: #082f49; }
+  a.secondary { background: #1e293b; color: #f8fafc; border: 1px solid #334155; }
+  a.btn:focus-visible, a:focus-visible { outline: 3px solid #fde047; outline-offset: 3px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  section.card { background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 20px 22px; }
+  h2 { margin: 0 0 10px; font-size: 1.2rem; }
+  ol, ul { margin: 0; padding-left: 20px; }
+  li { margin: 6px 0; color: #e2e8f0; }
+  code { background: #0f172a; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
+  a { color: #7dd3fc; }
+  footer { margin-top: 28px; color: #94a3b8; font-size: 0.95rem; }
+</style>
 </head>
-<body style="font-family: system-ui, sans-serif; background: #131a33; color: #fff; padding: 40px">
-<p>Opening the <a href="presentation/" style="color: #fbcfe8">iBrowse presentation</a>. The code is on <a href="https://github.com/srksourabh/ibrowse" style="color: #fbcfe8">GitHub</a>.</p>
+<body>
+<main>
+  <h1>iBrowse v0.2.0</h1>
+  <p class="lead">
+    Hear any website and explore it by mouse, touch, keyboard, and voice — built for blind and low-vision users
+    with subtle Indian English speech and optional Google Gemini Live &amp; Claude fallback.
+  </p>
+
+  <div class="actions">
+    <a class="btn primary" href="https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip">
+      Download Extension (.zip) — Windows &amp; macOS
+    </a>
+    <a class="btn primary" href="demo/">
+      Open Mobile &amp; Web App — iPhone &amp; Android
+    </a>
+    <a class="btn secondary" href="presentation/">Presentation</a>
+    <a class="btn secondary" href="https://github.com/srksourabh/ibrowse/blob/main/docs/USER_GUIDE.md">User Guide</a>
+  </div>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="win-mac">
+      <h2 id="win-mac">Windows &amp; macOS (Chrome, Edge, Brave)</h2>
+      <ol>
+        <li>Download <a href="https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip"><code>ibrowse-0.2.0-chrome.zip</code></a> and unzip it to a folder.</li>
+        <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code> / <code>brave://extensions</code>).</li>
+        <li>Turn on <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, and select the unzipped folder.</li>
+        <li>Press <strong><code>Alt+I</code></strong> on any website to start Explore Mode, or <strong><code>Alt+O</code></strong> for Settings.</li>
+      </ol>
+    </section>
+
+    <section class="card" aria-labelledby="ios">
+      <h2 id="ios">iPhone &amp; iPad (Safari)</h2>
+      <ol>
+        <li>Open the <a href="demo/"><strong>iBrowse Mobile Web App</strong></a> in Safari.</li>
+        <li>Tap <strong>Share &rarr; Add to Home Screen</strong> to install it full-screen.</li>
+        <li>Tap <strong>Initialize Audio &amp; Haptics</strong>, then drag your finger to hear elements or tap <strong>Speak</strong>.</li>
+      </ol>
+    </section>
+
+    <section class="card" aria-labelledby="android">
+      <h2 id="android">Android (Chrome or Kiwi/Mises Browser)</h2>
+      <ol>
+        <li><strong>Quick Web App (Chrome):</strong> Open <a href="demo/"><strong>iBrowse Mobile Web App</strong></a>, tap <strong>&#8942; &rarr; Add to Home screen</strong>.</li>
+        <li><strong>Full Extension on any site:</strong> Download <a href="https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip"><code>ibrowse-0.2.0-chrome.zip</code></a>, open <strong>Kiwi</strong> or <strong>Mises Browser</strong> &rarr; <strong>Extensions</strong> &rarr; <strong>Developer mode</strong> &rarr; <strong>+ (from .zip)</strong>.</li>
+      </ol>
+    </section>
+  </div>
+
+  <footer>
+    100% free, open source, and private — runs locally on your device unless you opt in to Cloud Voice or AI in Settings.
+    <a href="https://github.com/srksourabh/ibrowse">View on GitHub</a> &middot;
+    <a href="https://github.com/srksourabh/ibrowse/releases/tag/v0.2.0">Release v0.2.0</a>
+  </footer>
+</main>
 </body>
 </html>
