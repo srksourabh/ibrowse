@@ -1,7 +1,17 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { clearGeminiKey, hasGeminiKey, loadGeminiKey, moveKeyOut, saveGeminiKey } from '../../src/cloud/secrets'
+import {
+  clearAnthropicKey,
+  clearGeminiKey,
+  hasAnthropicKey,
+  hasGeminiKey,
+  loadAnthropicSecret,
+  loadGeminiKey,
+  moveKeyOut,
+  saveAnthropicKey,
+  saveGeminiKey,
+} from '../../src/cloud/secrets'
 
 function memoryStore(initial: Record<string, unknown> = {}) {
   const data = { ...initial }
@@ -48,7 +58,23 @@ describe('the Gemini key store', () => {
 
   it('ignores a stored value that is not a string', async () => {
     expect(await loadGeminiKey(memoryStore({ geminiKey: 42 }))).toBeNull()
-  })})
+  })
+})
+
+describe('the Anthropic key store', () => {
+  const GOOD_ANTHROPIC = 'sk-ant-api03-example_key_0123456789abcdef'
+
+  it('saves, loads, and removes an Anthropic fallback key without leaking bad input', async () => {
+    const store = memoryStore()
+    expect(await hasAnthropicKey(store)).toBe(false)
+    await expect(saveAnthropicKey(store, 'bad!')).rejects.toThrow(/Anthropic API key/i)
+    await saveAnthropicKey(store, `  ${GOOD_ANTHROPIC}  `)
+    expect(await loadAnthropicSecret(store)).toBe(GOOD_ANTHROPIC)
+    expect(await hasAnthropicKey(store)).toBe(true)
+    await clearAnthropicKey(store)
+    expect(await loadAnthropicSecret(store)).toBeNull()
+  })
+})
 
 describe('moving the key out of storage web pages can read', () => {
   it('moves a key from the old place to the vault, and leaves none behind', async () => {

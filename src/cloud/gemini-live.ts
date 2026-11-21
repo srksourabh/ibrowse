@@ -5,12 +5,13 @@ const LIVE_WS_URL =
   'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent'
 export const DEFAULT_LIVE_MODEL = 'models/gemini-3.8-live'
 export const LIVE_PCM_SAMPLE_RATE = 24_000
-const CONNECT_TIMEOUT_MS = 6_000
+const CONNECT_TIMEOUT_MS = 3_000
 const TURN_TIMEOUT_MS = 15_000
+export const LIVE_COOLDOWN_MS = 30_000
 
 const LIVE_SYSTEM_INSTRUCTION =
-  'Read the text provided by the user aloud verbatim in a clear, natural Indian English accent. ' +
-  'Do not add commentary, greetings, or extra words.'
+  'Read the text provided by the user aloud verbatim in a clear, natural, subtle Indian English accent. ' +
+  'Speak promptly at a steady pace. Do not add commentary, greetings, or extra words.'
 
 export interface WebSocketLike {
   readonly readyState: number
@@ -132,6 +133,11 @@ export class GeminiLiveClient implements Pick<GeminiClient, 'synthesize'> {
     this.#queue = run.catch(() => {})
     await run
     return result
+  }
+
+  /** Pre-opens the Live WebSocket so the first sentence speaks without handshake delay. */
+  warmup(voice: string): void {
+    void this.#connect(voice).catch(() => {})
   }
 
   close(): void {
@@ -278,18 +284,23 @@ export class GeminiLiveClient implements Pick<GeminiClient, 'synthesize'> {
 
 /**
  * Tries the persistent Gemini Live WebSocket first for low-latency native audio;
- * falls back to REST Gemini TTS on any non-abort error.
+ * falls back to REST Gemini TTS on any non-abort error and pauses Live retries
+ * briefly so subsequent sentences do not stall on a broken socket.
  */
 export function withLiveVoiceFallback(
   live: Pick<GeminiClient, 'synthesize'>,
   rest: Pick<GeminiClient, 'synthesize'>,
+  now: () => number = Date.now,
 ): Pick<GeminiClient, 'synthesize'> {
+  let retryLiveAt = 0
   return {
     async synthesize(request: SynthesizeRequest) {
+      if (now() < retryLiveAt) return rest.synthesize(request)
       try {
         return await live.synthesize(request)
       } catch (error) {
         if (isAbort(error)) throw error
+        retryLiveAt = now() + LIVE_COOLDOWN_MS
         return rest.synthesize(request)
       }
     },

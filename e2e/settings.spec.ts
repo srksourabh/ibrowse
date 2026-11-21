@@ -106,14 +106,23 @@ test.describe.serial('the settings page', () => {
     await harness.expectSpoken(/^Settings\. Use Tab to move between them\./)
   })
 
-  test('is built from real headings, labels and controls', async () => {
+  test('is built from real headings, labels, plain-English descriptions and quick navigation', async () => {
     await expect(page.getByRole('heading', { level: 1, name: 'iBrowse settings' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Settings sections' })).toBeVisible()
     for (const group of ['Speech', 'Exploring', 'Screen reader', 'Haptics', 'Cloud voice and AI']) {
       await expect(page.getByRole('heading', { level: 2, name: group })).toBeVisible()
     }
+    const descriptions = await page.locator('#settings .group-desc').allTextContents()
+    expect(descriptions.length).toBeGreaterThanOrEqual(7)
+    for (const text of descriptions) expect(text.trim().length).toBeGreaterThan(10)
     await expect(page.getByLabel('Speech rate')).toBeVisible()
     await expect(page.getByLabel('Typing echo')).toBeVisible()
     await expect(page.getByLabel('Short announcements')).toBeVisible()
+    const langs = await harness.worker.evaluate(
+      () => (globalThis as unknown as { spokenLangs: Array<string | undefined> }).spokenLangs,
+    )
+    expect(langs.length).toBeGreaterThan(0)
+    expect(langs.every((l) => l === 'en-IN')).toBe(true)
   })
 
   test('has no sideways scrolling on a narrow screen', async () => {
@@ -223,6 +232,22 @@ test.describe.serial('the settings page', () => {
     await page.keyboard.press('Enter')
     await harness.expectSpoken(/^Key removed\.$/)
     await expect(page.locator('#key-status')).toHaveText('No key is saved.')
+
+    // Optional Anthropic fallback key works the same way and is never spoken or stored in chrome.storage.local.
+    const GOOD_ANTHROPIC = 'sk-ant-api03-example_key_0123456789abcdef'
+    await harness.clearSpoken()
+    await page.fill('#anthropic-key', GOOD_ANTHROPIC)
+    await page.focus('#save-anthropic-key')
+    await page.keyboard.press('Enter')
+    await harness.expectSpoken(/^Anthropic key saved\./)
+    await expect(page.locator('#anthropic-key-status')).toHaveText('An Anthropic fallback key is saved.')
+    await expect(page.locator('#anthropic-key')).toHaveValue('')
+    expect((await harness.spoken()).join(' ')).not.toContain(GOOD_ANTHROPIC)
+
+    await page.focus('#remove-anthropic-key')
+    await page.keyboard.press('Enter')
+    await harness.expectSpoken(/^Anthropic key removed\.$/)
+    await expect(page.locator('#anthropic-key-status')).toHaveText('No Anthropic key is saved.')
   })
 
   test('says there is nothing to read out yet when no delays have been measured', async () => {

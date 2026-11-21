@@ -24,6 +24,7 @@ type Respond = (response: CloudSpeechResponse | AiResponse) => void
  */
 export class CloudHost {
   readonly #voice: CloudVoiceService
+  readonly #liveVoice: GeminiLiveClient
   readonly #ai: AiAssistant
   readonly #client: GeminiClient
 
@@ -40,6 +41,7 @@ export class CloudHost {
     })
     const aiClient = withClaudeFallback(client, claude, async () => (await loadAnthropicKey()) !== null)
     this.#client = client
+    this.#liveVoice = liveVoice
     this.#voice = new CloudVoiceService({
       client: withLiveVoiceFallback(liveVoice, client),
       getSettings: () => loadSettings(chrome.storage.local),
@@ -50,6 +52,15 @@ export class CloudHost {
       getSettings: () => loadSettings(chrome.storage.local),
       fetchImage: (url) => fetchImage(url, boundFetch),
     })
+  }
+
+  /** Pre-warms the Gemini Live WebSocket when cloud voice is on, cutting first-sentence delay. */
+  warmupVoice(): void {
+    void loadSettings(chrome.storage.local)
+      .then((settings) => {
+        if (settings.cloudVoice !== 'off') this.#liveVoice.warmup(settings.cloudVoiceName)
+      })
+      .catch(() => {})
   }
 
   /** Words from one recorded voice request, with the AI model the user chose (ADR-0017 #1). */

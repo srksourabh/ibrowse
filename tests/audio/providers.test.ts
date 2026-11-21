@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ChromeTtsProvider, MessageSpeechProvider } from '../../src/audio/providers'
+import { ChromeTtsProvider, MessageSpeechProvider, pickIndianVoice } from '../../src/audio/providers'
 
 type TtsEvent = { type: string; errorMessage?: string }
 type TtsOptions = {
@@ -91,6 +91,26 @@ describe('ChromeTtsProvider', () => {
     expect(done).toBe(false)
     emit({ type: 'end' })
     await speaking
+  })
+
+  it('picks an installed Indian English voice when available and no voiceName was chosen', () => {
+    const { api } = fakeTts()
+    const withVoices = {
+      ...api,
+      getVoices: (cb: (voices: Array<{ voiceName?: string; lang?: string }>) => void) =>
+        cb([
+          { voiceName: 'Microsoft David', lang: 'en-US' },
+          { voiceName: 'Microsoft Ravi', lang: 'en-IN' },
+          { voiceName: 'Microsoft Neerja Natural', lang: 'en-IN' },
+        ]),
+    }
+    const provider = new ChromeTtsProvider(withVoices)
+    void provider.speak({ text: 'Hello' })
+    expect(api.speak).toHaveBeenCalledWith(
+      'Hello',
+      expect.objectContaining({ lang: 'en-IN', voiceName: 'Microsoft Neerja Natural' }),
+    )
+    expect(pickIndianVoice([{ voiceName: 'US Voice', lang: 'en-US' }])).toBeUndefined()
   })
 
   it('ignores a voice-engine word or sentence event', async () => {

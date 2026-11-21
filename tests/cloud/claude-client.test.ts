@@ -64,6 +64,15 @@ describe('ClaudeClient.generate', () => {
     expect((err as CloudError).kind).toBe('rate-limit')
     expect(JSON.stringify(err)).not.toContain(KEY)
   })
+  it('checks the key against /v1/models without charging tokens', async () => {
+    const fetchFn = vi.fn(async () => jsonResponse({ data: [] }))
+    const client = new ClaudeClient({ fetch: fetchFn as unknown as typeof fetch, getKey: async () => KEY })
+    await client.checkKey()
+    const [url, init] = fetchFn.mock.calls[0]! as unknown as [string, RequestInit]
+    expect(url).toBe('https://api.anthropic.com/v1/models?limit=1')
+    expect(init.method).toBe('GET')
+    expect((init.headers as Record<string, string>)['x-api-key']).toBe(KEY)
+  })
 })
 
 describe('withClaudeFallback', () => {
@@ -82,6 +91,16 @@ describe('withClaudeFallback', () => {
     const fallback = { generate: vi.fn(async () => 'from claude') }
     const client = withClaudeFallback(primary, fallback, async () => true)
     expect(await client.generate(req)).toBe('from claude')
+    expect(fallback.generate).toHaveBeenCalledOnce()
+  })
+
+  it('races Claude when Gemini is slower than the slow-fallback threshold', async () => {
+    const primary = {
+      generate: vi.fn(() => new Promise<string>((resolve) => setTimeout(() => resolve('slow gemini'), 100))),
+    }
+    const fallback = { generate: vi.fn(async () => 'fast claude') }
+    const client = withClaudeFallback(primary, fallback, async () => true, 15)
+    expect(await client.generate(req)).toBe('fast claude')
     expect(fallback.generate).toHaveBeenCalledOnce()
   })
 

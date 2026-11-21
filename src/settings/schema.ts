@@ -1,13 +1,41 @@
 import type { Settings } from '../shared/settings'
 
 export const SETTING_GROUPS = [
-  { id: 'speech', label: 'Speech' },
-  { id: 'exploring', label: 'Exploring' },
-  { id: 'voice', label: 'Voice commands' },
-  { id: 'screenreader', label: 'Screen reader' },
-  { id: 'haptics', label: 'Haptics' },
-  { id: 'cloud', label: 'Cloud voice and AI' },
-  { id: 'developer', label: 'Developer' },
+  {
+    id: 'speech',
+    label: 'Speech',
+    description: 'Control how iBrowse sounds — reading speed, pitch, volume, and local Indian English voice.',
+  },
+  {
+    id: 'exploring',
+    label: 'Exploring',
+    description: 'Choose how Explore Mode starts and how you interact with pages using keyboard, mouse, or touch.',
+  },
+  {
+    id: 'voice',
+    label: 'Voice commands',
+    description: 'Talk to iBrowse to click buttons, scroll, read aloud, or ask questions about the page.',
+  },
+  {
+    id: 'screenreader',
+    label: 'Screen reader',
+    description: 'Let iBrowse speak in its own voice, or pass everything to NVDA, JAWS, or VoiceOver.',
+  },
+  {
+    id: 'haptics',
+    label: 'Haptics',
+    description: 'Optional gentle vibration cues when your pointer crosses buttons, links, or page edges.',
+  },
+  {
+    id: 'cloud',
+    label: 'Cloud voice and AI',
+    description: 'Optional Google Gemini Live voice (fast, natural Indian English) and quick AI page summaries.',
+  },
+  {
+    id: 'developer',
+    label: 'Developer',
+    description: 'Diagnostic tools for checking how quickly sounds and speech start on your computer.',
+  },
 ] as const
 
 export type SettingGroup = (typeof SETTING_GROUPS)[number]['id']
@@ -54,7 +82,7 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
   },
   {
     key: 'voiceName', kind: 'text', group: 'speech', label: 'Local voice', maxLength: 100,
-    help: 'The name of a voice installed on this computer. Leave it empty for the system default.',
+    help: 'Optional name of a voice installed on this computer. Leave empty to use an Indian English voice automatically when available.',
   },
   {
     key: 'shortMode', kind: 'boolean', group: 'speech', label: 'Short announcements',
@@ -62,7 +90,7 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
   },
   {
     key: 'alwaysExplore', kind: 'boolean', group: 'exploring', label: 'Start in Explore Mode on every page',
-    help: 'Switch Explore Mode on automatically. Off, it starts only when you press Alt and I, or remembers what you chose on each website.',
+    help: 'Turn Explore Mode on automatically whenever a page loads. When off, press Alt and I to start on any page.',
   },
   {
     key: 'shortcutKeys', kind: 'choice', group: 'exploring', label: 'Shortcut keys',
@@ -71,8 +99,8 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
       { value: 'alt-shift', label: 'Alt and Shift' },
     ],
     help:
-      'The keys you hold for iBrowse shortcuts, such as the next heading. ' +
-      'Alt and Shift also switch the keyboard language on Windows, so Control and Alt is safer.',
+      'The keys you hold for iBrowse shortcuts, such as jumping to the next heading. ' +
+      'Control and Alt is recommended on Windows because Alt and Shift can switch your keyboard language.',
   },
   {
     key: 'touchActivation', kind: 'choice', group: 'exploring', label: 'Touch activation',
@@ -80,7 +108,7 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
       { value: 'lift', label: 'Double-tap to activate' },
       { value: 'direct', label: 'Direct tap' },
     ],
-    help: 'Double-tap explores with a tap and activates with a double tap. Direct tap activates at once.',
+    help: 'On touch screens: Double-tap lets you tap once to hear what is under your finger and double-tap to press it. Direct tap presses immediately.',
   },
   {
     key: 'typingEcho', kind: 'choice', group: 'exploring', label: 'Typing echo',
@@ -89,7 +117,7 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
       { value: 'words', label: 'Each word' },
       { value: 'none', label: 'Nothing' },
     ],
-    help: 'What is spoken as you type in a form field. Passwords are never spoken.',
+    help: 'Choose whether iBrowse reads each letter, each word, or stays quiet while you type in forms. Passwords are never spoken.',
   },
   {
     key: 'screenReaderMode', kind: 'choice', group: 'screenreader', label: 'Screen reader mode',
@@ -97,11 +125,11 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
       { value: 'standalone', label: 'Standalone, spoken by iBrowse' },
       { value: 'companion', label: 'Companion, spoken by your screen reader' },
     ],
-    help: 'Companion sends what iBrowse says to your screen reader, so there is one voice, not two.',
+    help: 'Choose Standalone if you only use iBrowse. Choose Companion if you already use NVDA, JAWS, or VoiceOver so two voices never talk over each other.',
   },
   {
     key: 'hapticIntensity', kind: 'number', group: 'haptics', label: 'Haptic strength', min: 0, max: 1, step: 0.1,
-    help: 'How strong the feeling is. Zero turns haptics off.',
+    help: 'How strong vibration feedback feels, from 0 (off) to 1 (full strength).',
   },
   {
     key: 'hapticDriver', kind: 'choice', group: 'haptics', label: 'Haptic device',
@@ -111,7 +139,7 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
       { value: 'gamepad', label: 'Game controller' },
       { value: 'webhid', label: 'Paired haptic device' },
     ],
-    help: 'Pair a device on the hardware setup page, opened from the button below.',
+    help: 'Choose what plays tactile feedback. Sound only works everywhere; use Hardware setup below to pair a controller or haptic device.',
   },
   {
     key: 'voiceInput', kind: 'choice', group: 'voice', label: 'Voice commands',
@@ -120,7 +148,7 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
       { value: 'chrome', label: "On, with Chrome's speech recognition" },
       { value: 'gemini', label: 'On, with Google Gemini, using your key' },
     ],
-    help: 'Speak commands and questions. Hold your shortcut keys and V to talk, or answer when iBrowse asks what to do.',
+    help: 'Speak commands like "read", "scroll down", or ask questions. Hold your shortcut keys and V to talk, or answer when iBrowse asks what to do.',
   },
   {
     key: 'cloudVoice', kind: 'choice', group: 'cloud', label: 'Cloud voice',
@@ -129,27 +157,27 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
       { value: 'reading', label: 'For reading aloud only' },
       { value: 'all', label: 'For everything' },
     ],
-    help: 'A more natural voice from Google. It needs your own key and sends the text it speaks to Google.',
+    help: 'Use Google Gemini Live for a fast, natural Indian English voice. Needs a Google key below and sends spoken text to Google.',
   },
   {
     key: 'cloudVoiceName', kind: 'text', group: 'cloud', label: 'Cloud voice name', maxLength: 40,
-    help: 'The Google voice to use, for example Kore, Puck or Charon.',
+    help: 'Which Google voice persona to use, such as Kore (clear), Puck (lively), Charon (deep), or Aoede (warm).',
   },
   {
     key: 'cloudVoiceModel', kind: 'text', group: 'cloud', label: 'Cloud voice model', maxLength: 60,
-    help: 'The Google speech model. The default is fast and low cost.',
+    help: 'The fallback Google speech model (default: gemini-3.8-flash-lite-tts). Used alongside Gemini Live for fast, low-cost speech.',
   },
   {
     key: 'aiAssist', kind: 'boolean', group: 'cloud', label: 'AI descriptions and summaries',
-    help: 'Describe images, summarise a page, and say what a page is for. It needs your own key.',
+    help: 'Describe images, summarise long pages, and answer spoken questions about the page. Needs a Google key below.',
   },
   {
     key: 'aiModel', kind: 'text', group: 'cloud', label: 'AI model', maxLength: 60,
-    help: 'The Google model used for descriptions and summaries.',
+    help: 'The fast Google model used for summaries and image descriptions (default: gemini-3.8-flash, with Claude Haiku fallback when configured).',
   },
   {
     key: 'latencyReadout', kind: 'boolean', group: 'developer', label: 'Measure delays',
-    help: 'Keep a record of how long sounds and speech take to start, so it can be read out.',
+    help: 'Record how many milliseconds sounds and speech take to start, then hear the report using "Read out delays" below.',
   },
 ]
 

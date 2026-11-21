@@ -17,18 +17,36 @@ interface TtsOptions {
   onEvent?: (event: TtsEvent) => void
 }
 
+interface TtsVoice {
+  readonly voiceName?: string
+  readonly lang?: string
+}
+
 /** The slice of chrome.tts the provider uses. */
 export interface TtsApi {
   speak(text: string, options: TtsOptions): void
   stop(): void
+  getVoices?(callback: (voices: TtsVoice[]) => void): void
+}
+
+/** Picks the clearest installed Indian English (en-IN) voice, if the OS has one. */
+export function pickIndianVoice(voices: readonly TtsVoice[]): string | undefined {
+  const indian = voices.filter((v) => typeof v.voiceName === 'string' && /^en[-_]IN\b/i.test(v.lang ?? ''))
+  if (indian.length === 0) return undefined
+  const preferred = indian.find((v) => /natural|neural|google|neerja|heera|prabha/i.test(v.voiceName ?? ''))
+  return (preferred ?? indian[0])?.voiceName
 }
 
 /** Local OS voices through chrome.tts. Runs in the background worker. */
 export class ChromeTtsProvider implements SpeechProvider {
   readonly #tts: TtsApi
+  #indianVoice: string | undefined
 
   constructor(tts: TtsApi) {
     this.#tts = tts
+    this.#tts.getVoices?.((voices) => {
+      this.#indianVoice = pickIndianVoice(voices)
+    })
   }
 
   speak(utterance: Utterance): Promise<void> {
@@ -48,14 +66,15 @@ export class ChromeTtsProvider implements SpeechProvider {
           reject(new Error(event.errorMessage || 'Speech failed'))
         }
       }
-      // Always request Indian English (en-IN); leave out other unset options so the engine keeps its defaults.
+      // Always request Indian English (en-IN); prefer an installed en-IN voice when none was explicitly chosen.
+      const voiceName = utterance.voiceName ?? this.#indianVoice
       this.#tts.speak(utterance.text, {
         onEvent,
         lang: DEFAULT_VOICE_LANG,
         ...(utterance.rate === undefined ? {} : { rate: utterance.rate }),
         ...(utterance.pitch === undefined ? {} : { pitch: utterance.pitch }),
         ...(utterance.volume === undefined ? {} : { volume: utterance.volume }),
-        ...(utterance.voiceName === undefined ? {} : { voiceName: utterance.voiceName }),
+        ...(voiceName === undefined ? {} : { voiceName }),
       })
     })
   }

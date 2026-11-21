@@ -1,7 +1,8 @@
 import { latencyText } from '../../src/audio/latency-text'
 import type { LatencyReport } from '../../src/audio/latency-meter'
+import { ClaudeClient } from '../../src/cloud/claude-client'
 import { GeminiClient } from '../../src/cloud/gemini-client'
-import { keyVault, loadVaultKey } from '../../src/cloud/key-vault'
+import { keyVault, loadAnthropicKey, loadVaultKey } from '../../src/cloud/key-vault'
 import { moveKeyOut } from '../../src/cloud/secrets'
 import { byId, createPageSpeaker } from '../../src/pages/page-speaker'
 import { SettingsEditor } from '../../src/settings/editor'
@@ -47,26 +48,46 @@ function writeValue(field: FieldSpec, control: Control, value: unknown): void {
 function createRow(field: FieldSpec): HTMLElement {
   const id = controlId(field.key)
   const row = document.createElement('div')
-  row.className = 'row'
+  row.className = field.kind === 'boolean' ? 'row row-check' : 'row'
   const label = Object.assign(document.createElement('label'), { htmlFor: id, textContent: field.label })
+  if (field.kind === 'number') {
+    const hint = Object.assign(document.createElement('span'), {
+      className: 'range-hint',
+      textContent: `(${field.min}–${field.max})`,
+    })
+    hint.setAttribute('aria-hidden', 'true')
+    label.append(hint)
+  }
   const control = createControl(field)
   control.id = id
   control.dataset.key = field.key
   control.setAttribute('aria-describedby', `${id}-help`)
   const help = Object.assign(document.createElement('p'), { id: `${id}-help`, className: 'help', textContent: field.help })
-  row.append(label, control, help)
+  if (field.kind === 'boolean') {
+    const line = document.createElement('div')
+    line.className = 'check-line'
+    line.append(control, label)
+    row.append(line, help)
+  } else {
+    row.append(label, control, help)
+  }
   return row
 }
 
 function buildForm(form: HTMLElement): void {
   for (const group of SETTING_GROUPS) {
     const section = document.createElement('section')
+    section.className = 'card'
     const heading = Object.assign(document.createElement('h2'), {
       id: `group-${group.id}`,
       textContent: group.label,
     })
+    const desc = Object.assign(document.createElement('p'), {
+      className: 'group-desc',
+      textContent: group.description,
+    })
     section.setAttribute('aria-labelledby', heading.id)
-    section.append(heading, ...SETTINGS_FIELDS.filter((f) => f.group === group.id).map(createRow))
+    section.append(heading, desc, ...SETTINGS_FIELDS.filter((f) => f.group === group.id).map(createRow))
     form.append(section)
   }
 }
@@ -79,6 +100,9 @@ function fillForm(settings: Settings): void {
 
 async function refreshKeyStatus(editor: SettingsEditor): Promise<void> {
   byId('key-status').textContent = (await editor.hasKey()) ? 'A key is saved.' : 'No key is saved.'
+  byId('anthropic-key-status').textContent = (await editor.hasAnthropicKey())
+    ? 'An Anthropic fallback key is saved.'
+    : 'No Anthropic key is saved.'
 }
 
 async function readLatency(speak: (text: string) => void): Promise<void> {
@@ -108,6 +132,16 @@ function bindTools(editor: SettingsEditor, speak: (text: string) => void, refres
   click('test-key', () => editor.testKey())
   click('remove-key', async () => {
     await editor.removeKey()
+    await refreshKeyStatus(editor)
+  })
+  click('save-anthropic-key', async () => {
+    const input = byId<HTMLInputElement>('anthropic-key')
+    if (await editor.saveAnthropicKey(input.value)) input.value = ''
+    await refreshKeyStatus(editor)
+  })
+  click('test-anthropic-key', () => editor.testAnthropicKey())
+  click('remove-anthropic-key', async () => {
+    await editor.removeAnthropicKey()
     await refreshKeyStatus(editor)
   })
   click('tour', () => openPage('onboarding.html'))
@@ -184,6 +218,7 @@ async function main(): Promise<void> {
   const speak = (text: string): void => pageSpeak(text)
 
   const client = new GeminiClient({ fetch: (input, init) => fetch(input, init), getKey: loadVaultKey })
+  const claudeClient = new ClaudeClient({ fetch: (input, init) => fetch(input, init), getKey: loadAnthropicKey })
   const editor = new SettingsEditor({
     store,
     secrets: keyVault,
@@ -194,6 +229,7 @@ async function main(): Promise<void> {
     },
     requestMicrophone,
     checkKey: () => client.checkKey(),
+    checkAnthropicKey: () => claudeClient.checkKey(),
   })
 
   const form = byId('settings')

@@ -115,9 +115,15 @@ export async function launchHarness(
       logError(...args)
     }
     const spoken: string[] = []
-    ;(globalThis as unknown as { spoken: string[] }).spoken = spoken
-    chrome.tts.speak = ((text: string, options?: { onEvent?: (e: { type: string }) => void }) => {
+    const spokenLangs: Array<string | undefined> = []
+    ;(globalThis as unknown as { spoken: string[]; spokenLangs: Array<string | undefined> }).spoken = spoken
+    ;(globalThis as unknown as { spokenLangs: Array<string | undefined> }).spokenLangs = spokenLangs
+    chrome.tts.speak = ((
+      text: string,
+      options?: { lang?: string; onEvent?: (e: { type: string }) => void },
+    ) => {
       spoken.push(text)
+      spokenLangs.push(options?.lang)
       // A real voice says when it starts and when it ends; the delay to "start" is what is measured.
       setTimeout(() => options?.onEvent?.({ type: 'start' }), 2)
       setTimeout(() => options?.onEvent?.({ type: 'end' }), 6)

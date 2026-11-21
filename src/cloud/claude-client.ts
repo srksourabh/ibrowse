@@ -2,8 +2,11 @@ import { CloudError } from './cloud-error'
 import type { GeminiClient, GeminiPart, GenerateRequest } from './gemini-client'
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
+const ANTHROPIC_MODELS_URL = 'https://api.anthropic.com/v1/models?limit=1'
 const ANTHROPIC_VERSION = '2023-06-01'
-export const DEFAULT_CLAUDE_MODEL = 'claude-haiku-4-5-20251001'
+export const DEFAULT_CLAUDE_MODEL = 'claude-haiku-5-5'
+/** If primary (Gemini) takes longer than this and Claude is configured, start Claude in parallel. */
+export const SLOW_FALLBACK_MS = 4_000
 
 export interface ClaudeClientDeps {
   fetch: typeof fetch
@@ -58,6 +61,27 @@ export class ClaudeClient implements Pick<GeminiClient, 'generate'> {
     this.#deps = deps
   }
 
+  /** Lists one model with the key. Costs nothing, so it is how an Anthropic key is tested. */
+  async checkKey(): Promise<void> {
+    const key = await this.#deps.getKey()
+    if (!key) throw new CloudError('no-key')
+    let response: Response
+    try {
+      response = await this.#deps.fetch(ANTHROPIC_MODELS_URL, {
+        method: 'GET',
+        headers: {
+          'x-api-key': key,
+          'anthropic-version': ANTHROPIC_VERSION,
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+      })
+    } catch (error) {
+      if (isAbort(error)) throw error
+      throw new CloudError('network')
+    }
+    if (!response.ok) throw errorFor(response.status)
+  }
+
   async generate(request: GenerateRequest): Promise<string> {
     const key = await this.#deps.getKey()
     if (!key) throw new CloudError('no-key')
@@ -98,22 +122,41 @@ export class ClaudeClient implements Pick<GeminiClient, 'generate'> {
 }
 
 /**
- * Tries the primary client (Gemini) first; if it fails for any non-abort reason,
- * falls back to Claude when an Anthropic key is configured.
+ * Tries the primary client (Gemini) first. If it fails for any non-abort reason,
+ * OR takes longer than `slowFallbackMs` while an Anthropic key is configured,
+ * automatically falls back to Claude Haiku 5.5 for faster processing and reliability.
  */
 export function withClaudeFallback(
   primary: Pick<GeminiClient, 'generate'>,
   fallback: Pick<GeminiClient, 'generate'>,
   hasFallbackKey: () => Promise<boolean>,
+  slowFallbackMs = SLOW_FALLBACK_MS,
 ): Pick<GeminiClient, 'generate'> {
   return {
     async generate(request: GenerateRequest): Promise<string> {
+      const primaryPromise = primary.generate(request)
+      if (!(await hasFallbackKey())) return primaryPromise
+
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const slow = new Promise<'slow'>((resolve) => {
+        timer = setTimeout(() => resolve('slow'), slowFallbackMs)
+      })
       try {
-        return await primary.generate(request)
-      } catch (primaryError) {
-        if (isAbort(primaryError)) throw primaryError
-        if (!(await hasFallbackKey())) throw primaryError
-        return fallback.generate(request)
+        const winner = await Promise.race([
+          primaryPromise.then((text) => ({ ok: true as const, text })).catch((err: unknown) => ({ ok: false as const, err })),
+          slow,
+        ])
+        clearTimeout(timer)
+        if (winner === 'slow') {
+          return await Promise.any([primaryPromise, fallback.generate(request)]).catch((agg: AggregateError) => {
+            throw agg.errors[0]
+          })
+        }
+        if (winner.ok) return winner.text
+        if (isAbort(winner.err)) throw winner.err
+        return await fallback.generate(request)
+      } finally {
+        clearTimeout(timer)
       }
     },
   }

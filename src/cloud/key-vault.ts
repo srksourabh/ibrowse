@@ -1,4 +1,4 @@
-import { loadGeminiKey, moveKeyOut, type SecretStore } from './secrets'
+import { loadAnthropicSecret, loadGeminiKey, moveKeyOut, type SecretStore } from './secrets'
 
 declare const __EMBEDDED_GEMINI_KEY__: string | undefined
 declare const __EMBEDDED_ANTHROPIC_KEY__: string | undefined
@@ -12,11 +12,15 @@ function embeddedGeminiKey(): string | null {
   return key === '' ? null : key
 }
 
-/** Optional Anthropic key embedded at build time for Claude AI fallback. */
-export async function loadAnthropicKey(): Promise<string | null> {
+function embeddedAnthropicKey(): string | null {
   if (typeof __EMBEDDED_ANTHROPIC_KEY__ !== 'string') return null
   const key = __EMBEDDED_ANTHROPIC_KEY__.trim()
   return key === '' ? null : key
+}
+
+/** Optional Anthropic key from the vault (Settings) or embedded at build time for Claude fallback. */
+export async function loadAnthropicKey(): Promise<string | null> {
+  return loadAnthropicSecret(keyVault)
 }
 
 function openVault(): Promise<IDBDatabase> {
@@ -52,7 +56,12 @@ export const keyVault: SecretStore = {
   async get(key) {
     const value: unknown = await inVault('readonly', (table) => table.get(key))
     if (value !== undefined) return { [key]: value }
-    const fallback = key === 'geminiKey' ? embeddedGeminiKey() : null
+    const fallback =
+      key === 'geminiKey'
+        ? embeddedGeminiKey()
+        : key === 'anthropicKey'
+          ? embeddedAnthropicKey()
+          : null
     return fallback ? { [key]: fallback } : {}
   },
   async set(items) {

@@ -20,9 +20,12 @@ describe('SETTINGS_FIELDS', () => {
     expect(SETTINGS_FIELDS.map((f) => f.key).sort()).toEqual(expected)
   })
 
-  it('gives every field a unique label, some help, and a known group', () => {
+  it('gives every field a unique label, some help, and a known group with a description', () => {
     const labels = SETTINGS_FIELDS.map((f) => f.label)
     expect(new Set(labels).size).toBe(labels.length)
+    for (const group of SETTING_GROUPS) {
+      expect(group.description.trim(), group.id).not.toBe('')
+    }
     for (const field of SETTINGS_FIELDS) {
       expect(field.label.trim(), field.key).not.toBe('')
       expect(field.help.trim(), field.key).not.toBe('')

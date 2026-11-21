@@ -3,6 +3,7 @@ import { CloudError } from '../../src/cloud/cloud-error'
 import {
   DEFAULT_LIVE_MODEL,
   GeminiLiveClient,
+  LIVE_COOLDOWN_MS,
   pcm16ToWavBase64,
   withLiveVoiceFallback,
   type WebSocketLike,
@@ -108,6 +109,27 @@ describe('GeminiLiveClient', () => {
     await expect(promise).rejects.toMatchObject({ name: 'AbortError' })
     expect(sockets[0]!.closed).toBe(true)
   })
+  it('warms up the WebSocket ahead of time and reuses it on the first turn', async () => {
+    const sockets: FakeSocket[] = []
+    const client = new GeminiLiveClient({
+      getKey: async () => 'AIzaTESTKEY1234567890abcdef',
+      createSocket: () => {
+        const s = new FakeSocket()
+        sockets.push(s)
+        queueMicrotask(() => s.open())
+        return s
+      },
+    })
+    client.warmup('Kore')
+    await new Promise((r) => setTimeout(r, 10))
+    expect(sockets).toHaveLength(1)
+
+    const turn = client.synthesize({ text: 'Fast start.', voice: 'Kore', model: 'm' })
+    await new Promise((r) => setTimeout(r, 10))
+    sockets[0]!.emitAudio(btoa('ABCD'), true)
+    expect((await turn).mimeType).toBe('audio/wav')
+    expect(sockets).toHaveLength(1)
+  })
 })
 
 describe('withLiveVoiceFallback', () => {
@@ -120,11 +142,20 @@ describe('withLiveVoiceFallback', () => {
     expect(rest.synthesize).not.toHaveBeenCalled()
   })
 
-  it('falls back to REST TTS when Live WebSocket fails', async () => {
+  it('falls back to REST TTS when Live WebSocket fails and pauses Live retries during cooldown', async () => {
+    let time = 1_000
     const live = { synthesize: vi.fn(async () => { throw new CloudError('network') }) }
     const rest = { synthesize: vi.fn(async () => ({ base64: 'REST', mimeType: 'audio/wav' })) }
-    expect(await withLiveVoiceFallback(live, rest).synthesize(req)).toEqual({ base64: 'REST', mimeType: 'audio/wav' })
-    expect(rest.synthesize).toHaveBeenCalledOnce()
+    const client = withLiveVoiceFallback(live, rest, () => time)
+
+    expect(await client.synthesize(req)).toEqual({ base64: 'REST', mimeType: 'audio/wav' })
+    expect(await client.synthesize(req)).toEqual({ base64: 'REST', mimeType: 'audio/wav' })
+    expect(live.synthesize).toHaveBeenCalledOnce()
+    expect(rest.synthesize).toHaveBeenCalledTimes(2)
+
+    time += LIVE_COOLDOWN_MS + 1
+    expect(await client.synthesize(req)).toEqual({ base64: 'REST', mimeType: 'audio/wav' })
+    expect(live.synthesize).toHaveBeenCalledTimes(2)
   })
 
   it('never falls back on AbortError', async () => {

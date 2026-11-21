@@ -1,7 +1,15 @@
 import { chordWords, type ShortcutKeys } from '../key-router'
 import { CloudError } from '../cloud/gemini-client'
 import { GEMINI_ORIGIN } from '../cloud/permissions'
-import { clearGeminiKey, hasGeminiKey, saveGeminiKey, type SecretStore } from '../cloud/secrets'
+import {
+  clearAnthropicKey,
+  clearGeminiKey,
+  hasAnthropicKey,
+  hasGeminiKey,
+  saveAnthropicKey,
+  saveGeminiKey,
+  type SecretStore,
+} from '../cloud/secrets'
 import { loadSettings, parseSettings, saveSettings, type Settings } from '../shared/settings'
 import { confirmationFor, fieldFor, warningFor, type FieldSpec } from './schema'
 
@@ -26,6 +34,8 @@ export interface EditorDeps {
   requestMicrophone(): Promise<boolean>
   /** Asks Google whether the saved key works. Throws CloudError if not. */
   checkKey(): Promise<void>
+  /** Asks Anthropic whether the saved fallback key works. Throws CloudError if not. */
+  checkAnthropicKey?(): Promise<void>
 }
 
 const ADD_KEY = ' Add your Google key to use it.'
@@ -154,6 +164,39 @@ export class SettingsEditor {
   async removeKey(): Promise<void> {
     await clearGeminiKey(this.#deps.secrets)
     this.#deps.speak('Key removed.')
+  }
+
+  hasAnthropicKey(): Promise<boolean> {
+    return hasAnthropicKey(this.#deps.secrets)
+  }
+
+  /** Saves an Anthropic fallback key without repeating what was typed. */
+  async saveAnthropicKey(raw: string): Promise<boolean> {
+    try {
+      await saveAnthropicKey(this.#deps.secrets, raw)
+    } catch (error) {
+      this.#deps.speak(error instanceof Error ? error.message : 'That Anthropic key could not be saved.')
+      return false
+    }
+    this.#deps.speak('Anthropic key saved. Use Test Anthropic key to check it.')
+    return true
+  }
+
+  async testAnthropicKey(): Promise<boolean> {
+    if (!this.#deps.checkAnthropicKey) return false
+    try {
+      await this.#deps.checkAnthropicKey()
+    } catch (error) {
+      this.#deps.speak(error instanceof CloudError ? error.spoken : 'Could not check the Anthropic key.')
+      return false
+    }
+    this.#deps.speak('Anthropic key accepted.')
+    return true
+  }
+
+  async removeAnthropicKey(): Promise<void> {
+    await clearAnthropicKey(this.#deps.secrets)
+    this.#deps.speak('Anthropic key removed.')
   }
 
   async #save(field: FieldSpec, value: unknown): Promise<void> {

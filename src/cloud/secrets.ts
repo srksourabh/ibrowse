@@ -6,7 +6,8 @@ export interface SecretStore extends KeyValueStore {
 }
 
 const STORAGE_KEY = 'geminiKey'
-/** Google API keys are letters, digits, dashes and underscores. */
+const ANTHROPIC_STORAGE_KEY = 'anthropicKey'
+/** API keys are letters, digits, dashes and underscores. */
 const KEY_PATTERN = /^[A-Za-z0-9_-]{20,200}$/
 
 /**
@@ -33,6 +34,28 @@ export async function saveGeminiKey(store: KeyValueStore, raw: string): Promise<
 
 export function clearGeminiKey(store: SecretStore): Promise<void> {
   return store.remove(STORAGE_KEY)
+}
+
+export async function loadAnthropicSecret(store: KeyValueStore): Promise<string | null> {
+  const stored = (await store.get(ANTHROPIC_STORAGE_KEY))[ANTHROPIC_STORAGE_KEY]
+  return typeof stored === 'string' && stored !== '' ? stored : null
+}
+
+export async function hasAnthropicKey(store: KeyValueStore): Promise<boolean> {
+  return (await loadAnthropicSecret(store)) !== null
+}
+
+/** Saves an Anthropic key. The error never repeats what was typed. */
+export async function saveAnthropicKey(store: SecretStore, raw: string): Promise<void> {
+  const key = raw.trim()
+  if (!KEY_PATTERN.test(key)) {
+    throw new Error('That does not look like an Anthropic API key. It is 20 or more letters, digits, dashes or underscores.')
+  }
+  await store.set({ [ANTHROPIC_STORAGE_KEY]: key })
+}
+
+export function clearAnthropicKey(store: SecretStore): Promise<void> {
+  return store.remove(ANTHROPIC_STORAGE_KEY)
 }
 
 /**

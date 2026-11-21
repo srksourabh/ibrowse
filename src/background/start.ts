@@ -142,6 +142,7 @@ function handleMessage(
       if (sender.tab?.id !== undefined) {
         showToolbarState(sender.tab.id, message.enabled)
         b.voice.noteExploreState(sender.tab.id, message.enabled)
+        if (message.enabled) b.cloud.warmupVoice()
       }
       return false
     case 'listen-start':

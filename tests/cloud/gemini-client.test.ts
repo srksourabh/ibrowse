@@ -47,7 +47,7 @@ describe('GeminiClient.synthesize', () => {
             {
               type: 'text',
               text: 'Hello',
-              annotations: [{ type: 'speech_metadata', style: 'clear, natural Indian English accent' }],
+              annotations: [{ type: 'speech_metadata', style: 'clear, natural, subtle Indian English accent' }],
             },
           ],
         },
@@ -126,7 +126,7 @@ describe('GeminiClient.generate', () => {
         { type: 'text', text: 'Describe this.' },
         { type: 'image', data: 'QUJD', mime_type: 'image/jpeg' },
       ],
-      generation_config: { max_output_tokens: 120 },
+      generation_config: { max_output_tokens: 120, thinking_level: 'low' },
     })
   })
 

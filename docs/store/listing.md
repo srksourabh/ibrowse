@@ -1,78 +1,66 @@
-# Chrome Web Store listing
+# Chrome Web Store Listing — iBrowse v0.2.0
 
-The text and answers to paste into the Chrome Web Store developer dashboard
-(https://chrome.google.com/webstore/devconsole, account srksourabh@gmail.com). The images are in this
-folder, made by `npm run build && npm run store-assets`. The package is made by `npx wxt zip`
-(`.output/ibrowse-<version>-chrome.zip`).
+Use this sheet to fill out the **Store Listing** and **Privacy Practices** tabs on `https://chrome.google.com/webstore/devconsole`.
 
-## Store listing tab
+---
 
-- **Name:** iBrowse
-- **Summary** (132 characters at most): Explore any website by sound. Hover, touch or speak to hear what is on a page and act on it. Made for blind users.
-- **Category:** Accessibility
-- **Language:** English
+## 1. Package to Upload
+- **Zip file:** `.output/ibrowse-0.2.0-chrome.zip` (built with `npm run build && npx wxt zip` — zero embedded API keys)
 
-**Description:**
+## 2. Store Listing
+- **Name:** `iBrowse`
+- **Short Summary (max 132 chars):**
+  `Explore and operate any website by touch, mouse, keyboard, and voice. Built for blind and low-vision users.`
+- **Category:** `Accessibility`
+- **Language:** `English`
+- **Homepage URL:** `https://github.com/srksourabh/ibrowse`
+- **Support URL:** `https://github.com/srksourabh/ibrowse/issues`
 
-> iBrowse lets blind and low-vision people explore and use any website by moving a mouse or a finger over it and hearing what is there.
->
-> Turn on Explore Mode (Alt+I, or the toolbar button) and iBrowse tells you what the page holds, panel by panel: the header, the left panel, the main content, the right panel and the footer.
->
-> Move the pointer and iBrowse says what is under it: a heading, a link, a button, an image, a form field. Rest on something and it asks what you would like to do.
->
-> Talk to it. Hold Ctrl+Alt+V, or answer when it asks, and say what you want: "click", "click add to basket", "scroll down", "scroll up", "what is on the left?", "read this", "go back". Anything that is not a command is a question, answered from the page if you turn on AI.
->
-> Also:
-> - Reads text word by word, follows pages and live updates, and says when forms change or are sent.
-> - Works with screen readers: in Companion mode NVDA speaks for iBrowse, so you hear one voice.
-> - Supports haptic devices through an open profile format.
->
-> Private by default. iBrowse runs on your computer, has no servers, accounts or analytics, and does nothing while Explore Mode is off. Optional Google Gemini features (natural voice, AI summaries and answers, image descriptions, Gemini speech recognition) use your own key and send data only after you turn them on and are told what is sent.
->
-> Free and open source: https://github.com/srksourabh/ibrowse
+### Detailed Description
+```text
+iBrowse lets blind and low-vision people explore and operate any website using mouse, touch, keyboard, and voice — with stereo spatial audio, subtle Indian English speech, and optional haptic feedback.
 
-- **Icon:** `public/icon/128.png`
-- **Screenshots** (1280×800): `screenshot-1-tour.png`, `screenshot-2-settings.png`, `screenshot-3-hardware.png`
-- **Small promo tile** (440×280): `promo-small-440x280.png`
-- **Homepage URL:** https://github.com/srksourabh/ibrowse
-- **Support URL:** https://github.com/srksourabh/ibrowse/issues
+KEY FEATURES
+• Instant Page Briefing — Press Alt+I on any page to hear its title, layout panels, and counts, then press Y to read it aloud.
+• Spatial Hover & Touch Exploring — Move your pointer or drag your finger to hear buttons, links, headings, forms, and images with stereo panning and distinct earcons. Double-tap anywhere to activate.
+• Word-by-Word Scrubbing — Roll the scroll wheel over any paragraph to step word by word (Shift+wheel spells the word).
+• Works Alone or With Your Screen Reader — Standalone mode uses iBrowse's own voice; Companion mode sends announcements to NVDA, JAWS, or VoiceOver so two voices never talk over each other.
+• Keyboard & Voice Commands — Jump by heading or landmark, ask "where am I?", or hold Ctrl+Alt+V to speak commands like "click sign in", "scroll down", or "read".
+• Optional Google Gemini Live Voice & AI — Bring your own Google API key in Settings to unlock natural Indian English cloud speech, image descriptions, and page summaries.
+• Optional Haptics — Works with sound only, a built-in sound simulator, game controllers, or paired WebHID haptic devices.
 
-## Privacy practices tab
+PRIVACY FIRST
+• Inactive until you turn Explore Mode on.
+• No accounts, no servers, no analytics, no tracking.
+• Nothing leaves your device unless you explicitly turn on Cloud Voice, AI, or Voice Commands and grant permission.
+```
 
-**Single purpose:** iBrowse makes web pages usable without sight: it describes the page and what is under the pointer in speech, and lets the user act on the page by pointer, keyboard and voice.
+### Graphics to Upload (in `docs/store/`)
+- **Store icon (`128×128`):** `public/icon/128.png`
+- **Screenshots (`1280×800`):**
+  1. `docs/store/screenshot-1-tour.png` — First-run spoken setup & tour
+  2. `docs/store/screenshot-2-settings.png` — Plain-English, keyboard-accessible Settings page
+  3. `docs/store/screenshot-3-hardware.png` — Haptic hardware setup page
+- **Small promo tile (`440×280`):** `docs/store/promo-small-440x280.png`
 
-**Permission justifications:**
+---
 
-| Permission | Justification |
-|---|---|
-| Host permission `<all_urls>` (content script on all sites and frames) | The user explores whatever site they are on. iBrowse has to read the page they choose, in every frame, to describe it and to press, scroll or fill it for them. It does nothing on a page until the user turns Explore Mode on. |
-| `storage` | Keeps the user's settings, and their own Gemini key if they add one, on their device. |
-| `tts` | Speaks descriptions, briefings and answers with the computer's own voices. Speech is the extension's main output. |
-| `contextMenus` | Adds "Next page" and "Previous page" to the right-click menu, for pages split into several pages. |
-| `offscreen` | Voice commands: speech recognition needs a document with microphone access, which a service worker cannot have. The offscreen document is open only while voice commands are in use. |
-| Optional host `https://generativelanguage.googleapis.com/*` | Requested only when the user turns on a Google Gemini feature, and used only for it, with the user's own key. |
+## 3. Privacy Practices Tab
 
-**Remote code:** No, I am not using remote code. All code is in the package.
+### Single Purpose Description
+`Let blind and low-vision users explore and operate any web page using mouse, touch, keyboard, audio, and optional voice commands.`
 
-**Data usage.** Tick these, because they can leave the device when the user turns on a Gemini feature:
+### Permission Justifications
+- **`tts`:** Speaks element descriptions, page briefings, typing echo, and settings aloud in Standalone mode.
+- **`storage`:** Saves user preferences locally on the device (speech rate, shortcuts, screen reader mode, etc.).
+- **`contextMenus`:** Adds "iBrowse: Next page" and "iBrowse: Previous page" items to the browser context menu for easier page navigation.
+- **`offscreen`:** Runs speech recognition inside an offscreen document when the user enables optional push-to-talk voice commands (Manifest V3 requires an offscreen document for audio capture).
+- **`host_permissions` (`<all_urls>`):** Required so Explore Mode can inspect and speak elements on whichever website the user chooses to browse. Nothing is intercepted or read when Explore Mode is off.
+- **`optional_host_permissions` (`https://generativelanguage.googleapis.com/*`):** Requested only if the user explicitly opts into optional Cloud Voice or AI summaries with their own Google API key.
 
-- **Website content:** page text, and the one image the user asks about, are sent to Google Gemini only for AI features the user turned on.
-- **Personal communications** (or the closest audio category the form offers): when the user chooses Gemini for voice commands, a recording of what they say while iBrowse is listening is sent to Google Gemini to be turned into text. Nothing is kept.
+### Remote Code
+- **Are you using remote code?** `No, I am not using remote code.` (All JavaScript is bundled inside the extension package.)
 
-Leave the rest unticked. iBrowse does not collect personally identifiable information, health, financial or authentication data, location, web history or user activity. The Gemini key is stored on the device and sent only to Google, as the user's own credential.
-
-Certify all three: data is not sold to third parties; not used or transferred for purposes unrelated to the single purpose; not used to determine creditworthiness or for lending.
-
-**Privacy policy URL:** https://github.com/srksourabh/ibrowse/blob/main/PRIVACY.md
-
-## Distribution tab
-
-- **Visibility:** Unlisted for the closed beta (only people with the link can install). Public at release.
-- **Regions:** all.
-
-## Upload steps
-
-1. `npm run build && npx wxt zip`
-2. Dashboard → **New item** → upload `.output/ibrowse-0.2.0-chrome.zip`.
-3. Fill the three tabs above, then **Submit for review**. Broad host access means an in-depth review, which can take several days.
-4. When it is approved, record the extension ID: the desktop installers (ADR-0016) need it.
+### Data Usage & Privacy Policy
+- **Privacy Policy URL:** `https://github.com/srksourabh/ibrowse/blob/main/PRIVACY.md`
+- **Data collection:** None collected by the developer. Certify all 3 disclosures (no selling data, no unrelated use, no creditworthiness/lending use).
