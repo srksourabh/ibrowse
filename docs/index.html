@@ -4,80 +4,195 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>iBrowse — Hear &amp; Explore Any Website</title>
+<meta name="description" content="Hear any website. Explore by mouse, touch, keyboard and voice — built for blind and low-vision users. Chrome extension, Mobile PWA, Gemini Live voice.">
+<meta property="og:title" content="iBrowse — Hear any website">
+<meta property="og:description" content="Spatial audio, touch, haptics and voice browsing for blind and low-vision people.">
+<meta property="og:image" content="https://srksourabh.github.io/ibrowse/media/slides/slide-01.png">
+<meta property="og:url" content="https://srksourabh.github.io/ibrowse/">
+<link rel="icon" href="https://raw.githubusercontent.com/srksourabh/ibrowse/main/public/icon/32.png">
 <style>
-  :root { color-scheme: dark; }
+  :root {
+    color-scheme: dark;
+    --bg: #0b1220;
+    --panel: #152033;
+    --line: #2a3a55;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-ink: #082f49;
+    --warm: #fb923c;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: #0f172a; color: #f8fafc; line-height: 1.6; }
-  main { max-width: 860px; margin: 0 auto; padding: 40px 20px 64px; }
-  h1 { font-size: 2.35rem; margin: 0 0 8px; line-height: 1.2; }
-  .lead { color: #cbd5e1; font-size: 1.1rem; margin: 0 0 28px; }
-  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 32px; }
-  a.btn { display: inline-block; padding: 13px 20px; border-radius: 10px; text-decoration: none; font-weight: 700; }
-  a.primary { background: #38bdf8; color: #082f49; }
-  a.secondary { background: #1e293b; color: #f8fafc; border: 1px solid #334155; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #1e3a5f 0%, transparent 55%),
+      radial-gradient(900px 500px at 100% 0%, #3b1d4a 0%, transparent 50%),
+      var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 40px 20px 72px; }
+  .brand {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
+  }
+  .brand img { width: 56px; height: 56px; border-radius: 12px; }
+  h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); margin: 0; line-height: 1.15; }
+  .lead { color: var(--muted); font-size: 1.12rem; margin: 12px 0 22px; max-width: 46rem; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
+  .badge {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    background: #0f172a; border: 1px solid var(--line); color: #cbd5e1;
+    font-size: 0.78rem; font-weight: 600;
+  }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 28px; }
+  a.btn {
+    display: inline-block; padding: 13px 20px; border-radius: 10px;
+    text-decoration: none; font-weight: 700;
+  }
+  a.primary { background: var(--accent); color: var(--accent-ink); }
+  a.secondary { background: var(--panel); color: var(--text); border: 1px solid var(--line); }
   a.btn:focus-visible, a:focus-visible { outline: 3px solid #fde047; outline-offset: 3px; }
+  .demo {
+    margin: 0 0 28px; border-radius: 16px; overflow: hidden;
+    border: 1px solid var(--line); background: #000;
+  }
+  .demo a { display: block; }
+  .demo img { display: block; width: 100%; height: auto; }
+  .demo figcaption {
+    padding: 10px 14px; background: var(--panel); color: var(--muted); font-size: 0.9rem;
+  }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  section.card { background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 20px 22px; }
-  h2 { margin: 0 0 10px; font-size: 1.2rem; }
+  section.card {
+    background: color-mix(in srgb, var(--panel) 92%, #000);
+    border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px;
+  }
+  h2 { margin: 0 0 10px; font-size: 1.15rem; }
+  h2 .dot { color: var(--warm); }
   ol, ul { margin: 0; padding-left: 20px; }
   li { margin: 6px 0; color: #e2e8f0; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 0 0 24px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: #cbd5e1; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:last-child td { border-bottom: 0; }
   code { background: #0f172a; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
   a { color: #7dd3fc; }
-  footer { margin-top: 28px; color: #94a3b8; font-size: 0.95rem; }
+  .stack { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; }
+  .stack span {
+    background: #0f172a; border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 12px; font-size: 0.88rem; color: #e2e8f0;
+  }
+  footer { margin-top: 8px; color: var(--muted); font-size: 0.95rem; }
 </style>
 </head>
 <body>
 <main>
-  <h1>iBrowse v0.2.0</h1>
+  <div class="brand">
+    <img src="https://raw.githubusercontent.com/srksourabh/ibrowse/main/public/icon/128.png" alt="iBrowse icon">
+    <h1>iBrowse v0.2.0</h1>
+  </div>
   <p class="lead">
-    Hear any website and explore it by mouse, touch, keyboard, and voice — built for blind and low-vision users
-    with subtle Indian English speech and optional Google Gemini Live &amp; Claude fallback.
+    Hear any website and explore it by mouse, touch, keyboard, and voice —
+    built for blind and low-vision users, with Indian English speech and optional
+    Google Gemini Live &amp; Claude fallback.
   </p>
+
+  <div class="badges" aria-label="Highlights">
+    <span class="badge">Chrome Manifest V3</span>
+    <span class="badge">Spatial audio</span>
+    <span class="badge">Voice commands</span>
+    <span class="badge">NVDA companion</span>
+    <span class="badge">Gemini Live + Claude</span>
+    <span class="badge">Private by default</span>
+    <span class="badge">MIT</span>
+  </div>
 
   <div class="actions">
     <a class="btn primary" href="https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip">
-      Download Extension (.zip) — Windows &amp; macOS
+      Download Extension (.zip)
     </a>
-    <a class="btn primary" href="demo/">
-      Open Mobile &amp; Web App — iPhone &amp; Android
-    </a>
+    <a class="btn primary" href="demo/">Open Mobile &amp; Web App</a>
     <a class="btn secondary" href="presentation/">Presentation</a>
+    <a class="btn secondary" href="media/ibrowse-demo.mp4">Demo video (MP4)</a>
     <a class="btn secondary" href="https://github.com/srksourabh/ibrowse/blob/main/docs/USER_GUIDE.md">User Guide</a>
+    <a class="btn secondary" href="https://github.com/srksourabh/ibrowse">GitHub</a>
   </div>
+
+  <figure class="demo">
+    <a href="media/ibrowse-demo.mp4" aria-label="Play the iBrowse demo video">
+      <img src="media/ibrowse-demo.gif" width="860" height="484" alt="Animated demo of iBrowse briefing a page and responding to voice commands. GIF is silent; open the MP4 for audio.">
+    </a>
+    <figcaption>
+      Silent GIF preview — <a href="media/ibrowse-demo.mp4">open the MP4 for both voices</a>
+      · <a href="presentation/#slide-8">captioned in the presentation</a>
+    </figcaption>
+  </figure>
+
+  <h2><span class="dot">●</span> Tech stack</h2>
+  <div class="stack" aria-label="Tech stack">
+    <span>TypeScript strict</span>
+    <span>WXT / Chrome MV3</span>
+    <span>Vitest + Playwright</span>
+    <span>Web Audio earcons</span>
+    <span>chrome.tts en-IN</span>
+    <span>Gemini Live WS</span>
+    <span>Claude fallback</span>
+    <span>Gamepad / WebHID haptics</span>
+    <span>PWA · Docker portal</span>
+  </div>
+
+  <h2><span class="dot">●</span> Quick use</h2>
+  <table>
+    <thead>
+      <tr><th>Do this</th><th>Keys / action</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Turn Explore Mode on</td><td><code>Alt+I</code> or the toolbar button</td></tr>
+      <tr><td>Hear the page map</td><td>Briefing: header · left · main · right · footer</td></tr>
+      <tr><td>Explore</td><td>Move the mouse or drag a finger</td></tr>
+      <tr><td>Talk</td><td>Hold <code>Ctrl+Alt+V</code> and speak</td></tr>
+      <tr><td>Settings / hardware</td><td><code>Alt+O</code> · <code>Ctrl+Alt+P</code></td></tr>
+    </tbody>
+  </table>
 
   <div class="grid">
     <section class="card" aria-labelledby="win-mac">
-      <h2 id="win-mac">Windows &amp; macOS (Chrome, Edge, Brave)</h2>
+      <h2 id="win-mac">Windows &amp; macOS</h2>
       <ol>
-        <li>Download <a href="https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip"><code>ibrowse-0.2.0-chrome.zip</code></a> and unzip it to a folder.</li>
-        <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code> / <code>brave://extensions</code>).</li>
-        <li>Turn on <strong>Developer mode</strong>, click <strong>Load unpacked</strong>, and select the unzipped folder.</li>
-        <li>Press <strong><code>Alt+I</code></strong> on any website to start Explore Mode, or <strong><code>Alt+O</code></strong> for Settings.</li>
+        <li>Download <a href="https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip"><code>ibrowse-0.2.0-chrome.zip</code></a> and unzip it.</li>
+        <li>Open <code>chrome://extensions</code> (or Edge / Brave).</li>
+        <li>Enable <strong>Developer mode</strong> → <strong>Load unpacked</strong> → select the folder.</li>
+        <li>Press <strong><code>Alt+I</code></strong> on any site to start, or <strong><code>Alt+O</code></strong> for Settings.</li>
       </ol>
     </section>
 
     <section class="card" aria-labelledby="ios">
-      <h2 id="ios">iPhone &amp; iPad (Safari)</h2>
+      <h2 id="ios">iPhone &amp; iPad</h2>
       <ol>
-        <li>Open the <a href="demo/"><strong>iBrowse Mobile Web App</strong></a> in Safari.</li>
-        <li>Tap <strong>Share &rarr; Add to Home Screen</strong> to install it full-screen.</li>
-        <li>Tap <strong>Initialize Audio &amp; Haptics</strong>, then drag your finger to hear elements or tap <strong>Speak</strong>.</li>
+        <li>Open the <a href="demo/"><strong>Mobile Web App</strong></a> in Safari.</li>
+        <li>Tap <strong>Share → Add to Home Screen</strong>.</li>
+        <li>Tap <strong>Initialize Audio &amp; Haptics</strong>, then drag or tap <strong>Speak</strong>.</li>
       </ol>
     </section>
 
     <section class="card" aria-labelledby="android">
-      <h2 id="android">Android (Chrome or Kiwi/Mises Browser)</h2>
+      <h2 id="android">Android</h2>
       <ol>
-        <li><strong>Quick Web App (Chrome):</strong> Open <a href="demo/"><strong>iBrowse Mobile Web App</strong></a>, tap <strong>&#8942; &rarr; Add to Home screen</strong>.</li>
-        <li><strong>Full Extension on any site:</strong> Download <a href="https://github.com/srksourabh/ibrowse/releases/download/v0.2.0/ibrowse-0.2.0-chrome.zip"><code>ibrowse-0.2.0-chrome.zip</code></a>, open <strong>Kiwi</strong> or <strong>Mises Browser</strong> &rarr; <strong>Extensions</strong> &rarr; <strong>Developer mode</strong> &rarr; <strong>+ (from .zip)</strong>.</li>
+        <li><strong>PWA:</strong> open the <a href="demo/">Mobile Web App</a> → <strong>Add to Home screen</strong>.</li>
+        <li><strong>Full extension:</strong> load the zip in <strong>Kiwi</strong> or <strong>Mises</strong> (Developer mode).</li>
       </ol>
     </section>
   </div>
 
   <footer>
-    100% free, open source, and private — runs locally on your device unless you opt in to Cloud Voice or AI in Settings.
-    <a href="https://github.com/srksourabh/ibrowse">View on GitHub</a> &middot;
-    <a href="https://github.com/srksourabh/ibrowse/releases/tag/v0.2.0">Release v0.2.0</a>
+    Free, open source, and private by default — runs locally unless you opt in to Cloud Voice or AI in Settings.
+    <a href="https://github.com/srksourabh/ibrowse">View on GitHub</a> ·
+    <a href="https://github.com/srksourabh/ibrowse/releases/tag/v0.2.0">Release v0.2.0</a> ·
+    <a href="https://github.com/srksourabh/ibrowse/blob/main/docs/FEATURES.md">Every feature</a>
   </footer>
 </main>
 </body>
