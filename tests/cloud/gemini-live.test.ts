@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 import { CloudError } from '../../src/cloud/cloud-error'
 import {
+  createTokenServiceProvider,
   DEFAULT_LIVE_MODEL,
   GeminiLiveClient,
   LIVE_COOLDOWN_MS,
+  LIVE_WS_URL,
   pcm16ToWavBase64,
   sanitizeWsUrl,
   withLiveVoiceFallback,
@@ -59,11 +61,13 @@ describe('pcm16ToWavBase64', () => {
   })
 })
 
+const validToken = () => async () => ({ token: 'auth_tokens/ephemeral_test_token', expiresAt: Date.now() + 600_000 })
+
 describe('GeminiLiveClient', () => {
   it('opens a Live WebSocket with Indian English setup and reuses it across turns', async () => {
     const sockets: FakeSocket[] = []
     const client = new GeminiLiveClient({
-      getKey: async () => 'AIzaTESTKEY1234567890abcdef',
+      getEphemeralToken: validToken(),
       createSocket: () => {
         const s = new FakeSocket()
         sockets.push(s)
@@ -95,7 +99,7 @@ describe('GeminiLiveClient', () => {
   it('rejects with AbortError and closes the socket when cancelled', async () => {
     const sockets: FakeSocket[] = []
     const client = new GeminiLiveClient({
-      getKey: async () => 'AIzaTESTKEY1234567890abcdef',
+      getEphemeralToken: validToken(),
       createSocket: () => {
         const s = new FakeSocket()
         sockets.push(s)
@@ -113,7 +117,7 @@ describe('GeminiLiveClient', () => {
   it('warms up the WebSocket ahead of time and reuses it on the first turn', async () => {
     const sockets: FakeSocket[] = []
     const client = new GeminiLiveClient({
-      getKey: async () => 'AIzaTESTKEY1234567890abcdef',
+      getEphemeralToken: validToken(),
       createSocket: () => {
         const s = new FakeSocket()
         sockets.push(s)
@@ -132,11 +136,10 @@ describe('GeminiLiveClient', () => {
     expect(sockets).toHaveLength(1)
   })
 
-  it('prefers short-lived ephemeral session tokens over permanent API keys when available', async () => {
+  it('connects to BidiGenerateContentConstrained with access_token and never ?key=', async () => {
     let requestedUrl = ''
     const client = new GeminiLiveClient({
-      getKey: async () => 'PERMANENT_SECRET_KEY',
-      getEphemeralToken: async () => ({ token: 'SHORT_LIVED_TOKEN_XYZ', expiresAt: Date.now() + 600_000 }),
+      getEphemeralToken: async () => ({ token: 'auth_tokens/SHORT_LIVED_TOKEN_XYZ', expiresAt: Date.now() + 600_000 }),
       createSocket: (url) => {
         requestedUrl = url
         const s = new FakeSocket()
@@ -147,8 +150,61 @@ describe('GeminiLiveClient', () => {
 
     const turn = client.synthesize({ text: 'Auth check.', voice: 'Kore', model: 'm' })
     await new Promise((r) => setTimeout(r, 10))
-    expect(requestedUrl).toContain('access_token=SHORT_LIVED_TOKEN_XYZ')
-    expect(requestedUrl).not.toContain('PERMANENT_SECRET_KEY')
+    expect(requestedUrl).toContain(LIVE_WS_URL)
+    expect(requestedUrl).toContain('BidiGenerateContentConstrained')
+    expect(requestedUrl).toContain('access_token=auth_tokens%2FSHORT_LIVED_TOKEN_XYZ')
+    expect(requestedUrl).not.toMatch(/[?&]key=/)
+  })
+
+  it('refuses to connect without an ephemeral token service (never falls back to permanent key)', async () => {
+    const createSocket = vi.fn()
+    const client = new GeminiLiveClient({ createSocket })
+    await expect(client.synthesize({ text: 'No token', voice: 'Kore', model: 'm' })).rejects.toMatchObject({
+      kind: 'auth-failed',
+    })
+    expect(createSocket).not.toHaveBeenCalled()
+  })
+
+  it('rejects expired ephemeral tokens and obtains a fresh token on reconnect', async () => {
+    let now = 1_000_000
+    let call = 0
+    const urls: string[] = []
+    const sockets: FakeSocket[] = []
+    const client = new GeminiLiveClient({
+      now: () => now,
+      getEphemeralToken: async () => {
+        call++
+        if (call === 1) return { token: 'auth_tokens/expired', expiresAt: now + 10_000 } // within 30s buffer
+        return { token: `auth_tokens/fresh_${call}`, expiresAt: now + 120_000 }
+      },
+      createSocket: (url) => {
+        urls.push(url)
+        const s = new FakeSocket()
+        sockets.push(s)
+        queueMicrotask(() => s.open())
+        return s
+      },
+    })
+
+    await expect(client.synthesize({ text: 'First', voice: 'Kore', model: 'm' })).rejects.toMatchObject({
+      kind: 'auth-failed',
+    })
+    expect(urls).toHaveLength(0)
+
+    const turn2 = client.synthesize({ text: 'Second', voice: 'Kore', model: 'm' })
+    await new Promise((r) => setTimeout(r, 10))
+    expect(urls[0]).toContain('access_token=auth_tokens%2Ffresh_2')
+    sockets[0]!.emitAudio(btoa('ABCD'), true)
+    await turn2
+
+    // Advance past token expiry buffer -> next turn must reconnect with a fresh token
+    now += 100_000
+    const turn3 = client.synthesize({ text: 'Third', voice: 'Kore', model: 'm' })
+    await new Promise((r) => setTimeout(r, 10))
+    expect(urls).toHaveLength(2)
+    expect(urls[1]).toContain('access_token=auth_tokens%2Ffresh_3')
+    sockets[1]!.emitAudio(btoa('EFGH'), true)
+    await turn3
   })
 
   it('redacts secrets from WebSocket URLs for safe logging and error reporting', () => {
@@ -159,6 +215,39 @@ describe('GeminiLiveClient', () => {
 
     const tokenUrl = 'wss://example.com/ws?access_token=TOP_SECRET_BEARER'
     expect(sanitizeWsUrl(tokenUrl)).not.toContain('TOP_SECRET_BEARER')
+  })
+})
+
+describe('createTokenServiceProvider', () => {
+  it('fetches ephemeral tokens over HTTPS and handles auth rejections and invalid responses', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ token: 'auth_tokens/abc', expiresAt: 999_999_999 }), { status: 200 }),
+    )
+    const provider = createTokenServiceProvider({
+      endpoint: 'https://token.example.com/gemini-live-token',
+      fetch: fetchMock as unknown as typeof fetch,
+      getAuthHeader: async () => 'Bearer user_session_123',
+    })
+    await expect(provider()).resolves.toEqual({ token: 'auth_tokens/abc', expiresAt: 999_999_999 })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://token.example.com/gemini-live-token',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer user_session_123' }),
+      }),
+    )
+
+    const rejected = createTokenServiceProvider({
+      endpoint: 'https://token.example.com/gemini-live-token',
+      fetch: (async () => new Response('Forbidden', { status: 403 })) as unknown as typeof fetch,
+    })
+    await expect(rejected()).rejects.toMatchObject({ kind: 'auth-failed' })
+
+    const insecure = createTokenServiceProvider({
+      endpoint: 'http://evil.example.com/token',
+      fetch: fetchMock as unknown as typeof fetch,
+    })
+    await expect(insecure()).rejects.toMatchObject({ kind: 'auth-failed' })
   })
 })
 

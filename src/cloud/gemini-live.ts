@@ -1,12 +1,14 @@
 import { CloudError } from './cloud-error'
 import type { GeminiClient, SynthesizeRequest } from './gemini-client'
 
-const LIVE_WS_URL =
-  'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent'
+export const LIVE_WS_URL =
+  'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained'
 export const DEFAULT_LIVE_MODEL = 'models/gemini-3.8-live'
 export const LIVE_PCM_SAMPLE_RATE = 24_000
 const CONNECT_TIMEOUT_MS = 3_000
 const TURN_TIMEOUT_MS = 15_000
+const TOKEN_TIMEOUT_MS = 5_000
+const TOKEN_EXPIRY_BUFFER_MS = 30_000
 export const LIVE_COOLDOWN_MS = 30_000
 
 const LIVE_SYSTEM_INSTRUCTION =
@@ -46,8 +48,68 @@ export interface EphemeralToken {
   readonly expiresAt: number // epoch ms
 }
 
+export interface TokenServiceOptions {
+  readonly endpoint: string
+  readonly fetch?: typeof fetch
+  readonly getAuthHeader?: () => Promise<string | null>
+  readonly timeoutMs?: number
+}
+
+/**
+ * Fetches short-lived, constrained Gemini Live ephemeral tokens (`auth_tokens/...`)
+ * from a trusted backend service. Tokens are kept only in memory and never persisted.
+ */
+export function createTokenServiceProvider(options: TokenServiceOptions): () => Promise<EphemeralToken | null> {
+  const fetchFn = options.fetch ?? fetch
+  const timeoutMs = options.timeoutMs ?? TOKEN_TIMEOUT_MS
+
+  return async () => {
+    let parsed: URL
+    try {
+      parsed = new URL(options.endpoint)
+    } catch {
+      throw new CloudError('auth-failed')
+    }
+    if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+      throw new CloudError('auth-failed')
+    }
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const headers: Record<string, string> = { Accept: 'application/json' }
+      const auth = options.getAuthHeader ? await options.getAuthHeader() : null
+      if (auth) headers.Authorization = auth
+
+      const response = await fetchFn(parsed.toString(), {
+        method: 'POST',
+        headers,
+        signal: controller.signal,
+      })
+      if (response.status === 401 || response.status === 403) throw new CloudError('auth-failed')
+      if (!response.ok) throw new CloudError('server')
+
+      const body: unknown = await response.json()
+      if (
+        !isRecord(body) ||
+        typeof body.token !== 'string' ||
+        body.token.trim() === '' ||
+        typeof body.expiresAt !== 'number' ||
+        !Number.isFinite(body.expiresAt)
+      ) {
+        throw new CloudError('auth-failed')
+      }
+      return { token: body.token.trim(), expiresAt: body.expiresAt }
+    } catch (error) {
+      if (error instanceof CloudError) throw error
+      throw new CloudError('network')
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+}
+
 export interface GeminiLiveDeps {
-  getKey(): Promise<string | null>
   getEphemeralToken?: () => Promise<EphemeralToken | null>
   createSocket?: (url: string) => WebSocketLike
   model?: string
@@ -140,6 +202,7 @@ export class GeminiLiveClient implements Pick<GeminiClient, 'synthesize'> {
   #socket: WebSocketLike | null = null
   #ready: Promise<WebSocketLike> | null = null
   #voice = ''
+  #tokenExpiresAt = 0
   #queue: Promise<void> = Promise.resolve()
 
   constructor(deps: GeminiLiveDeps) {
@@ -176,33 +239,42 @@ export class GeminiLiveClient implements Pick<GeminiClient, 'synthesize'> {
     }
   }
 
-  async #getAuthCredential(): Promise<{ param: string; value: string }> {
-    if (this.#deps.getEphemeralToken) {
-      try {
-        const ephemeral = await this.#deps.getEphemeralToken()
-        const now = this.#deps.now ? this.#deps.now() : Date.now()
-        if (ephemeral && ephemeral.token && ephemeral.expiresAt > now + 30_000) {
-          return { param: 'access_token', value: ephemeral.token }
-        }
-      } catch {
-        // Fall back to key if ephemeral token retrieval fails
-      }
+  async #getAuthToken(): Promise<EphemeralToken> {
+    if (!this.#deps.getEphemeralToken) {
+      throw new CloudError('auth-failed')
     }
-    const key = await this.#deps.getKey()
-    if (!key || key.trim() === '') throw new CloudError('no-key')
-    return { param: 'key', value: key.trim() }
+    let ephemeral: EphemeralToken | null
+    try {
+      ephemeral = await this.#deps.getEphemeralToken()
+    } catch (error) {
+      if (error instanceof CloudError) throw error
+      throw new CloudError('network')
+    }
+    const now = this.#deps.now ? this.#deps.now() : Date.now()
+    if (!ephemeral || !ephemeral.token || ephemeral.token.trim() === '' || ephemeral.expiresAt <= now + TOKEN_EXPIRY_BUFFER_MS) {
+      throw new CloudError('auth-failed')
+    }
+    return { token: ephemeral.token.trim(), expiresAt: ephemeral.expiresAt }
   }
 
   async #connect(voice: string): Promise<WebSocketLike> {
-    if (this.#socket && this.#socket.readyState === 1 && this.#voice === voice && this.#ready) {
+    const now = this.#deps.now ? this.#deps.now() : Date.now()
+    if (
+      this.#socket &&
+      this.#socket.readyState === 1 &&
+      this.#voice === voice &&
+      this.#ready &&
+      now < this.#tokenExpiresAt - TOKEN_EXPIRY_BUFFER_MS
+    ) {
       return this.#ready
     }
     this.close()
-    const auth = await this.#getAuthCredential()
+    const ephemeral = await this.#getAuthToken()
+    this.#tokenExpiresAt = ephemeral.expiresAt
 
     const baseUrl = this.#deps.wsUrl ?? LIVE_WS_URL
     const sep = baseUrl.includes('?') ? '&' : '?'
-    const url = `${baseUrl}${sep}${auth.param}=${encodeURIComponent(auth.value)}`
+    const url = `${baseUrl}${sep}access_token=${encodeURIComponent(ephemeral.token)}`
     const factory = this.#deps.createSocket ?? ((u: string) => new WebSocket(u) as unknown as WebSocketLike)
     const ws = factory(url)
     this.#socket = ws

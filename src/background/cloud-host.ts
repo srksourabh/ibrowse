@@ -34,7 +34,9 @@ export class CloudHost {
       fetch: boundFetch,
       getKey: loadVaultKey,
     })
-    const liveVoice = new GeminiLiveClient({ getKey: loadVaultKey })
+    // Gemini Live WebSocket never receives the permanent API key; without an ephemeral
+    // token service configured, withLiveVoiceFallback routes synthesis to REST TTS.
+    const liveVoice = new GeminiLiveClient({})
     const claude = new ClaudeClient({
       fetch: boundFetch,
       getKey: loadAnthropicKey,
