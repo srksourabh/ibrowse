@@ -1,12 +1,8 @@
-using System.Diagnostics;
-
 namespace IBrowse.Windows;
 
-/// <summary>Companion mode: when a screen reader is running, iBrowse stays quiet so nothing is said twice.</summary>
+/// <summary>Companion mode detector forwarder.</summary>
 internal static class ScreenReaderDetector
 {
-    private static readonly string[] Names = ["nvda", "jfw", "narrator", "zoomtext", "supernova"];
-
-    public static bool IsRunning() =>
-        Process.GetProcesses().Any(p => Names.Contains(p.ProcessName.ToLowerInvariant()));
+    public static bool IsRunning() => IBrowse.Core.ScreenReaderDetector.IsRunningDefault();
+    public static void Invalidate() => IBrowse.Core.ScreenReaderDetector.InvalidateDefault();
 }
