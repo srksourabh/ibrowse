@@ -2,6 +2,8 @@ import { isPrivateHost } from './private-network'
 
 /** Larger images are refused: they cost more, and take too long to be useful to someone waiting. */
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024
+export const MAX_REDIRECTS = 5
+const FETCH_TIMEOUT_MS = 10_000
 
 const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 const DATA_URL = /^data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/i
@@ -53,30 +55,74 @@ export async function fetchImage(
   const inline = fromDataUrl(url)
   if (inline) return inline
 
-  let parsed: URL
-  try {
-    parsed = new URL(url)
-  } catch {
-    throw new ImageError(UNDESCRIBABLE)
+  let currentUrl = url
+  let redirects = 0
+  const visited = new Set<string>()
+
+  while (redirects <= MAX_REDIRECTS) {
+    let parsed: URL
+    try {
+      parsed = new URL(currentUrl)
+    } catch {
+      throw new ImageError(UNDESCRIBABLE)
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new ImageError(UNDESCRIBABLE)
+    // A page could point at a router or printer at home; the worker would fetch it and send it to Google.
+    if (isPrivateHost(parsed.hostname)) throw new ImageError(PRIVATE)
+
+    if (visited.has(parsed.href)) {
+      throw new ImageError(COULD_NOT_LOAD) // Redirect loop
+    }
+    visited.add(parsed.href)
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
+    let response: Response
+    try {
+      response = await fetchFn(currentUrl, {
+        credentials: 'omit',
+        redirect: 'manual',
+        signal: controller.signal,
+      })
+    } catch {
+      clearTimeout(timer)
+      throw new ImageError(COULD_NOT_LOAD)
+    }
+    clearTimeout(timer)
+
+    const isRedirect =
+      (response.status >= 300 && response.status < 400) ||
+      response.type === 'opaqueredirect'
+
+    if (isRedirect) {
+      redirects++
+      if (redirects > MAX_REDIRECTS) {
+        throw new ImageError(COULD_NOT_LOAD) // Excessive redirects
+      }
+      const location = response.headers.get('location')
+      if (!location) {
+        throw new ImageError(COULD_NOT_LOAD)
+      }
+      try {
+        currentUrl = new URL(location, currentUrl).href
+      } catch {
+        throw new ImageError(UNDESCRIBABLE)
+      }
+      continue
+    }
+
+    if (!response.ok) throw new ImageError(COULD_NOT_LOAD)
+    if (response.url && isPrivateHost(new URL(response.url).hostname)) throw new ImageError(PRIVATE)
+
+    const mimeType = (response.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase()
+    if (!ALLOWED_TYPES.has(mimeType)) throw new ImageError(UNDESCRIBABLE)
+    if (Number(response.headers.get('content-length')) > MAX_IMAGE_BYTES) throw new ImageError(TOO_LARGE)
+
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    if (bytes.length > MAX_IMAGE_BYTES) throw new ImageError(TOO_LARGE)
+    return { base64: bytesToBase64(bytes), mimeType }
   }
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new ImageError(UNDESCRIBABLE)
-  // A page could point at a router or printer at home; the worker would fetch it and send it to Google.
-  if (isPrivateHost(parsed.hostname)) throw new ImageError(PRIVATE)
 
-  let response: Response
-  try {
-    response = await fetchFn(url, { credentials: 'omit', redirect: 'follow' })
-  } catch {
-    throw new ImageError(COULD_NOT_LOAD)
-  }
-  if (!response.ok) throw new ImageError(COULD_NOT_LOAD)
-  if (response.url && isPrivateHost(new URL(response.url).hostname)) throw new ImageError(PRIVATE)
-
-  const mimeType = (response.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase()
-  if (!ALLOWED_TYPES.has(mimeType)) throw new ImageError(UNDESCRIBABLE)
-  if (Number(response.headers.get('content-length')) > MAX_IMAGE_BYTES) throw new ImageError(TOO_LARGE)
-
-  const bytes = new Uint8Array(await response.arrayBuffer())
-  if (bytes.length > MAX_IMAGE_BYTES) throw new ImageError(TOO_LARGE)
-  return { base64: bytesToBase64(bytes), mimeType }
+  throw new ImageError(COULD_NOT_LOAD)
 }

@@ -127,4 +127,66 @@ describe("fetchImage: images on the user's own network", () => {
     const error = await caught(fetchImage('https://example.com/a.png', fetchFn as unknown as typeof fetch))
     expect(error.spoken).toBe('That image is on a private network, so it is not sent.')
   })
+
+  it('supports legitimate public CDN redirects', async () => {
+    const redirectResponse = new Response(null, {
+      status: 302,
+      headers: { Location: 'https://cdn.example.com/actual.png' },
+    })
+    const finalResponse = imageResponse([1, 2, 3], 'image/png')
+    const fetchFn = vi.fn(async (url: string) => {
+      if (url === 'https://example.com/image-link') return redirectResponse
+      if (url === 'https://cdn.example.com/actual.png') return finalResponse
+      throw new Error(`Unexpected fetch to ${url}`)
+    })
+
+    const result = await fetchImage('https://example.com/image-link', fetchFn as unknown as typeof fetch)
+    expect(result).toEqual({ base64: 'AQID', mimeType: 'image/png' })
+    expect(fetchFn).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
+    ['localhost', 'http://localhost/secret.png'],
+    ['127.0.0.1 loopback', 'http://127.0.0.1/admin.png'],
+    ['private IPv4 (192.168.x)', 'http://192.168.1.1/status.png'],
+    ['private IPv4 (10.x)', 'http://10.0.0.1/intranet.png'],
+    ['private IPv4 (172.16.x)', 'http://172.16.0.1/camera.png'],
+    ['cloud metadata endpoint (169.254.169.254)', 'http://169.254.169.254/latest/meta-data'],
+    ['IPv6 loopback [::1]', 'http://[::1]/debug.png'],
+  ])('intercepts redirect to %s BEFORE requesting it', async (_desc, targetUrl) => {
+    const redirectResponse = new Response(null, {
+      status: 302,
+      headers: { Location: targetUrl },
+    })
+    const fetchFn = vi.fn(async () => redirectResponse)
+
+    const error = await caught(fetchImage('https://example.com/innocent.png', fetchFn as unknown as typeof fetch))
+    expect(error.spoken).toBe('That image is on a private network, so it is not sent.')
+    // fetchFn must have been called ONLY for the initial public URL, NEVER for the private redirect target!
+    expect(fetchFn).toHaveBeenCalledTimes(1)
+    expect(fetchFn).toHaveBeenCalledWith('https://example.com/innocent.png', expect.anything())
+  })
+
+  it('detects and aborts redirect loops', async () => {
+    const fetchFn = vi.fn(async (url: string) => {
+      if (url === 'https://example.com/a.png') {
+        return new Response(null, { status: 302, headers: { Location: 'https://example.com/b.png' } })
+      }
+      return new Response(null, { status: 302, headers: { Location: 'https://example.com/a.png' } })
+    })
+
+    const error = await caught(fetchImage('https://example.com/a.png', fetchFn as unknown as typeof fetch))
+    expect(error.spoken).toMatch(/could not load/i)
+  })
+
+  it('enforces maximum redirect limit and rejects excessive redirects', async () => {
+    let hop = 0
+    const fetchFn = vi.fn(async () => {
+      hop++
+      return new Response(null, { status: 302, headers: { Location: `https://example.com/hop-${hop}.png` } })
+    })
+
+    const error = await caught(fetchImage('https://example.com/start.png', fetchFn as unknown as typeof fetch))
+    expect(error.spoken).toMatch(/could not load/i)
+  })
 })
