@@ -112,12 +112,24 @@ export interface AudioContextLike {
   createStereoPanner(): { pan: { value: number }; connect(node: unknown): void }
 }
 
+export const DEFAULT_MAX_EARCON_BUFFERS = 32
+
 export class EarconEngine {
   readonly #context: AudioContextLike
+  readonly #maxCapacity: number
   readonly #buffers = new Map<EarconName, BufferLike>()
 
-  constructor(context: AudioContextLike) {
+  constructor(context: AudioContextLike, maxCapacity = DEFAULT_MAX_EARCON_BUFFERS) {
     this.#context = context
+    this.#maxCapacity = Math.max(1, maxCapacity)
+  }
+
+  get bufferCount(): number {
+    return this.#buffers.size
+  }
+
+  clearBuffers(): void {
+    this.#buffers.clear()
   }
 
   play(name: EarconName, pan: number): void {
@@ -132,10 +144,23 @@ export class EarconEngine {
 
   #bufferFor(name: EarconName): BufferLike {
     const cached = this.#buffers.get(name)
-    if (cached) return cached
+    if (cached) {
+      // LRU refresh: move accessed buffer to end
+      this.#buffers.delete(name)
+      this.#buffers.set(name, cached)
+      return cached
+    }
     const samples = renderEarcon(name, this.#context.sampleRate)
     const buffer = this.#context.createBuffer(1, samples.length, this.#context.sampleRate)
     buffer.getChannelData(0).set(samples)
+
+    if (this.#buffers.size >= this.#maxCapacity) {
+      const oldest = this.#buffers.keys().next().value
+      if (oldest !== undefined) {
+        this.#buffers.delete(oldest)
+      }
+    }
+
     this.#buffers.set(name, buffer)
     return buffer
   }

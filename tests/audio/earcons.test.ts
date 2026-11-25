@@ -67,4 +67,48 @@ describe('EarconEngine', () => {
     engine.play('edge', 0)
     expect(ctx.createBuffer).toHaveBeenCalledTimes(1)
   })
+
+  it('bounds buffer memory by evicting least-recently-used buffers when capacity is exceeded', () => {
+    const { ctx } = fakeContext()
+    // Configure an engine with a small capacity of 3 buffers
+    const engine = new EarconEngine(ctx as never, 3)
+
+    engine.play('interactive', 0)
+    engine.play('static', 0)
+    engine.play('boundary', 0)
+    expect(engine.bufferCount).toBe(3)
+    expect(ctx.createBuffer).toHaveBeenCalledTimes(3)
+
+    // Access 'interactive' to mark it recently used (order now: static, boundary, interactive)
+    engine.play('interactive', 0)
+    expect(ctx.createBuffer).toHaveBeenCalledTimes(3) // reused
+
+    // Play a 4th earcon 'edge': causes 'static' (the LRU entry) to be evicted
+    engine.play('edge', 0)
+    expect(engine.bufferCount).toBe(3)
+    expect(ctx.createBuffer).toHaveBeenCalledTimes(4)
+
+    // Replay 'interactive': still cached!
+    engine.play('interactive', 0)
+    expect(ctx.createBuffer).toHaveBeenCalledTimes(4)
+
+    // Replay 'static': was evicted, so it is regenerated
+    engine.play('static', 0)
+    expect(ctx.createBuffer).toHaveBeenCalledTimes(5)
+    expect(engine.bufferCount).toBe(3)
+  })
+
+  it('clears all buffers safely via clearBuffers', () => {
+    const { ctx } = fakeContext()
+    const engine = new EarconEngine(ctx as never, 5)
+    engine.play('confirm', 0)
+    engine.play('error', 0)
+    expect(engine.bufferCount).toBe(2)
+
+    engine.clearBuffers()
+    expect(engine.bufferCount).toBe(0)
+
+    engine.play('confirm', 0)
+    expect(engine.bufferCount).toBe(1)
+  })
 })
