@@ -5,6 +5,7 @@ import {
   GeminiLiveClient,
   LIVE_COOLDOWN_MS,
   pcm16ToWavBase64,
+  sanitizeWsUrl,
   withLiveVoiceFallback,
   type WebSocketLike,
 } from '../../src/cloud/gemini-live'
@@ -129,6 +130,35 @@ describe('GeminiLiveClient', () => {
     sockets[0]!.emitAudio(btoa('ABCD'), true)
     expect((await turn).mimeType).toBe('audio/wav')
     expect(sockets).toHaveLength(1)
+  })
+
+  it('prefers short-lived ephemeral session tokens over permanent API keys when available', async () => {
+    let requestedUrl = ''
+    const client = new GeminiLiveClient({
+      getKey: async () => 'PERMANENT_SECRET_KEY',
+      getEphemeralToken: async () => ({ token: 'SHORT_LIVED_TOKEN_XYZ', expiresAt: Date.now() + 600_000 }),
+      createSocket: (url) => {
+        requestedUrl = url
+        const s = new FakeSocket()
+        queueMicrotask(() => s.open())
+        return s
+      },
+    })
+
+    const turn = client.synthesize({ text: 'Auth check.', voice: 'Kore', model: 'm' })
+    await new Promise((r) => setTimeout(r, 10))
+    expect(requestedUrl).toContain('access_token=SHORT_LIVED_TOKEN_XYZ')
+    expect(requestedUrl).not.toContain('PERMANENT_SECRET_KEY')
+  })
+
+  it('redacts secrets from WebSocket URLs for safe logging and error reporting', () => {
+    const rawUrl = 'wss://generativelanguage.googleapis.com/ws?key=SECRET_API_KEY_123&foo=bar'
+    const sanitized = sanitizeWsUrl(rawUrl)
+    expect(sanitized).toBe('wss://generativelanguage.googleapis.com/ws?key=%5BREDACTED%5D&foo=bar')
+    expect(sanitized).not.toContain('SECRET_API_KEY_123')
+
+    const tokenUrl = 'wss://example.com/ws?access_token=TOP_SECRET_BEARER'
+    expect(sanitizeWsUrl(tokenUrl)).not.toContain('TOP_SECRET_BEARER')
   })
 })
 

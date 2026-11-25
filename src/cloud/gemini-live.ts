@@ -23,11 +23,36 @@ export interface WebSocketLike {
   close(): void
 }
 
+/**
+ * Sanitizes WebSocket URLs for safe logging, diagnostics, and error messages
+ * by stripping query parameter secrets.
+ */
+export function sanitizeWsUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    for (const param of ['key', 'access_token', 'token', 'auth']) {
+      if (parsed.searchParams.has(param)) {
+        parsed.searchParams.set(param, '[REDACTED]')
+      }
+    }
+    return parsed.toString()
+  } catch {
+    return url.replace(/(?:([?&](?:key|access_token|token|auth)=))[^&]+/gi, '$1[REDACTED]')
+  }
+}
+
+export interface EphemeralToken {
+  readonly token: string
+  readonly expiresAt: number // epoch ms
+}
+
 export interface GeminiLiveDeps {
   getKey(): Promise<string | null>
+  getEphemeralToken?: () => Promise<EphemeralToken | null>
   createSocket?: (url: string) => WebSocketLike
   model?: string
   wsUrl?: string
+  now?: () => number
 }
 
 type Json = Record<string, unknown>
@@ -151,15 +176,33 @@ export class GeminiLiveClient implements Pick<GeminiClient, 'synthesize'> {
     }
   }
 
+  async #getAuthCredential(): Promise<{ param: string; value: string }> {
+    if (this.#deps.getEphemeralToken) {
+      try {
+        const ephemeral = await this.#deps.getEphemeralToken()
+        const now = this.#deps.now ? this.#deps.now() : Date.now()
+        if (ephemeral && ephemeral.token && ephemeral.expiresAt > now + 30_000) {
+          return { param: 'access_token', value: ephemeral.token }
+        }
+      } catch {
+        // Fall back to key if ephemeral token retrieval fails
+      }
+    }
+    const key = await this.#deps.getKey()
+    if (!key || key.trim() === '') throw new CloudError('no-key')
+    return { param: 'key', value: key.trim() }
+  }
+
   async #connect(voice: string): Promise<WebSocketLike> {
     if (this.#socket && this.#socket.readyState === 1 && this.#voice === voice && this.#ready) {
       return this.#ready
     }
     this.close()
-    const key = await this.#deps.getKey()
-    if (!key) throw new CloudError('no-key')
+    const auth = await this.#getAuthCredential()
 
-    const url = `${this.#deps.wsUrl ?? LIVE_WS_URL}?key=${encodeURIComponent(key)}`
+    const baseUrl = this.#deps.wsUrl ?? LIVE_WS_URL
+    const sep = baseUrl.includes('?') ? '&' : '?'
+    const url = `${baseUrl}${sep}${auth.param}=${encodeURIComponent(auth.value)}`
     const factory = this.#deps.createSocket ?? ((u: string) => new WebSocket(u) as unknown as WebSocketLike)
     const ws = factory(url)
     this.#socket = ws
