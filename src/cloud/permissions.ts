@@ -4,3 +4,4 @@
  * turned on, and nothing can be sent until it is granted.
  */
 export const GEMINI_ORIGIN = 'https://generativelanguage.googleapis.com/*'
+export const ANTHROPIC_ORIGIN = 'https://api.anthropic.com/*'

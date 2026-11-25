@@ -1,6 +1,6 @@
 import { chordWords, type ShortcutKeys } from '../key-router'
 import { CloudError } from '../cloud/gemini-client'
-import { GEMINI_ORIGIN } from '../cloud/permissions'
+import { ANTHROPIC_ORIGIN, GEMINI_ORIGIN } from '../cloud/permissions'
 import {
   clearAnthropicKey,
   clearGeminiKey,
@@ -39,6 +39,7 @@ export interface EditorDeps {
 }
 
 const ADD_KEY = ' Add your Google key to use it.'
+const ADD_AI_KEY = ' Add your Google key (or Anthropic key) to use it.'
 const aiKeys = (keys: ShortcutKeys): string =>
   ` Press ${chordWords(keys, 'D')} to describe what is under the pointer, and ${chordWords(keys, 'M')} to summarise the page.`
 
@@ -118,7 +119,8 @@ export class SettingsEditor {
    */
   async #grant(pending: PendingChange): Promise<string | null> {
     if (pending.key !== 'voiceInput') {
-      const granted = await this.#deps.requestPermission([GEMINI_ORIGIN])
+      const origins = pending.key === 'aiAssist' ? [GEMINI_ORIGIN, ANTHROPIC_ORIGIN] : [GEMINI_ORIGIN]
+      const granted = await this.#deps.requestPermission(origins)
       return granted ? null : `Permission was not granted, so ${pending.label.toLowerCase()} stays off.`
     }
     // Ask for the optional host permission first while the click user gesture is still fresh.
@@ -152,6 +154,11 @@ export class SettingsEditor {
 
   async testKey(): Promise<boolean> {
     try {
+      const granted = await this.#deps.requestPermission([GEMINI_ORIGIN])
+      if (!granted) {
+        this.#deps.speak('Permission to contact Google was not granted.')
+        return false
+      }
       await this.#deps.checkKey()
     } catch (error) {
       this.#deps.speak(error instanceof CloudError ? error.spoken : 'Could not check the key.')
@@ -185,6 +192,11 @@ export class SettingsEditor {
   async testAnthropicKey(): Promise<boolean> {
     if (!this.#deps.checkAnthropicKey) return false
     try {
+      const granted = await this.#deps.requestPermission([ANTHROPIC_ORIGIN])
+      if (!granted) {
+        this.#deps.speak('Permission to contact Anthropic was not granted.')
+        return false
+      }
       await this.#deps.checkAnthropicKey()
     } catch (error) {
       this.#deps.speak(error instanceof CloudError ? error.spoken : 'Could not check the Anthropic key.')
@@ -208,8 +220,10 @@ export class SettingsEditor {
       (field.key === 'voiceInput' && value === 'gemini')
     if (field.key === 'voiceInput' && value !== 'off') text += talkKeys(shortcutKeys)
     if (turnedOn) {
-      const hasKey = await this.hasKey()
-      text += hasKey ? (field.key === 'aiAssist' ? aiKeys(shortcutKeys) : '') : ADD_KEY
+      const hasKey =
+        field.key === 'aiAssist' ? (await this.hasKey()) || (await this.hasAnthropicKey()) : await this.hasKey()
+      const keyPrompt = field.key === 'aiAssist' ? ADD_AI_KEY : ADD_KEY
+      text += hasKey ? (field.key === 'aiAssist' ? aiKeys(shortcutKeys) : '') : keyPrompt
     }
     this.#deps.speak(text)
   }

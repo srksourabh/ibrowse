@@ -39,9 +39,13 @@ describe('manifest', () => {
   })
 
   it('can reach Google only if the user grants it: the permission is optional, not required', () => {
-    expect(manifest.optional_host_permissions).toEqual(['https://generativelanguage.googleapis.com/*'])
+    expect(manifest.optional_host_permissions).toEqual([
+      'https://generativelanguage.googleapis.com/*',
+      'https://api.anthropic.com/*',
+    ])
     expect(manifest.host_permissions).toEqual(['<all_urls>'])
     expect(manifest.permissions).not.toContain('https://generativelanguage.googleapis.com/*')
+    expect(manifest.permissions).not.toContain('https://api.anthropic.com/*')
   })
 
   it('has a toolbar button whose title says Explore Mode is off until a page turns it on', () => {

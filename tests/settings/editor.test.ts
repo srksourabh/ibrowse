@@ -7,9 +7,15 @@ import { DEFAULT_SETTINGS, loadSettings } from '../../src/shared/settings'
 const KEY = 'AIzaSyD-example_key_0123456789abcdef'
 
 function setup(
-  options: { permission?: boolean; microphone?: boolean; checkKey?: () => Promise<void>; initial?: Record<string, unknown> } = {},
+  options: {
+    permission?: boolean
+    microphone?: boolean
+    checkKey?: () => Promise<void>
+    checkAnthropicKey?: () => Promise<void>
+    initial?: Record<string, unknown>
+  } = {},
 ) {
-  const { geminiKey, ...rest } = options.initial ?? {}
+  const { geminiKey, anthropicKey, ...rest } = options.initial ?? {}
   const memory = (data: Record<string, unknown>) => ({
     data,
     get: async (key: string) => ({ [key]: data[key] }),
@@ -17,8 +23,11 @@ function setup(
     remove: async (key: string) => void delete data[key],
   })
   const store = memory({ ...rest })
-  // The key lives apart from the settings, where nothing running in a web page can read it.
-  const secrets = memory(geminiKey === undefined ? {} : { geminiKey })
+  // The keys live apart from settings, where nothing running in a web page can read them.
+  const secrets = memory({
+    ...(geminiKey !== undefined ? { geminiKey } : {}),
+    ...(anthropicKey !== undefined ? { anthropicKey } : {}),
+  })
   const spoken: string[] = []
   const requestPermission = vi.fn(async (_origins: string[]) => options.permission ?? true)
   const requestMicrophone = vi.fn(async () => options.microphone ?? true)
@@ -29,6 +38,7 @@ function setup(
     requestPermission,
     requestMicrophone,
     checkKey: options.checkKey ?? (async () => {}),
+    checkAnthropicKey: options.checkAnthropicKey ?? (async () => {}),
   })
   return { editor, store, secrets, spoken, requestPermission, requestMicrophone, last: () => spoken.at(-1) }
 }
@@ -285,5 +295,69 @@ describe('SettingsEditor: voice commands with Gemini', () => {
   it('warns again when changing from Chrome to Gemini, since speech would now go to Google with the key', async () => {
     const { editor } = setup({ initial: { settings: { voiceInput: 'chrome' } } })
     expect(await editor.change('voiceInput', 'gemini')).toBe('pending')
+  })
+})
+
+describe('SettingsEditor: Anthropic Claude integration & multi-provider handling', () => {
+  it('detects Gemini and Claude keys independently', async () => {
+    const geminiOnly = setup({ initial: { geminiKey: 'AIzaSyD-good_gemini_key_123456789' } })
+    expect(await geminiOnly.editor.hasKey()).toBe(true)
+    expect(await geminiOnly.editor.hasAnthropicKey()).toBe(false)
+
+    const claudeOnly = setup({ initial: { anthropicKey: 'sk-ant-api03-good_claude_key_123456789' } })
+    expect(await claudeOnly.editor.hasKey()).toBe(false)
+    expect(await claudeOnly.editor.hasAnthropicKey()).toBe(true)
+
+    const both = setup({
+      initial: {
+        geminiKey: 'AIzaSyD-good_gemini_key_123456789',
+        anthropicKey: 'sk-ant-api03-good_claude_key_123456789',
+      },
+    })
+    expect(await both.editor.hasKey()).toBe(true)
+    expect(await both.editor.hasAnthropicKey()).toBe(true)
+
+    const neither = setup()
+    expect(await neither.editor.hasKey()).toBe(false)
+    expect(await neither.editor.hasAnthropicKey()).toBe(false)
+  })
+
+  it('allows aiAssist when only Claude key is configured without false Google key warning', async () => {
+    const { editor, store, last, requestPermission } = setup({
+      initial: { anthropicKey: 'sk-ant-api03-good_claude_key_123456789' },
+    })
+    await editor.change('aiAssist', true)
+    expect(await editor.confirmPending()).toBe('saved')
+    expect(requestPermission).toHaveBeenCalledWith([
+      'https://generativelanguage.googleapis.com/*',
+      'https://api.anthropic.com/*',
+    ])
+    expect((await loadSettings(store)).aiAssist).toBe(true)
+    expect(last()).not.toContain('Add your Google key')
+    expect(last()).toContain('AI descriptions and summaries: on.')
+  })
+
+  it('requests Google key when turning on voice streaming or Gemini transcription with only Claude configured', async () => {
+    const { editor, store, last } = setup({
+      initial: { anthropicKey: 'sk-ant-api03-good_claude_key_123456789' },
+    })
+    // Cloud voice requires Gemini Live
+    await editor.change('cloudVoice', 'reading')
+    await editor.confirmPending()
+    expect(last()).toContain('Add your Google key to use it.')
+
+    // Gemini voice input requires Gemini transcription
+    await editor.change('voiceInput', 'gemini')
+    await editor.confirmPending()
+    expect(last()).toContain('Add your Google key to use it.')
+  })
+
+  it('communicates permission denial clearly for testKey and testAnthropicKey', async () => {
+    const { editor, last } = setup({ permission: false })
+    expect(await editor.testKey()).toBe(false)
+    expect(last()).toBe('Permission to contact Google was not granted.')
+
+    expect(await editor.testAnthropicKey()).toBe(false)
+    expect(last()).toBe('Permission to contact Anthropic was not granted.')
   })
 })

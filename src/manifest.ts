@@ -1,5 +1,5 @@
 import type { KeyAction } from './key-router'
-import { GEMINI_ORIGIN } from './cloud/permissions'
+import { ANTHROPIC_ORIGIN, GEMINI_ORIGIN } from './cloud/permissions'
 import { toolbarState } from './shared/toolbar'
 
 /**
@@ -36,7 +36,7 @@ export const manifest = {
   permissions: ['contextMenus', 'offscreen', 'storage', 'tts'],
   host_permissions: ['<all_urls>'],
   // Asked for only when the user turns on cloud voice or AI. Until granted, nothing can be sent.
-  optional_host_permissions: [GEMINI_ORIGIN],
+  optional_host_permissions: [GEMINI_ORIGIN, ANTHROPIC_ORIGIN],
   // The toolbar button switches Explore Mode, like Alt+I. Each page sets its own state (ADR-0016).
   action: { default_title: toolbarState(false).title },
   commands: {
