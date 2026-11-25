@@ -62,8 +62,8 @@ export class ClaudeClient implements Pick<GeminiClient, 'generate'> {
   }
 
   /** Lists one model with the key. Costs nothing, so it is how an Anthropic key is tested. */
-  async checkKey(): Promise<void> {
-    const key = await this.#deps.getKey()
+  async checkKey(candidateKey?: string): Promise<void> {
+    const key = candidateKey !== undefined && candidateKey.trim() !== '' ? candidateKey.trim() : await this.#deps.getKey()
     if (!key) throw new CloudError('no-key')
     let response: Response
     try {

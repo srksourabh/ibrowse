@@ -129,7 +129,11 @@ function bindTools(editor: SettingsEditor, speak: (text: string) => void, refres
     if (await editor.saveKey(input.value)) input.value = ''
     await refreshKeyStatus(editor)
   })
-  click('test-key', () => editor.testKey())
+  click('test-key', () => {
+    const input = byId<HTMLInputElement>('key')
+    const candidate = input.value.trim()
+    return editor.testKey(candidate !== '' ? candidate : undefined)
+  })
   click('remove-key', async () => {
     await editor.removeKey()
     await refreshKeyStatus(editor)
@@ -139,7 +143,11 @@ function bindTools(editor: SettingsEditor, speak: (text: string) => void, refres
     if (await editor.saveAnthropicKey(input.value)) input.value = ''
     await refreshKeyStatus(editor)
   })
-  click('test-anthropic-key', () => editor.testAnthropicKey())
+  click('test-anthropic-key', () => {
+    const input = byId<HTMLInputElement>('anthropic-key')
+    const candidate = input.value.trim()
+    return editor.testAnthropicKey(candidate !== '' ? candidate : undefined)
+  })
   click('remove-anthropic-key', async () => {
     await editor.removeAnthropicKey()
     await refreshKeyStatus(editor)
@@ -228,8 +236,8 @@ async function main(): Promise<void> {
       return chrome.permissions.request({ origins })
     },
     requestMicrophone,
-    checkKey: () => client.checkKey(),
-    checkAnthropicKey: () => claudeClient.checkKey(),
+    checkKey: (candidateKey?: string) => client.checkKey(candidateKey),
+    checkAnthropicKey: (candidateKey?: string) => claudeClient.checkKey(candidateKey),
   })
 
   const form = byId('settings')

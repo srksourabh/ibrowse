@@ -32,10 +32,10 @@ export interface EditorDeps {
   requestPermission(origins: string[]): Promise<boolean>
   /** Asks the browser to let the extension use the microphone. It needs a fresh user gesture. */
   requestMicrophone(): Promise<boolean>
-  /** Asks Google whether the saved key works. Throws CloudError if not. */
-  checkKey(): Promise<void>
-  /** Asks Anthropic whether the saved fallback key works. Throws CloudError if not. */
-  checkAnthropicKey?(): Promise<void>
+  /** Asks Google whether the key works. Throws CloudError if not. */
+  checkKey(candidateKey?: string): Promise<void>
+  /** Asks Anthropic whether the fallback key works. Throws CloudError if not. */
+  checkAnthropicKey?(candidateKey?: string): Promise<void>
 }
 
 const ADD_KEY = ' Add your Google key to use it.'
@@ -152,14 +152,21 @@ export class SettingsEditor {
     return true
   }
 
-  async testKey(): Promise<boolean> {
+  async testKey(candidateKey?: string): Promise<boolean> {
     try {
       const granted = await this.#deps.requestPermission([GEMINI_ORIGIN])
       if (!granted) {
         this.#deps.speak('Permission to contact Google was not granted.')
         return false
       }
-      await this.#deps.checkKey()
+      if (candidateKey !== undefined && candidateKey.trim() !== '') {
+        const key = candidateKey.trim()
+        if (!/^[A-Za-z0-9_-]{20,200}$/.test(key)) {
+          this.#deps.speak('That does not look like a Google API key. It is 20 or more letters, digits, dashes or underscores.')
+          return false
+        }
+      }
+      await this.#deps.checkKey(candidateKey)
     } catch (error) {
       this.#deps.speak(error instanceof CloudError ? error.spoken : 'Could not check the key.')
       return false
@@ -189,7 +196,7 @@ export class SettingsEditor {
     return true
   }
 
-  async testAnthropicKey(): Promise<boolean> {
+  async testAnthropicKey(candidateKey?: string): Promise<boolean> {
     if (!this.#deps.checkAnthropicKey) return false
     try {
       const granted = await this.#deps.requestPermission([ANTHROPIC_ORIGIN])
@@ -197,7 +204,14 @@ export class SettingsEditor {
         this.#deps.speak('Permission to contact Anthropic was not granted.')
         return false
       }
-      await this.#deps.checkAnthropicKey()
+      if (candidateKey !== undefined && candidateKey.trim() !== '') {
+        const key = candidateKey.trim()
+        if (!/^[A-Za-z0-9_-]{20,200}$/.test(key)) {
+          this.#deps.speak('That does not look like an Anthropic API key. It is 20 or more letters, digits, dashes or underscores.')
+          return false
+        }
+      }
+      await this.#deps.checkAnthropicKey(candidateKey)
     } catch (error) {
       this.#deps.speak(error instanceof CloudError ? error.spoken : 'Could not check the Anthropic key.')
       return false

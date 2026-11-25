@@ -249,4 +249,55 @@ describe('GeminiClient errors', () => {
     const { client } = setup(() => new Response('<html>Bad gateway</html>', { status: 502 }))
     expect((await caught(generate(client))).kind).toBe('server')
   })
+
+  it('differentiates API not enabled from an invalid API key', async () => {
+    const disabledResponse = {
+      error: {
+        code: 403,
+        message: 'Generative Language API has not been used in project 12345 before or it is disabled.',
+        status: 'PERMISSION_DENIED',
+        details: [{ reason: 'SERVICE_DISABLED' }],
+      },
+    }
+    const { client } = setup(() => jsonResponse(disabledResponse, 403))
+    const error = await caught(client.checkKey())
+    expect(error.kind).toBe('api-disabled')
+    expect(error.spoken).toMatch(/not enabled/i)
+  })
+
+  it('differentiates referrer/IP blocked from invalid key', async () => {
+    const blockedResponse = {
+      error: {
+        code: 403,
+        message: 'Requests to this API are blocked.',
+        status: 'PERMISSION_DENIED',
+        details: [{ reason: 'API_KEY_HTTP_REFERRER_BLOCKED' }],
+      },
+    }
+    const { client } = setup(() => jsonResponse(blockedResponse, 403))
+    const error = await caught(client.checkKey())
+    expect(error.kind).toBe('auth-failed')
+    expect(error.spoken).toMatch(/restrictions or authentication failure/i)
+  })
+
+  it('differentiates quota exceeded from general rate limit', async () => {
+    const quotaResponse = {
+      error: {
+        code: 429,
+        message: 'Resource has been exhausted (e.g. check quota).',
+        status: 'RESOURCE_EXHAUSTED',
+      },
+    }
+    const { client } = setup(() => jsonResponse(quotaResponse, 429))
+    const error = await caught(client.checkKey())
+    expect(error.kind).toBe('quota-exceeded')
+    expect(error.spoken).toMatch(/quota or billing limit/i)
+  })
+
+  it('tests a candidate key directly without modifying stored key', async () => {
+    const candidate = 'AIzaCandidateKeyDirectTest12345678'
+    const { client, lastRequest } = setup(() => jsonResponse({ models: [] }))
+    await client.checkKey(candidate)
+    expect(lastRequest().init.headers).toMatchObject({ 'x-goog-api-key': candidate })
+  })
 })

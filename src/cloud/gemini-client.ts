@@ -38,18 +38,96 @@ const isAbort = (error: unknown): boolean => (error as { name?: string } | null)
 
 async function errorFor(response: Response): Promise<CloudError> {
   const { status } = response
-  if (status === 401 || status === 403) return new CloudError('bad-key')
-  if (status === 404) return new CloudError('bad-model')
-  if (status === 429) return new CloudError('rate-limit')
-  if (status >= 500) return new CloudError('server')
-  if (status === 400) {
-    // Google answers a bad key with 400, so what it says decides. The words are only read, never repeated.
-    const message = await response
-      .json()
-      .then((body: unknown) => (isRecord(body) && isRecord(body.error) ? String(body.error.message ?? '') : ''))
-      .catch(() => '')
-    return new CloudError(/api key/i.test(message) ? 'bad-key' : 'bad-request')
+  let message = ''
+  let statusStr = ''
+  let reason = ''
+
+  try {
+    const body: unknown = await response.json()
+    if (isRecord(body) && isRecord(body.error)) {
+      message = String(body.error.message ?? '')
+      statusStr = String(body.error.status ?? '')
+      if (Array.isArray(body.error.details)) {
+        for (const detail of body.error.details) {
+          if (isRecord(detail) && typeof detail.reason === 'string') {
+            reason = detail.reason
+            break
+          }
+        }
+      }
+    }
+  } catch {
+    // Non-JSON response body
   }
+
+  const msgLower = message.toLowerCase()
+
+  // 1. API not enabled / Service disabled in Google Cloud
+  if (
+    reason === 'SERVICE_DISABLED' ||
+    reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT' ||
+    msgLower.includes('has not been used') ||
+    msgLower.includes('is disabled') ||
+    msgLower.includes('api not enabled')
+  ) {
+    return new CloudError('api-disabled')
+  }
+
+  // 2. Key restrictions or auth block (HTTP referrer, IP address blocked, not authorized)
+  if (
+    reason === 'API_KEY_HTTP_REFERRER_BLOCKED' ||
+    reason === 'API_KEY_IP_ADDRESS_BLOCKED' ||
+    reason === 'IP_REFERRER_BLOCKED' ||
+    msgLower.includes('requests from this referrer are blocked') ||
+    (msgLower.includes('requests to this api') && msgLower.includes('blocked')) ||
+    msgLower.includes('not authorized')
+  ) {
+    return new CloudError('auth-failed')
+  }
+
+  // 3. Billing disabled or quota exceeded
+  if (reason === 'BILLING_DISABLED' || msgLower.includes('billing')) {
+    return new CloudError('quota-exceeded')
+  }
+
+  // 4. Invalid API key (400 or 401 or explicit reason)
+  if (
+    reason === 'API_KEY_INVALID' ||
+    status === 401 ||
+    /api key.*(?:not valid|invalid)/i.test(message) ||
+    /invalid api key/i.test(message)
+  ) {
+    return new CloudError('bad-key')
+  }
+
+  // 5. 403 Forbidden
+  if (status === 403) {
+    if (statusStr === 'PERMISSION_DENIED' && reason !== '') {
+      return new CloudError('auth-failed')
+    }
+    return new CloudError('bad-key')
+  }
+
+  // 6. 404 Model Not Found
+  if (status === 404) return new CloudError('bad-model')
+
+  // 7. 429 Rate limit / Quota exceeded
+  if (status === 429) {
+    if (statusStr === 'RESOURCE_EXHAUSTED' || msgLower.includes('quota')) {
+      return new CloudError('quota-exceeded')
+    }
+    return new CloudError('rate-limit')
+  }
+
+  // 8. 5xx Server error
+  if (status >= 500) return new CloudError('server')
+
+  // 9. 400 Bad Request
+  if (status === 400) {
+    if (/api key/i.test(message)) return new CloudError('bad-key')
+    return new CloudError('bad-request')
+  }
+
   return new CloudError('bad-request')
 }
 
@@ -99,8 +177,8 @@ export class GeminiClient {
   }
 
   /** Lists models with the key. It costs nothing, so it is how a key is tested. */
-  async checkKey(): Promise<void> {
-    await this.#request('/v1beta/models?pageSize=1', { method: 'GET' })
+  async checkKey(candidateKey?: string): Promise<void> {
+    await this.#request('/v1beta/models?pageSize=1', { method: 'GET' }, candidateKey)
   }
 
   async synthesize(request: SynthesizeRequest): Promise<{ base64: string; mimeType: string }> {
@@ -152,8 +230,9 @@ export class GeminiClient {
   async #request(
     path: string,
     init: { method: 'GET' | 'POST'; body?: Json; signal?: AbortSignal | undefined },
+    overrideKey?: string,
   ): Promise<unknown> {
-    const key = await this.#deps.getKey()
+    const key = overrideKey !== undefined && overrideKey.trim() !== '' ? overrideKey.trim() : await this.#deps.getKey()
     if (!key) throw new CloudError('no-key')
 
     let response: Response

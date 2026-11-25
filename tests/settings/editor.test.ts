@@ -360,4 +360,30 @@ describe('SettingsEditor: Anthropic Claude integration & multi-provider handling
     expect(await editor.testAnthropicKey()).toBe(false)
     expect(last()).toBe('Permission to contact Anthropic was not granted.')
   })
+
+  it('tests candidate keys directly and validates format before network request', async () => {
+    const checkKey = vi.fn(async (_k?: string) => {})
+    const { editor, last } = setup({ checkKey })
+
+    // Malformed candidate key
+    expect(await editor.testKey('short')).toBe(false)
+    expect(last()).toMatch(/does not look like a Google API key/i)
+    expect(checkKey).not.toHaveBeenCalled()
+
+    // Valid candidate key
+    const candidate = 'AIzaCandidateKeyDirectTest12345678'
+    expect(await editor.testKey(candidate)).toBe(true)
+    expect(checkKey).toHaveBeenCalledWith(candidate)
+    expect(last()).toBe('Key accepted.')
+  })
+
+  it('reports granular cloud error messages on key test', async () => {
+    const { editor, last } = setup({
+      checkKey: async () => {
+        throw new CloudError('api-disabled')
+      },
+    })
+    expect(await editor.testKey()).toBe(false)
+    expect(last()).toMatch(/Generative Language API is not enabled/i)
+  })
 })
