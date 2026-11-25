@@ -251,6 +251,12 @@ async function main(): Promise<void> {
     }
     fillForm(current)
     await refreshKeyStatus(editor)
+    const liveEl = document.getElementById('live-status')
+    if (liveEl) {
+      liveEl.textContent = current.liveTokenServiceUrl.trim()
+        ? 'Gemini Live streaming: Token server configured (REST voice fallback active if unavailable).'
+        : 'Gemini Live streaming: Token server not configured (using REST voice fallback).'
+    }
   }
   bindForm(form, editor, speak, () => !companion, refresh)
   bindTools(editor, speak, refresh)

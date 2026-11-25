@@ -3,6 +3,7 @@ import { fetchImage } from '../ai/image-fetch'
 import type { AiRequest, AiResponse, LatencyReportMessage } from '../ai/messages'
 import { AudioCache } from '../cloud/audio-cache'
 import { ClaudeClient, withClaudeFallback } from '../cloud/claude-client'
+import { DeviceAuth } from '../cloud/device-auth'
 import { GeminiClient } from '../cloud/gemini-client'
 import { GeminiLiveClient, withLiveVoiceFallback } from '../cloud/gemini-live'
 import { loadAnthropicKey, loadVaultKey } from '../cloud/key-vault'
@@ -34,9 +35,20 @@ export class CloudHost {
       fetch: boundFetch,
       getKey: loadVaultKey,
     })
-    // Gemini Live WebSocket never receives the permanent API key; without an ephemeral
-    // token service configured, withLiveVoiceFallback routes synthesis to REST TTS.
-    const liveVoice = new GeminiLiveClient({})
+    const deviceAuth = new DeviceAuth({
+      store: chrome.storage.local,
+      fetch: boundFetch,
+    })
+    // Gemini Live WebSocket authenticates exclusively via short-lived ephemeral tokens
+    // minted by the trusted token backend (never via the permanent API key).
+    const liveVoice = new GeminiLiveClient({
+      getEphemeralToken: async () => {
+        const settings = await loadSettings(chrome.storage.local)
+        const serviceUrl = settings.liveTokenServiceUrl.trim()
+        if (!serviceUrl) return null
+        return deviceAuth.fetchLiveToken(serviceUrl)
+      },
+    })
     const claude = new ClaudeClient({
       fetch: boundFetch,
       getKey: loadAnthropicKey,

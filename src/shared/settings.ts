@@ -20,7 +20,10 @@ export interface Settings {
   /** Whether a cloud voice speaks: never, only long-form reading, or everything. */
   readonly cloudVoice: 'off' | 'reading' | 'all'
   readonly cloudVoiceName: string
+  /** Cloud voice model. */
   readonly cloudVoiceModel: string
+  /** Optional HTTPS URL of the iBrowse token-minting server for Gemini Live WebSockets. */
+  readonly liveTokenServiceUrl: string
   /** AI descriptions and summaries. Sends page text and images to the provider when used. */
   readonly aiAssist: boolean
   readonly aiModel: string
@@ -48,6 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cloudVoice: 'off',
   cloudVoiceName: 'Kore',
   cloudVoiceModel: 'gemini-3.8-flash-lite-tts',
+  liveTokenServiceUrl: '',
   aiAssist: false,
   aiModel: 'gemini-3.8-flash',
   latencyReadout: false,
@@ -81,6 +85,17 @@ const VALIDATORS: Record<keyof Settings, (value: unknown) => boolean> = {
   cloudVoice: oneOf('off', 'reading', 'all'),
   cloudVoiceName: (v) => typeof v === 'string' && /^[A-Za-z0-9_-]{1,40}$/.test(v),
   cloudVoiceModel: (v) => typeof v === 'string' && /^[a-z0-9.-]{1,60}$/.test(v),
+  liveTokenServiceUrl: (v) => {
+    if (typeof v !== 'string' || v.length > 200) return false
+    const trimmed = v.trim()
+    if (trimmed === '') return true
+    try {
+      const u = new URL(trimmed)
+      return u.protocol === 'https:' || u.hostname === 'localhost' || u.hostname === '127.0.0.1'
+    } catch {
+      return false
+    }
+  },
   aiAssist: isBoolean,
   aiModel: (v) => typeof v === 'string' && /^[a-z0-9.-]{1,60}$/.test(v),
   latencyReadout: isBoolean,
@@ -112,6 +127,7 @@ export function parseSettings(raw: unknown): Settings {
     cloudVoice: pick('cloudVoice'),
     cloudVoiceName: pick('cloudVoiceName'),
     cloudVoiceModel: pick('cloudVoiceModel'),
+    liveTokenServiceUrl: pick('liveTokenServiceUrl'),
     aiAssist: pick('aiAssist'),
     aiModel: pick('aiModel'),
     latencyReadout: pick('latencyReadout'),

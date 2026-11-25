@@ -168,6 +168,10 @@ export const SETTINGS_FIELDS: readonly FieldSpec[] = [
     help: 'The fallback Google speech model (default: gemini-3.8-flash-lite-tts). Used alongside Gemini Live for fast, low-cost speech.',
   },
   {
+    key: 'liveTokenServiceUrl', kind: 'text', group: 'cloud', label: 'Live voice token server', maxLength: 200,
+    help: 'Optional HTTPS address of your iBrowse token server for low-latency Gemini Live streaming. Leave empty to use REST voice.',
+  },
+  {
     key: 'aiAssist', kind: 'boolean', group: 'cloud', label: 'AI descriptions and summaries',
     help: 'Describe images, summarise long pages, and answer spoken questions about the page. Needs a Google key below.',
   },
