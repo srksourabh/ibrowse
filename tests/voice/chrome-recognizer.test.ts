@@ -68,13 +68,13 @@ describe('chooseMode', () => {
 })
 
 describe('ChromeRecognizer', () => {
-  it('listens once, in the page language, for one final result, on-device when chosen', async () => {
+  it('listens continuously with interim results in the page language, on-device when chosen', async () => {
     const listening = new ChromeRecognizer(SR, 'en-GB', 'on-device').listen({ maxMs: 5000 })
     const recognition = instances[0]!
     expect(recognition).toMatchObject({
       lang: 'en-GB',
-      interimResults: false,
-      continuous: false,
+      interimResults: true,
+      continuous: true,
       maxAlternatives: 1,
       processLocally: true,
     })
@@ -206,5 +206,31 @@ describe('recognitionErrorText: voice turned off', () => {
     expect(recognitionErrorText(new Error('voice-off'))).toBe(
       'Voice commands are off. Turn them on in settings, opened with Alt and O.',
     )
+  })
+})
+
+describe('ChromeRecognizer: multi-sentence and empty results', () => {
+  it('waits across natural pauses in multi-sentence speech and emits complete transcript', async () => {
+    const listening = new ChromeRecognizer(SR, 'en-US', 'online').listen({ maxMs: 15000 })
+    const recognition = instances[0]!
+    recognition.say('What is on this page.')
+    vi.advanceTimersByTime(600)
+    expect(recognition.stop).not.toHaveBeenCalled()
+    recognition.say('What is on this page. Also read the summary.')
+    vi.advanceTimersByTime(999)
+    expect(recognition.stop).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1)
+    expect(recognition.stop).toHaveBeenCalled()
+    await expect(listening.result).resolves.toBe('What is on this page. Also read the summary.')
+  })
+
+  it('resolves null for empty transcript without triggering settle timer', async () => {
+    const listening = new ChromeRecognizer(SR, 'en-US', 'online').listen({ maxMs: 5000 })
+    const recognition = instances[0]!
+    recognition.say('   ')
+    vi.advanceTimersByTime(1500)
+    expect(recognition.stop).not.toHaveBeenCalled()
+    recognition.onend?.()
+    await expect(listening.result).resolves.toBeNull()
   })
 })

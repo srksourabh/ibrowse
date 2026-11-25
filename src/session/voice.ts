@@ -122,7 +122,7 @@ export function createListening(s: Services, runner: VoiceRunner): ListeningCont
     recognizer,
     speech: s.speech,
     earcons: s.earcons,
-    onHeard: (text) => runner.run(parseUtterance(text)),
+    onHeard: (text, eventId) => runner.run(parseUtterance(text), eventId),
     onNothingHeard: () => void s.speech.speak({ text: NOTHING_HEARD, rate: s.rate() }),
     onError: (error) => void s.speech.speak({ text: recognitionErrorText(error), rate: s.rate() }),
   })

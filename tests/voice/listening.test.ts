@@ -51,7 +51,7 @@ describe('ListeningController: listening for an answer', () => {
     sessions[0]!.resolve('click')
     await flush()
     expect(deps.earcons.play).toHaveBeenLastCalledWith('listen-end', 0)
-    expect(deps.onHeard).toHaveBeenCalledWith('click')
+    expect(deps.onHeard).toHaveBeenCalledWith('click', 1)
     expect(controller.isListening).toBe(false)
   })
 
@@ -111,7 +111,7 @@ describe('ListeningController: push to talk', () => {
     expect(sessions[0]!.stop).toHaveBeenCalled()
     sessions[0]!.resolve('scroll down')
     await flush()
-    expect(deps.onHeard).toHaveBeenCalledWith('scroll down')
+    expect(deps.onHeard).toHaveBeenCalledWith('scroll down', 1)
   })
 
   it('takes over from a window opened for an answer', () => {

@@ -67,30 +67,32 @@ function whichOne(names: readonly string[]): string {
 /** A risky control waiting for a spoken yes, and when it was asked about. */
 type Confirming = { readonly element: Element; readonly at: number } | null
 
+const MAX_REMEMBERED_EVENTS = 64
+
 /** Carries out what the user said: a Voice Command on the page, or a question passed on. */
 export class VoiceRunner {
   readonly #deps: VoiceRunnerDeps
   #confirming: Confirming = null
-  #lastQuestion: { text: string; time: number } | null = null
+  readonly #processedEvents = new Set<string | number>()
 
   constructor(deps: VoiceRunnerDeps) {
     this.#deps = deps
   }
 
-  run(understood: Understood): void {
+  run(understood: Understood, eventId?: string | number): void {
     if (understood.type === 'nothing') return
+    if (eventId !== undefined) {
+      if (this.#processedEvents.has(eventId)) return
+      if (this.#processedEvents.size >= MAX_REMEMBERED_EVENTS) {
+        const oldest = this.#processedEvents.values().next().value
+        if (oldest !== undefined) this.#processedEvents.delete(oldest)
+      }
+      this.#processedEvents.add(eventId)
+    }
     const confirming = this.#confirming
     // Anything said after "Say yes to press it" answers it, or drops it.
     this.#confirming = null
     if (understood.type === 'question') {
-      if (
-        this.#lastQuestion &&
-        this.#lastQuestion.text === understood.text &&
-        this.#deps.now() - this.#lastQuestion.time < 1000
-      ) {
-        return
-      }
-      this.#lastQuestion = { text: understood.text, time: this.#deps.now() }
       this.#deps.ask(understood.text)
     } else {
       this.#command(understood.command, confirming)

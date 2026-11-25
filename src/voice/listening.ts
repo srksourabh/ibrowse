@@ -27,13 +27,14 @@ export interface ListeningDeps {
   readonly recognizer: SpeechRecognizer
   readonly speech: Pick<SpeechService, 'cancel'>
   readonly earcons: { play(name: EarconName, pan: number): void }
-  onHeard(text: string): void
+  onHeard(text: string, eventId: number): void
   /** The user held the talk key but nothing was made out. */
   onNothingHeard(): void
   onError(error: Error): void
 }
 
 interface Session {
+  readonly id: number
   readonly listening: Listening
   readonly held: boolean
   /** The talk key was let go; the request is now being turned into text. */
@@ -48,6 +49,7 @@ interface Session {
 export class ListeningController {
   readonly #deps: ListeningDeps
   #session: Session | null = null
+  #nextSessionId = 1
 
   constructor(deps: ListeningDeps) {
     this.#deps = deps
@@ -93,13 +95,18 @@ export class ListeningController {
 
   #begin(maxMs: number, held: boolean): void {
     this.#deps.earcons.play('listen', 0)
-    const session: Session = { listening: this.#deps.recognizer.listen({ maxMs }), held, released: false }
+    const session: Session = {
+      id: this.#nextSessionId++,
+      listening: this.#deps.recognizer.listen({ maxMs }),
+      held,
+      released: false,
+    }
     this.#session = session
     session.listening.result.then(
       (text) => {
         if (this.#session !== session) return // cancelled or replaced: a late result is dropped
         this.#end(session)
-        if (text && text.trim()) this.#deps.onHeard(text.trim())
+        if (text && text.trim()) this.#deps.onHeard(text.trim(), session.id)
         else if (session.held) this.#deps.onNothingHeard()
       },
       (error: unknown) => {

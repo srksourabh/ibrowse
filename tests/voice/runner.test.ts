@@ -269,4 +269,31 @@ describe('VoiceRunner: questions and nothing', () => {
     expect(spoken).toEqual([])
     expect(deps.ask).not.toHaveBeenCalled()
   })
+
+  it('processes identical questions submitted as separate user actions or sessions', () => {
+    const { runner, deps } = setup()
+    runner.run({ type: 'question', text: 'Is there free delivery?' }, 1)
+    runner.run({ type: 'question', text: 'Is there free delivery?' }, 2)
+    runner.run({ type: 'question', text: 'Is there free delivery?' })
+    expect(deps.ask).toHaveBeenCalledTimes(3)
+  })
+
+  it('deduplicates only when the exact same recognition event ID is delivered twice', () => {
+    const { runner, deps } = setup()
+    runner.run({ type: 'question', text: 'Is there free delivery?' }, 42)
+    runner.run({ type: 'question', text: 'Is there free delivery?' }, 42)
+    expect(deps.ask).toHaveBeenCalledTimes(1)
+  })
+
+  it('allows immediate retry after failure, cancellation, or settings change', () => {
+    let aiEnabled = false
+    const ask = vi.fn(() => {
+      if (!aiEnabled) throw new Error('AI off')
+    })
+    const { runner } = setup({ ask })
+    expect(() => runner.run({ type: 'question', text: 'Summarize' }, 10)).toThrow('AI off')
+    aiEnabled = true
+    runner.run({ type: 'question', text: 'Summarize' }, 11)
+    expect(ask).toHaveBeenCalledTimes(2)
+  })
 })

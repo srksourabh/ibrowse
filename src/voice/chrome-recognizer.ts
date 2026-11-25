@@ -63,8 +63,8 @@ export class ChromeRecognizer implements SpeechRecognizer {
   listen({ maxMs }: { readonly maxMs: number }): Listening {
     const recognition = new this.#Recognition()
     recognition.lang = this.#lang
-    recognition.interimResults = false
-    recognition.continuous = false
+    recognition.interimResults = true
+    recognition.continuous = true
     recognition.maxAlternatives = 1
     recognition.processLocally = this.#mode === 'on-device'
 
@@ -72,15 +72,17 @@ export class ChromeRecognizer implements SpeechRecognizer {
     let failure: string | null = null
     let dropped = false
     let settleTimer: ReturnType<typeof setTimeout> | null = null
+    const clearSettle = (): void => {
+      if (settleTimer) {
+        clearTimeout(settleTimer)
+        settleTimer = null
+      }
+    }
     const result = new Promise<string | null>((resolve, reject) => {
       recognition.onresult = (event) => {
         heard = Array.from(event.results, (r) => r[0]?.transcript ?? '').join(' ').trim() || null
-        // Reset the pause settle timer on any new speech activity
-        if (settleTimer) {
-          clearTimeout(settleTimer)
-          settleTimer = null
-        }
-        // Allow a natural conversational pause after speech before finalizing
+        // Reset the pause settle timer on any new interim or final speech activity
+        clearSettle()
         if (heard && !dropped) {
           settleTimer = setTimeout(() => {
             if (!dropped) recognition.stop()
@@ -92,7 +94,7 @@ export class ChromeRecognizer implements SpeechRecognizer {
       }
       recognition.onend = () => {
         clearTimeout(timer)
-        if (settleTimer) clearTimeout(settleTimer)
+        clearSettle()
         if (failure && !dropped) reject(new Error(failure))
         else resolve(dropped ? null : heard)
       }
@@ -108,9 +110,14 @@ export class ChromeRecognizer implements SpeechRecognizer {
     }
     return {
       result,
-      stop: () => recognition.stop(),
+      stop: () => {
+        clearSettle()
+        recognition.stop()
+      },
       cancel: () => {
         dropped = true
+        clearTimeout(timer)
+        clearSettle()
         recognition.abort()
       },
     }
