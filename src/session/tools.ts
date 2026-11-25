@@ -21,6 +21,7 @@ import {
   scrubBlockAt,
 } from '../reading/blocks'
 import { TextReader } from '../reading/text-reader'
+import { getNavigationCoordinator, NavigationCoordinator } from '../navigation/navigation-coordinator'
 import type { NavigationNotice, OpenPageRequest, TabInfoRequest, TabInfoResponse } from '../shared/messages'
 import { statusText } from '../status/status'
 import { createAi } from './ai'
@@ -38,7 +39,8 @@ function activatePagination(target: PaginationTarget): void {
 }
 
 /** Focus text fields so the user can type; click everything else. */
-export function activateElement(el: Element): void {
+export function activateElement(el: Element, coordinator: NavigationCoordinator = getNavigationCoordinator()): void {
+  coordinator.beforeActivation(el)
   const info = describeElement(el)
   if (info.affordance === 'static' || !(el instanceof HTMLElement)) return
   if (['textbox', 'searchbox', 'combobox'].includes(info.role)) el.focus()
@@ -105,7 +107,7 @@ function createBriefer(s: Services, hover: HoverController, ai: SessionAi): Brie
   })
 }
 
-function createPageNavigator(s: Services): PageNavigator {
+function createPageNavigator(s: Services, coordinator: NavigationCoordinator = getNavigationCoordinator()): PageNavigator {
   return new PageNavigator({
     scroll: {
       y: () => window.scrollY,
@@ -115,10 +117,7 @@ function createPageNavigator(s: Services): PageNavigator {
     },
     findLink: (direction) => findPaginationTarget(document, direction),
     activate: activatePagination,
-    willNavigate: () => {
-      const notice: NavigationNotice = { type: 'will-navigate' }
-      chrome.runtime.sendMessage(notice).catch(s.reportError)
-    },
+    willNavigate: () => coordinator.noteNavigation(),
     briefViewport: () => viewportBriefing(analyzeCurrentPage('viewport')),
     speech: s.speech,
     earcons: s.earcons,
@@ -178,7 +177,12 @@ function openPage(s: Services, page: OpenPageRequest['page']): void {
 }
 
 /** Everything an Explore Mode session works with, built from the shared services. */
-export function createTools(s: Services, isTopFrame: boolean, exploreOff: () => void) {
+export function createTools(
+  s: Services,
+  isTopFrame: boolean,
+  exploreOff: () => void,
+  coordinator: NavigationCoordinator = getNavigationCoordinator(),
+) {
   const jumps = createJumps(s)
   const meter = new LatencyMeter()
   // Ask-after-rest needs listening, which needs the voice runner, which needs hover: bound late.
@@ -189,7 +193,7 @@ export function createTools(s: Services, isTopFrame: boolean, exploreOff: () => 
   })
   const ai = createAi(s, hover)
   const briefer = createBriefer(s, hover, ai)
-  const navigator = createPageNavigator(s)
+  const navigator = createPageNavigator(s, coordinator)
   const reader = createReader(s, hover, navigator)
   const whereAmI = createWhereAmI(s)
   const voice = createVoice(s, {
@@ -199,8 +203,9 @@ export function createTools(s: Services, isTopFrame: boolean, exploreOff: () => 
     reader,
     navigator,
     whereAmI,
-    activate: activateElement,
+    activate: (el) => activateElement(el, coordinator),
     ai,
+    coordinator,
     // The listening controller is built from this runner, so it is reached late.
     listenForAnswer: () => listening.listenForAnswer(),
   })
@@ -208,6 +213,7 @@ export function createTools(s: Services, isTopFrame: boolean, exploreOff: () => 
 
   return {
     isTopFrame,
+    navigationCoordinator: coordinator,
     jumps,
     hover,
     briefer,

@@ -6,6 +6,7 @@ import type { HoverController } from '../hover/hover-controller'
 import type { JumpNavigator } from '../navigation/jump-navigator'
 import type { PageNavigator } from '../navigation/page-navigator'
 import type { TextReader } from '../reading/text-reader'
+import type { NavigationCoordinator } from '../navigation/navigation-coordinator'
 import type { NavigationNotice } from '../shared/messages'
 import { AskAfterRest } from '../voice/ask-after-rest'
 import { recognitionErrorText } from '../voice/chrome-recognizer'
@@ -39,6 +40,7 @@ export interface VoiceParts {
   readonly ai: SessionAi
   /** Opens the short answer window; bound once the listening controller exists. */
   readonly listenForAnswer: () => void
+  readonly coordinator?: NavigationCoordinator
 }
 
 /** The page is about to change because of something said, so Explore Mode resumes after it loads. */
@@ -70,7 +72,8 @@ export function createVoice(s: Services, p: VoiceParts): VoiceRunner {
     describe: (el) => spokenText(describeElement(el)),
     isText: (el) => describeElement(el).affordance === 'static',
     activate: (el) => {
-      if (el.closest('a[href]')) noteNavigation(s)
+      if (p.coordinator) p.coordinator.beforeActivation(el)
+      else if (el.closest('a[href]')) noteNavigation(s)
       p.activate(el)
     },
     readBlock: (el) => p.reader.readBlock(el),
@@ -81,7 +84,8 @@ export function createVoice(s: Services, p: VoiceParts): VoiceRunner {
     scrollToEdge: (edge) => p.navigator.scrollToEdge(edge),
     goPage: (direction) => void p.navigator.go(direction),
     history: (step) => {
-      noteNavigation(s)
+      if (p.coordinator) p.coordinator.noteNavigation()
+      else noteNavigation(s)
       history.go(step)
     },
     whereAmI: p.whereAmI,

@@ -114,6 +114,8 @@ function readingHandlers(s: Services, t: Tools): Record<string, HandlerSpec> {
     click: (event) => {
       if (!(event instanceof MouseEvent) || !event.isTrusted || event.button !== 0) return
       const target = hitTest(event.clientX, event.clientY)
+      const element = (event.target instanceof Element ? event.target : target) ?? target
+      if (element) t.navigationCoordinator.beforeActivation(element, event)
       if (!target) return
       const info = describeElement(target)
       // Controls, and elements that may be controls, keep their normal click, and confirm it.
