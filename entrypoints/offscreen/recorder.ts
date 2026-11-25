@@ -2,7 +2,7 @@
 export const SAMPLE_RATE = 16000
 const BUFFER_SIZE = 4096
 /** Auto-stop after this much silence once speech is heard (used for hands-free answer windows). */
-const SILENCE_STOP_MS = 700
+const SILENCE_STOP_MS = 1200
 const SPEECH_RMS_THRESHOLD = 0.015
 const ANSWER_WINDOW_MAX_MS = 6000
 

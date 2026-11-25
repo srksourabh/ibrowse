@@ -124,6 +124,35 @@ describe('ChromeRecognizer', () => {
     instances[0]!.onend?.()
     await expect(listening.result).rejects.toThrow('not-allowed')
   })
+
+  it('resets settle timer on continued speech and accommodates natural pauses', async () => {
+    const listening = new ChromeRecognizer(SR, 'en-GB', 'online').listen({ maxMs: 15000 })
+    const rec = instances[0]!
+
+    // First word spoken
+    rec.say('What')
+    // Advance 400ms (shorter than natural pause)
+    vi.advanceTimersByTime(400)
+    expect(rec.stop).not.toHaveBeenCalled()
+
+    // Second words spoken before pause runs out
+    rec.say('What is the main topic')
+    vi.advanceTimersByTime(500)
+    expect(rec.stop).not.toHaveBeenCalled()
+
+    // Third phrase spoken
+    rec.say('What is the main topic of this page')
+    // Advance 500ms (still speaking / brief pause)
+    vi.advanceTimersByTime(500)
+    expect(rec.stop).not.toHaveBeenCalled()
+
+    // Full 1000ms natural pause of silence occurs after complete question
+    vi.advanceTimersByTime(1000)
+    expect(rec.stop).toHaveBeenCalledOnce()
+
+    rec.onend?.()
+    await expect(listening.result).resolves.toBe('What is the main topic of this page')
+  })
 })
 
 describe('recognitionErrorText', () => {

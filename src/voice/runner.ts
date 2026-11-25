@@ -71,6 +71,7 @@ type Confirming = { readonly element: Element; readonly at: number } | null
 export class VoiceRunner {
   readonly #deps: VoiceRunnerDeps
   #confirming: Confirming = null
+  #lastQuestion: { text: string; time: number } | null = null
 
   constructor(deps: VoiceRunnerDeps) {
     this.#deps = deps
@@ -81,8 +82,19 @@ export class VoiceRunner {
     const confirming = this.#confirming
     // Anything said after "Say yes to press it" answers it, or drops it.
     this.#confirming = null
-    if (understood.type === 'question') this.#deps.ask(understood.text)
-    else this.#command(understood.command, confirming)
+    if (understood.type === 'question') {
+      if (
+        this.#lastQuestion &&
+        this.#lastQuestion.text === understood.text &&
+        this.#deps.now() - this.#lastQuestion.time < 1000
+      ) {
+        return
+      }
+      this.#lastQuestion = { text: understood.text, time: this.#deps.now() }
+      this.#deps.ask(understood.text)
+    } else {
+      this.#command(understood.command, confirming)
+    }
   }
 
   #command(command: VoiceCommand, confirming: Confirming): void {

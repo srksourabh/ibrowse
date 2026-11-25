@@ -79,7 +79,10 @@ export function createVoice(s: Services, p: VoiceParts): VoiceRunner {
     readBlock: (el) => p.reader.readBlock(el),
     readAll: (from) => p.briefer.readAll(from),
     brief: () => p.briefer.brief(),
-    stop: () => p.briefer.stop(),
+    stop: () => {
+      s.speech.cancel()
+      p.briefer.stop()
+    },
     scrollScreen: (direction) => void p.navigator.scrollScreen(direction),
     scrollToEdge: (edge) => p.navigator.scrollToEdge(edge),
     goPage: (direction) => void p.navigator.go(direction),
@@ -94,7 +97,14 @@ export function createVoice(s: Services, p: VoiceParts): VoiceRunner {
       p.jumps.setCursor(el)
     },
     // Questions go to the AI only when the user turned it on; otherwise iBrowse says so (PRD FR-11.5).
-    ask: (question) => (s.settings().aiAssist ? p.ai.answer(question) : say(NOT_UNDERSTOOD)),
+    ask: (question) => {
+      if (s.settings().aiAssist) {
+        s.speech.cancel()
+        p.ai.answer(question)
+      } else {
+        say(NOT_UNDERSTOOD)
+      }
+    },
     lastSpoken: () => s.speech.lastText,
     speech: s.speech,
     earcons: s.earcons,

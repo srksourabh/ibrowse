@@ -42,6 +42,13 @@ export async function chooseMode(recognition: RecognitionClass, lang: string): P
 }
 
 /** Chrome's own recogniser (ADR-0017 #1). Runs in the offscreen document. */
+/**
+ * Natural conversational pause threshold: silence after speech before endpointing.
+ * 1000ms gives blind users time to breathe and pause between words or thoughts
+ * without premature interruption, while keeping the turn responsive.
+ */
+export const NATURAL_PAUSE_MS = 1000
+
 export class ChromeRecognizer implements SpeechRecognizer {
   readonly #Recognition: RecognitionClass
   readonly #lang: string
@@ -68,11 +75,16 @@ export class ChromeRecognizer implements SpeechRecognizer {
     const result = new Promise<string | null>((resolve, reject) => {
       recognition.onresult = (event) => {
         heard = Array.from(event.results, (r) => r[0]?.transcript ?? '').join(' ').trim() || null
-        // Stop shortly after a transcript arrives instead of waiting for Chrome's long silence tail.
-        if (heard && !settleTimer) {
+        // Reset the pause settle timer on any new speech activity
+        if (settleTimer) {
+          clearTimeout(settleTimer)
+          settleTimer = null
+        }
+        // Allow a natural conversational pause after speech before finalizing
+        if (heard && !dropped) {
           settleTimer = setTimeout(() => {
             if (!dropped) recognition.stop()
-          }, 150)
+          }, NATURAL_PAUSE_MS)
         }
       }
       recognition.onerror = (event) => {
