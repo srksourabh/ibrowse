@@ -2,6 +2,9 @@ import { createReadStream, existsSync, statSync } from 'node:fs'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createTokenService } from '../server/token-service.mjs'
+
+const tokenService = createTokenService()
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const docsDir = path.join(root, 'docs')
@@ -146,7 +149,17 @@ const server = createServer((req, res) => {
 
   if (pathname === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ status: 'ok', version: '0.2.0' }))
+    res.end(JSON.stringify({ status: 'ok', version: '0.2.0', liveTokenService: tokenService.isEnabled }))
+    return
+  }
+
+  if (pathname.startsWith('/api/')) {
+    void tokenService.handle(req, res, pathname).then((handled) => {
+      if (!handled) {
+        res.writeHead(404, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'not_found' }))
+      }
+    })
     return
   }
 
