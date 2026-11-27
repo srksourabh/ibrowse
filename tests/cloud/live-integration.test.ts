@@ -93,11 +93,13 @@ describe('End-to-end Gemini Live ephemeral auth flow (Extension -> Token Backend
     const store = memoryStore()
     const deviceAuth = new DeviceAuth({ store })
     const wsUrls: string[] = []
+    const sockets: FakeLiveSocket[] = []
     const liveClient = new GeminiLiveClient({
       getEphemeralToken: () => deviceAuth.fetchLiveToken(srv.baseUrl),
       createSocket: (url) => {
         wsUrls.push(url)
         const s = new FakeLiveSocket()
+        sockets.push(s)
         queueMicrotask(() => s.open())
         return s
       },
@@ -114,6 +116,8 @@ describe('End-to-end Gemini Live ephemeral auth flow (Extension -> Token Backend
     expect(wsUrls[0]).toContain('access_token=auth_tokens%2Flive_e2e_token_987')
     expect(wsUrls[0]).not.toContain('PERMANENT_SERVER_API_KEY_NEVER_IN_EXT')
     expect(wsUrls[0]).not.toMatch(/[?&]key=/)
+    const setupMsg = JSON.parse(sockets[0]!.sent[0]!) as { setup: { model: string } }
+    expect(setupMsg.setup.model).toBe('models/gemini-2.5-flash-native-audio-preview-12-2025')
     // Ephemeral Live token must NOT be persisted in storage
     expect(JSON.stringify(store.data)).not.toContain('live_e2e_token_987')
   })

@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { CloudError } from '../../src/cloud/cloud-error'
 import {
-  createTokenServiceProvider,
   DEFAULT_LIVE_MODEL,
   GeminiLiveClient,
   LIVE_COOLDOWN_MS,
@@ -216,38 +215,29 @@ describe('GeminiLiveClient', () => {
     const tokenUrl = 'wss://example.com/ws?access_token=TOP_SECRET_BEARER'
     expect(sanitizeWsUrl(tokenUrl)).not.toContain('TOP_SECRET_BEARER')
   })
-})
 
-describe('createTokenServiceProvider', () => {
-  it('fetches ephemeral tokens over HTTPS and handles auth rejections and invalid responses', async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(JSON.stringify({ token: 'auth_tokens/abc', expiresAt: 999_999_999 }), { status: 200 }),
-    )
-    const provider = createTokenServiceProvider({
-      endpoint: 'https://token.example.com/gemini-live-token',
-      fetch: fetchMock as unknown as typeof fetch,
-      getAuthHeader: async () => 'Bearer user_session_123',
-    })
-    await expect(provider()).resolves.toEqual({ token: 'auth_tokens/abc', expiresAt: 999_999_999 })
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://token.example.com/gemini-live-token',
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({ Authorization: 'Bearer user_session_123' }),
+  it('uses the ephemeral token model constraint in WebSocket setup when provided', async () => {
+    const sockets: FakeSocket[] = []
+    const client = new GeminiLiveClient({
+      getEphemeralToken: async () => ({
+        token: 'auth_tokens/constrained_model_tok',
+        expiresAt: Date.now() + 600_000,
+        model: 'models/gemini-2.5-flash-native-audio-preview-12-2025',
       }),
-    )
-
-    const rejected = createTokenServiceProvider({
-      endpoint: 'https://token.example.com/gemini-live-token',
-      fetch: (async () => new Response('Forbidden', { status: 403 })) as unknown as typeof fetch,
+      createSocket: () => {
+        const s = new FakeSocket()
+        sockets.push(s)
+        queueMicrotask(() => s.open())
+        return s
+      },
     })
-    await expect(rejected()).rejects.toMatchObject({ kind: 'auth-failed' })
 
-    const insecure = createTokenServiceProvider({
-      endpoint: 'http://evil.example.com/token',
-      fetch: fetchMock as unknown as typeof fetch,
-    })
-    await expect(insecure()).rejects.toMatchObject({ kind: 'auth-failed' })
+    const turn = client.synthesize({ text: 'Hello.', voice: 'Kore', model: 'm' })
+    await new Promise((r) => setTimeout(r, 10))
+    const setupMsg = JSON.parse(sockets[0]!.sent[0]!) as { setup: { model: string } }
+    expect(setupMsg.setup.model).toBe('models/gemini-2.5-flash-native-audio-preview-12-2025')
+    sockets[0]!.emitAudio(btoa('ABCD'), true)
+    await turn
   })
 })
 

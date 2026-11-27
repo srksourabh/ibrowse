@@ -7,7 +7,6 @@ export const DEFAULT_LIVE_MODEL = 'models/gemini-3.8-live'
 export const LIVE_PCM_SAMPLE_RATE = 24_000
 const CONNECT_TIMEOUT_MS = 3_000
 const TURN_TIMEOUT_MS = 15_000
-const TOKEN_TIMEOUT_MS = 5_000
 const TOKEN_EXPIRY_BUFFER_MS = 30_000
 export const LIVE_COOLDOWN_MS = 30_000
 
@@ -46,67 +45,7 @@ export function sanitizeWsUrl(url: string): string {
 export interface EphemeralToken {
   readonly token: string
   readonly expiresAt: number // epoch ms
-}
-
-export interface TokenServiceOptions {
-  readonly endpoint: string
-  readonly fetch?: typeof fetch
-  readonly getAuthHeader?: () => Promise<string | null>
-  readonly timeoutMs?: number
-}
-
-/**
- * Fetches short-lived, constrained Gemini Live ephemeral tokens (`auth_tokens/...`)
- * from a trusted backend service. Tokens are kept only in memory and never persisted.
- */
-export function createTokenServiceProvider(options: TokenServiceOptions): () => Promise<EphemeralToken | null> {
-  const fetchFn = options.fetch ?? fetch
-  const timeoutMs = options.timeoutMs ?? TOKEN_TIMEOUT_MS
-
-  return async () => {
-    let parsed: URL
-    try {
-      parsed = new URL(options.endpoint)
-    } catch {
-      throw new CloudError('auth-failed')
-    }
-    if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
-      throw new CloudError('auth-failed')
-    }
-
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), timeoutMs)
-    try {
-      const headers: Record<string, string> = { Accept: 'application/json' }
-      const auth = options.getAuthHeader ? await options.getAuthHeader() : null
-      if (auth) headers.Authorization = auth
-
-      const response = await fetchFn(parsed.toString(), {
-        method: 'POST',
-        headers,
-        signal: controller.signal,
-      })
-      if (response.status === 401 || response.status === 403) throw new CloudError('auth-failed')
-      if (!response.ok) throw new CloudError('server')
-
-      const body: unknown = await response.json()
-      if (
-        !isRecord(body) ||
-        typeof body.token !== 'string' ||
-        body.token.trim() === '' ||
-        typeof body.expiresAt !== 'number' ||
-        !Number.isFinite(body.expiresAt)
-      ) {
-        throw new CloudError('auth-failed')
-      }
-      return { token: body.token.trim(), expiresAt: body.expiresAt }
-    } catch (error) {
-      if (error instanceof CloudError) throw error
-      throw new CloudError('network')
-    } finally {
-      clearTimeout(timer)
-    }
-  }
+  readonly model?: string
 }
 
 export interface GeminiLiveDeps {
@@ -202,6 +141,7 @@ export class GeminiLiveClient implements Pick<GeminiClient, 'synthesize'> {
   #socket: WebSocketLike | null = null
   #ready: Promise<WebSocketLike> | null = null
   #voice = ''
+  #tokenModel: string | undefined = undefined
   #tokenExpiresAt = 0
   #queue: Promise<void> = Promise.resolve()
 
@@ -254,7 +194,12 @@ export class GeminiLiveClient implements Pick<GeminiClient, 'synthesize'> {
     if (!ephemeral || !ephemeral.token || ephemeral.token.trim() === '' || ephemeral.expiresAt <= now + TOKEN_EXPIRY_BUFFER_MS) {
       throw new CloudError('auth-failed')
     }
-    return { token: ephemeral.token.trim(), expiresAt: ephemeral.expiresAt }
+    const model = typeof ephemeral.model === 'string' && ephemeral.model.trim() !== '' ? ephemeral.model.trim() : undefined
+    return {
+      token: ephemeral.token.trim(),
+      expiresAt: ephemeral.expiresAt,
+      ...(model ? { model } : {}),
+    }
   }
 
   async #connect(voice: string): Promise<WebSocketLike> {
@@ -271,6 +216,7 @@ export class GeminiLiveClient implements Pick<GeminiClient, 'synthesize'> {
     this.close()
     const ephemeral = await this.#getAuthToken()
     this.#tokenExpiresAt = ephemeral.expiresAt
+    this.#tokenModel = ephemeral.model
 
     const baseUrl = this.#deps.wsUrl ?? LIVE_WS_URL
     const sep = baseUrl.includes('?') ? '&' : '?'
@@ -290,7 +236,7 @@ export class GeminiLiveClient implements Pick<GeminiClient, 'synthesize'> {
         ws.send(
           JSON.stringify({
             setup: {
-              model: this.#deps.model ?? DEFAULT_LIVE_MODEL,
+              model: this.#tokenModel ?? this.#deps.model ?? DEFAULT_LIVE_MODEL,
               generationConfig: {
                 responseModalities: ['AUDIO'],
                 speechConfig: {

@@ -193,7 +193,11 @@ export class DeviceAuth {
     if (res.status === 401 || res.status === 403) throw new CloudError('auth-failed')
     if (res.status === 429) throw new CloudError('rate-limit')
     if (!res.ok) throw new CloudError('server')
-    const body = (await res.json().catch(() => null)) as { token?: unknown; expiresAt?: unknown } | null
+    const body = (await res.json().catch(() => null)) as {
+      token?: unknown
+      expiresAt?: unknown
+      model?: unknown
+    } | null
     if (
       !body ||
       typeof body.token !== 'string' ||
@@ -203,6 +207,11 @@ export class DeviceAuth {
     ) {
       throw new CloudError('auth-failed')
     }
-    return { token: body.token.trim(), expiresAt: body.expiresAt }
+    const model = typeof body.model === 'string' && body.model.trim() !== '' ? body.model.trim() : undefined
+    return {
+      token: body.token.trim(),
+      expiresAt: body.expiresAt,
+      ...(model ? { model } : {}),
+    }
   }
 }
