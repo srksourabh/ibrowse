@@ -10,6 +10,7 @@ const DEVICE_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 const SIGNATURE_MAX_SKEW_MS = 60_000
 const GOOGLE_TIMEOUT_MS = 10_000
 const MAX_BODY_BYTES = 16 * 1024
+const MAX_SEEN_NONCES = 50_000
 
 /**
  * Simple sliding-window rate limiter for per-IP and per-device quotas.
@@ -123,7 +124,9 @@ export function createTokenService(options = {}) {
   const enabledFlag = (options.enabled ?? env.GEMINI_LIVE_TOKEN_SERVICE_ENABLED ?? (apiKey ? 'true' : 'false')).toLowerCase()
   const isEnabled = enabledFlag === 'true' && apiKey !== ''
 
-  const signingSecret = (options.signingSecret ?? env.IBROWSE_TOKEN_SIGNING_SECRET ?? '').trim() || randomBytes(32).toString('hex')
+  const signingSecretRaw = (options.signingSecret ?? env.IBROWSE_TOKEN_SIGNING_SECRET ?? '').trim()
+  const signingSecretConfigured = signingSecretRaw !== ''
+  const signingSecret = signingSecretRaw || randomBytes(32).toString('hex')
   const model = (options.model ?? env.GEMINI_LIVE_MODEL ?? DEFAULT_LIVE_MODEL).trim() || DEFAULT_LIVE_MODEL
   const tokenTtlSec = clamp(options.tokenTtlSec ?? env.GEMINI_LIVE_TOKEN_TTL, MIN_TOKEN_TTL_SEC, MAX_TOKEN_TTL_SEC, DEFAULT_TOKEN_TTL_SEC)
   const newSessionTtlSec = clamp(
@@ -136,10 +139,20 @@ export function createTokenService(options = {}) {
   const registerLimitPerMin = clamp(options.registerLimitPerMin ?? env.IBROWSE_REGISTER_RATE_LIMIT_PER_MIN, 1, 1000, 10)
   const tokenLimitPerMin = clamp(options.tokenLimitPerMin ?? env.IBROWSE_TOKEN_RATE_LIMIT_PER_MIN, 1, 1000, 20)
   const tokenDailyQuota = clamp(options.tokenDailyQuota ?? env.IBROWSE_TOKEN_DAILY_QUOTA, 1, 100_000, 200)
+  const globalLimitPerMin = clamp(options.globalLimitPerMin ?? env.IBROWSE_GLOBAL_TOKEN_RATE_LIMIT_PER_MIN, 1, 100_000, 120)
+
+  const allowedOriginsRaw = options.allowedOrigins ?? env.IBROWSE_ALLOWED_ORIGINS ?? ''
+  const allowedOrigins = new Set(
+    String(allowedOriginsRaw)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+  )
 
   const ipLimiter = new WindowLimiter()
   const deviceMinLimiter = new WindowLimiter()
   const deviceDayLimiter = new WindowLimiter()
+  const globalLimiter = new WindowLimiter()
   const seenNonces = new Map() // nonce -> expiresAtMs
 
   function signDeviceToken(payload) {
@@ -179,6 +192,18 @@ export function createTokenService(options = {}) {
     for (const [nonce, exp] of seenNonces) {
       if (exp <= now) seenNonces.delete(nonce)
     }
+    while (seenNonces.size >= MAX_SEEN_NONCES) {
+      const oldest = seenNonces.keys().next().value
+      if (oldest === undefined) break
+      seenNonces.delete(oldest)
+    }
+  }
+
+  function isOriginAllowed(req) {
+    if (allowedOrigins.size === 0) return true
+    const origin = req.headers.origin
+    if (typeof origin !== 'string' || origin === '') return true
+    return allowedOrigins.has(origin)
   }
 
   function clientIp(req) {
@@ -286,6 +311,12 @@ export function createTokenService(options = {}) {
       return
     }
 
+    const globalCheck = globalLimiter.check('global', globalLimitPerMin, 60_000, now)
+    if (!globalCheck.allowed) {
+      sendJson(res, 429, { error: 'rate_limited', message: 'Service busy. Try again shortly.' }, { 'Retry-After': String(globalCheck.retryAfterSec) })
+      return
+    }
+
     const expireIso = new Date(now + tokenTtlSec * 1000).toISOString()
     const newSessionIso = new Date(now + newSessionTtlSec * 1000).toISOString()
 
@@ -346,7 +377,31 @@ export function createTokenService(options = {}) {
   return {
     isEnabled,
     model,
+    health() {
+      return {
+        liveTokenService: isEnabled,
+        checks: {
+          geminiApiKeyConfigured: apiKey !== '',
+          signingSecretConfigured,
+        },
+      }
+    },
     async handle(req, res, pathname) {
+      if (!pathname.startsWith('/api/')) return false
+      if (!isOriginAllowed(req)) {
+        sendJson(res, 403, { error: 'forbidden_origin', message: 'Origin is not allowed.' })
+        return true
+      }
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204, {
+          'Access-Control-Allow-Origin': typeof req.headers.origin === 'string' ? req.headers.origin : '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Device-Timestamp, X-Device-Nonce, X-Device-Signature',
+          'Cache-Control': 'no-store',
+        })
+        res.end()
+        return true
+      }
       if (req.method === 'POST' && pathname === '/api/auth/device') {
         await handleRegisterDevice(req, res)
         return true

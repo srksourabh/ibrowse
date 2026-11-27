@@ -148,8 +148,9 @@ const server = createServer((req, res) => {
   const pathname = decodeURIComponent(url.pathname)
 
   if (pathname === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ status: 'ok', version: '0.2.0', liveTokenService: tokenService.isEnabled }))
+    const h = tokenService.health()
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
+    res.end(JSON.stringify({ status: 'ok', version: '0.2.0', ...h }))
     return
   }
 

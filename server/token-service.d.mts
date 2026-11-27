@@ -13,11 +13,20 @@ export interface TokenServiceOptions {
   readonly registerLimitPerMin?: number
   readonly tokenLimitPerMin?: number
   readonly tokenDailyQuota?: number
+  readonly globalLimitPerMin?: number
+  readonly allowedOrigins?: string
 }
 
 export interface TokenService {
   readonly isEnabled: boolean
   readonly model: string
+  health(): {
+    readonly liveTokenService: boolean
+    readonly checks: {
+      readonly geminiApiKeyConfigured: boolean
+      readonly signingSecretConfigured: boolean
+    }
+  }
   handle(req: IncomingMessage, res: ServerResponse, pathname: string): Promise<boolean>
 }
 

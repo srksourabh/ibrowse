@@ -257,4 +257,66 @@ describe('Gemini Live Token Service', () => {
     })
     expect(badKey.status).toBe(400)
   })
+
+  it('enforces global rate limit across distinct devices, origin allowlists, and safe health flags', async () => {
+    const now = 1_700_000_000_000
+    const googleFetch = vi.fn(async () =>
+      new Response(JSON.stringify({ name: 'auth_tokens/tok', expireTime: new Date(now + 60_000).toISOString() }), { status: 200 }),
+    )
+    const service = createTokenService({
+      apiKey: 'SECRET_API_KEY',
+      signingSecret: 'SECRET_SIGNING_KEY',
+      globalLimitPerMin: 1,
+      allowedOrigins: 'chrome-extension://abcdefghijklmnop',
+      fetch: googleFetch as unknown as typeof fetch,
+      now: () => now,
+    })
+    const health = service.health()
+    expect(health).toEqual({
+      liveTokenService: true,
+      checks: { geminiApiKeyConfigured: true, signingSecretConfigured: true },
+    })
+    expect(JSON.stringify(health)).not.toContain('SECRET')
+
+    const srv = await startTestServer(service)
+    cleanups.push(srv.close)
+
+    // Blocked origin rejected with 403
+    const badOrigin = await fetch(`${srv.baseUrl}/api/auth/device`, {
+      method: 'POST',
+      headers: { Origin: 'https://evil.example.com' },
+      body: JSON.stringify({ publicKeyJwk: makeDeviceKeys().publicKeyJwk }),
+    })
+    expect(badOrigin.status).toBe(403)
+
+    // Allowed origin OPTIONS preflight succeeds
+    const preflight = await fetch(`${srv.baseUrl}/api/gemini/live-token`, {
+      method: 'OPTIONS',
+      headers: { Origin: 'chrome-extension://abcdefghijklmnop' },
+    })
+    expect(preflight.status).toBe(204)
+
+    // Two distinct devices hit the global limit of 1/min on the 2nd request
+    const d1 = makeDeviceKeys()
+    const d2 = makeDeviceKeys()
+    const r1 = (await (
+      await fetch(`${srv.baseUrl}/api/auth/device`, { method: 'POST', body: JSON.stringify({ publicKeyJwk: d1.publicKeyJwk }) })
+    ).json()) as { deviceToken: string }
+    const r2 = (await (
+      await fetch(`${srv.baseUrl}/api/auth/device`, { method: 'POST', body: JSON.stringify({ publicKeyJwk: d2.publicKeyJwk }) })
+    ).json()) as { deviceToken: string }
+
+    expect(
+      (await fetch(`${srv.baseUrl}/api/gemini/live-token`, {
+        method: 'POST',
+        headers: signRequest(r1.deviceToken, d1.privateKey, now, 'global-nonce-11111111'),
+      })).status,
+    ).toBe(200)
+    expect(
+      (await fetch(`${srv.baseUrl}/api/gemini/live-token`, {
+        method: 'POST',
+        headers: signRequest(r2.deviceToken, d2.privateKey, now, 'global-nonce-22222222'),
+      })).status,
+    ).toBe(429)
+  })
 })
