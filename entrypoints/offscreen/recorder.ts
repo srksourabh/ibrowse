@@ -45,9 +45,15 @@ export function recordMicrophone(maxMs: number): Recording {
 
   const until = (): Promise<boolean> =>
     new Promise<boolean>((resolve) => {
-      finish = resolve
-      if (ended !== null) resolve(ended)
-      setTimeout(() => resolve(false), maxMs)
+      if (ended !== null) {
+        resolve(ended)
+        return
+      }
+      const timer = setTimeout(() => end(false), maxMs)
+      finish = (cancelled: boolean) => {
+        clearTimeout(timer)
+        resolve(cancelled)
+      }
     })
 
   const samples = (async () => {
