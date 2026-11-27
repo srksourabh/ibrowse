@@ -99,10 +99,18 @@ function fillForm(settings: Settings): void {
 }
 
 async function refreshKeyStatus(editor: SettingsEditor): Promise<void> {
-  byId('key-status').textContent = (await editor.hasKey()) ? 'A key is saved.' : 'No key is saved.'
-  byId('anthropic-key-status').textContent = (await editor.hasAnthropicKey())
-    ? 'An Anthropic fallback key is saved.'
-    : 'No Anthropic key is saved.'
+  try {
+    byId('key-status').textContent = (await editor.hasKey()) ? 'A key is saved.' : 'No key is saved.'
+  } catch {
+    byId('key-status').textContent = 'Key storage could not be read.'
+  }
+  try {
+    byId('anthropic-key-status').textContent = (await editor.hasAnthropicKey())
+      ? 'An Anthropic fallback key is saved.'
+      : 'No Anthropic key is saved.'
+  } catch {
+    byId('anthropic-key-status').textContent = 'Key storage could not be read.'
+  }
 }
 
 async function readLatency(speak: (text: string) => void): Promise<void> {
@@ -219,7 +227,9 @@ async function requestMicrophone(): Promise<boolean> {
 
 async function main(): Promise<void> {
   const store = chrome.storage.local
-  await moveKeyOut(store, keyVault)
+  await moveKeyOut(store, keyVault).catch((error: unknown) => {
+    console.error('iBrowse key migration error:', error instanceof Error ? error.message : 'unknown')
+  })
   const initial = await loadSettings(store)
   let companion = initial.screenReaderMode === 'companion'
   let pageSpeak = createPageSpeaker(byId('status'), companion)

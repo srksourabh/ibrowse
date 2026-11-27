@@ -102,7 +102,7 @@ async function errorFor(response: Response): Promise<CloudError> {
 
   // 5. 403 Forbidden
   if (status === 403) {
-    if (statusStr === 'PERMISSION_DENIED' && reason !== '') {
+    if (statusStr === 'PERMISSION_DENIED') {
       return new CloudError('auth-failed')
     }
     return new CloudError('bad-key')

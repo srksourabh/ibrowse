@@ -23,11 +23,19 @@ export async function hasGeminiKey(store: KeyValueStore): Promise<boolean> {
   return (await loadGeminiKey(store)) !== null
 }
 
+/** Thrown when user input does not match the expected API key format (never includes the key). */
+export class InvalidKeyError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'InvalidKeyError'
+  }
+}
+
 /** Saves a key. The error never repeats what was typed, in case it was a key with a typo. */
 export async function saveGeminiKey(store: KeyValueStore, raw: string): Promise<void> {
   const key = raw.trim()
   if (!KEY_PATTERN.test(key)) {
-    throw new Error('That does not look like a Google API key. It is 20 or more letters, digits, dashes or underscores.')
+    throw new InvalidKeyError('That does not look like a Google API key. It is 20 or more letters, digits, dashes or underscores.')
   }
   await store.set({ [STORAGE_KEY]: key })
 }
@@ -49,7 +57,7 @@ export async function hasAnthropicKey(store: KeyValueStore): Promise<boolean> {
 export async function saveAnthropicKey(store: SecretStore, raw: string): Promise<void> {
   const key = raw.trim()
   if (!KEY_PATTERN.test(key)) {
-    throw new Error('That does not look like an Anthropic API key. It is 20 or more letters, digits, dashes or underscores.')
+    throw new InvalidKeyError('That does not look like an Anthropic API key. It is 20 or more letters, digits, dashes or underscores.')
   }
   await store.set({ [ANTHROPIC_STORAGE_KEY]: key })
 }

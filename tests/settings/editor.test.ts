@@ -386,4 +386,32 @@ describe('SettingsEditor: Anthropic Claude integration & multi-provider handling
     expect(await editor.testKey()).toBe(false)
     expect(last()).toMatch(/Generative Language API is not enabled/i)
   })
+
+  it('preserves existing valid key when testing an invalid candidate or failing saveKey/removeKey', async () => {
+    const failing = setup({
+      initial: { geminiKey: KEY },
+      checkKey: async () => {
+        throw new CloudError('bad-key')
+      },
+    })
+    // Bad format save does not destroy existing working key
+    expect(await failing.editor.saveKey('bad')).toBe(false)
+    expect(failing.secrets.data.geminiKey).toBe(KEY)
+
+    // Rejected candidate key test does not destroy existing working key
+    expect(await failing.editor.testKey('AIzaWrongCandidateKey0123456789abc')).toBe(false)
+    expect(failing.secrets.data.geminiKey).toBe(KEY)
+
+    // Storage write/remove failures do not leak key and report cleanly
+    failing.secrets.set = async () => {
+      throw new Error(`IndexedDB quota exceeded for ${KEY}`)
+    }
+    failing.secrets.remove = async () => {
+      throw new Error('IndexedDB locked')
+    }
+    expect(await failing.editor.saveKey('AIzaNewCandidateKey0123456789abcdef')).toBe(false)
+    expect(failing.last()).not.toContain(KEY)
+    await failing.editor.removeKey()
+    expect(failing.last()).toBe('The key could not be removed.')
+  })
 })

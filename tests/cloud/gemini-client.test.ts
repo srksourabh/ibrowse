@@ -300,4 +300,25 @@ describe('GeminiClient errors', () => {
     await client.checkKey(candidate)
     expect(lastRequest().init.headers).toMatchObject({ 'x-goog-api-key': candidate })
   })
+
+  it('classifies HTTP 403 PERMISSION_DENIED without ErrorInfo details as auth-failed rather than bad-key', async () => {
+    const { client } = setup(() =>
+      jsonResponse(
+        { error: { code: 403, message: 'The caller does not have permission', status: 'PERMISSION_DENIED' } },
+        403,
+      ),
+    )
+    const error = await caught(client.checkKey())
+    expect(error.kind).toBe('auth-failed')
+  })
+
+  it('classifies HTTP 400 API_KEY_INVALID detail reason as bad-key', async () => {
+    const { client } = setup(() =>
+      jsonResponse(
+        { error: { code: 400, status: 'INVALID_ARGUMENT', message: 'Invalid argument', details: [{ reason: 'API_KEY_INVALID' }] } },
+        400,
+      ),
+    )
+    expect((await caught(client.checkKey())).kind).toBe('bad-key')
+  })
 })

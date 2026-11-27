@@ -6,6 +6,7 @@ import {
   clearGeminiKey,
   hasAnthropicKey,
   hasGeminiKey,
+  InvalidKeyError,
   saveAnthropicKey,
   saveGeminiKey,
   type SecretStore,
@@ -145,7 +146,7 @@ export class SettingsEditor {
     try {
       await saveGeminiKey(this.#deps.secrets, raw)
     } catch (error) {
-      this.#deps.speak(error instanceof Error ? error.message : 'That key could not be saved.')
+      this.#deps.speak(error instanceof InvalidKeyError ? error.message : 'That key could not be saved.')
       return false
     }
     this.#deps.speak('Key saved. Use Test key to check it.')
@@ -176,8 +177,12 @@ export class SettingsEditor {
   }
 
   async removeKey(): Promise<void> {
-    await clearGeminiKey(this.#deps.secrets)
-    this.#deps.speak('Key removed.')
+    try {
+      await clearGeminiKey(this.#deps.secrets)
+      this.#deps.speak('Key removed.')
+    } catch {
+      this.#deps.speak('The key could not be removed.')
+    }
   }
 
   hasAnthropicKey(): Promise<boolean> {
@@ -189,7 +194,7 @@ export class SettingsEditor {
     try {
       await saveAnthropicKey(this.#deps.secrets, raw)
     } catch (error) {
-      this.#deps.speak(error instanceof Error ? error.message : 'That Anthropic key could not be saved.')
+      this.#deps.speak(error instanceof InvalidKeyError ? error.message : 'That Anthropic key could not be saved.')
       return false
     }
     this.#deps.speak('Anthropic key saved. Use Test Anthropic key to check it.')
@@ -221,8 +226,12 @@ export class SettingsEditor {
   }
 
   async removeAnthropicKey(): Promise<void> {
-    await clearAnthropicKey(this.#deps.secrets)
-    this.#deps.speak('Anthropic key removed.')
+    try {
+      await clearAnthropicKey(this.#deps.secrets)
+      this.#deps.speak('Anthropic key removed.')
+    } catch {
+      this.#deps.speak('The Anthropic key could not be removed.')
+    }
   }
 
   async #save(field: FieldSpec, value: unknown): Promise<void> {
